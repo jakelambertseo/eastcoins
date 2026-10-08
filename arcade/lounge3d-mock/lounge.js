@@ -607,7 +607,7 @@ const tstate = { x: 0, y: 0, jump: false, slide: false };   // the shell's thumb
 let bots = [];
 const A = await Arcade.start({
   stage: document.querySelector(".stage"), room: "lounge", title: "The Lounge", where: "", localUnlocks,
-  help: `<p><b>Walk</b> with WASD, <b>jump</b> with Space, <b>drag</b> to look round. <b>E</b> uses whatever you're standing at:</p>
+  help: `<p><b>Walk</b> with WASD, <b>jump</b> with Space, <b>drag</b> to look round, <b>+</b> / <b>-</b> to zoom, <b>V</b> for first person. <b>Shift</b> slides. <b>E</b> uses whatever you're standing at:</p>
     <p>🕹️ a <b>cabinet</b> on the far wall opens its game · 🏆 the <b>board</b> on the right flips to the next game · 🎁 the <b>prize counter</b> changes your look ·
     📻 the <b>jukebox</b> picks the station the whole arcade hears · 🧸 the <b>claw</b>, and 🏒 <b>air hockey</b> (for two, once the room is live).</p>
     <p><b>Enter</b> opens the chat, <b>Esc</b> the menu, <b>M</b> mutes.</p>`,
@@ -914,12 +914,25 @@ function cashier(tab = "buy") {
 
 /* ------------------------------------------------------------------ input and movement */
 const keys = {};
+/* ZOOM AND FIRST PERSON (2026-10-08, the owner, testing without a mouse: "how can i zoom in or first person?"). + and - move the camera
+   in and out (kept in this browser); V switches to your own eyes and back. */
+const ZOOM = { min: 3, max: 15, step: 1.5, def: 9 };
+let camZoom = ZOOM.def, fpView = false;
+try { const z = Number(localStorage.getItem("ec_lounge_zoom")); if (z >= ZOOM.min && z <= ZOOM.max) camZoom = z; } catch {}
+function zoomBy(d) {
+  if (fpView && d > 0) { fpView = false; camZoom = ZOOM.min; }   // - out of first person comes back to the closest view
+  else camZoom = clamp(camZoom + d, ZOOM.min, ZOOM.max);
+  try { localStorage.setItem("ec_lounge_zoom", String(camZoom)); } catch {}
+}
 let dragId = null, camYaw = 0, camPitch = 0.42, dragging = false, lastX = 0, lastY = 0, jumpWas = false, near = null, entering = false;
 addEventListener("keydown", (e) => {
   if (document.activeElement !== canvas || A.windowOpen() || pokerOpen) return; Sfx.ensure();
   if (EX.active()) { EX.key(e, true); if (e.code === "Space") e.preventDefault(); return; }
   keys[e.code] = true;
   if (e.code === "KeyR" && EX.restart?.()) return;
+  if (e.code === "Equal" || e.code === "NumpadAdd") { zoomBy(-ZOOM.step); return; }
+  if (e.code === "Minus" || e.code === "NumpadSubtract") { zoomBy(ZOOM.step); return; }
+  if (e.code === "KeyV") { fpView = !fpView; A.notify(fpView ? "First person: V to step back out." : "Third person.", "👁️"); return; }
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
   if (e.code === "KeyE" && near) use(near);
 });
@@ -1024,7 +1037,7 @@ function frame(now) {
   stepHockey(dt);
   EX.step(dt, t);
   // first-person games (skee-ball, darts, beer pong): your character, and anyone standing right by you, step out of the shot
-  { const fp = EX.firstPerson(); me.mesh.g.visible = !fp;
+  { const fp = EX.firstPerson(); me.mesh.g.visible = !fp && !(fpView && !EX.active() && hkSide() < 0);
     const near2 = (g) => fp && Math.hypot(g.position.x - me.p.x, g.position.z - me.p.z) < 2.2;
     for (const b of bots) if (!b.inGame) b.mesh.g.visible = !near2(b.mesh.g);
     for (const r of remote.values()) if (r.p.room === "lounge") r.mesh.g.visible = !near2(r.mesh.g); }
@@ -1035,7 +1048,7 @@ function frame(now) {
   const sp = Math.hypot(me.v.x, me.v.z); me.mesh.ch?.play(me.slide ? "idle" : !me.grounded ? "jump" : sp > 0.6 ? "walk" : "idle"); me.mesh.ch?.update(dt); squash(me.mesh, me.slide, dt);
   // speed widens the view a little (slide-hop, boost pads)
   { const fov = 58 + clamp((sp - RUN) / 9, 0, 1) * 12; if (Math.abs(camera.fov - fov) > 0.05) { camera.fov += (fov - camera.fov) * Math.min(1, dt * 5); camera.updateProjectionMatrix(); } }
-  const ox = Math.sin(camYaw) * Math.cos(camPitch), oz = Math.cos(camYaw) * Math.cos(camPitch); let dist = 9;
+  const ox = Math.sin(camYaw) * Math.cos(camPitch), oz = Math.cos(camYaw) * Math.cos(camPitch); let dist = camZoom;
   const RG = REGIONS.find((g) => me.p.x >= g.x0 && me.p.x <= g.x1 && me.p.z >= g.z0 && me.p.z <= g.z1) || REGIONS[0];
   const RX0 = RG.x0, RX1 = RG.x1, RZ0 = RG.z0, RZ1 = RG.z1;
   // (outdoors too: the patio's edges are the building on one side and the fence on the others, and a camera through the wall looks indoors)
@@ -1046,8 +1059,14 @@ function frame(now) {
   _cam.set(me.p.x + ox * dist, me.p.y + 1.4 + Math.sin(camPitch) * dist, me.p.z + oz * dist);
   if (EX.cam(_cam, _look)) { /* a game is driving the camera */ }
   else if (hkSide() >= 0) { const sd = hkSide() ? 1 : -1; _cam.set(HOCKEY.at.x + sd * 2.9, 2.35, HOCKEY.at.z); _look.set(HOCKEY.at.x - sd * 0.25, 0.7, HOCKEY.at.z); }
+  else if (fpView) {   // your own eyes: look where the camera points, pitch measured from level (the third-person default is level)
+    const p = camPitch - 0.42; _cam.set(me.p.x, me.p.y + 1.15, me.p.z);
+    _look.set(me.p.x - Math.sin(camYaw) * Math.cos(p), me.p.y + 1.15 - Math.sin(p), me.p.z - Math.cos(camYaw) * Math.cos(p));
+    camera.position.copy(_cam);
+  }
   else _look.set(me.p.x, me.p.y + 1.1, me.p.z);
-  camera.position.lerp(_cam, 0.15); camera.lookAt(_look);
+  if (!fpView || EX.active() || hkSide() >= 0) camera.position.lerp(_cam, 0.15);
+  camera.lookAt(_look);
 
   // the lights. The LED colour runs slowly round the room; the bulbs chase at 3 steps a second (no faster: photosensitivity)
   if (!CALM) {
