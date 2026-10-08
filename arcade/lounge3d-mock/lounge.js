@@ -17,8 +17,8 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { Sfx } from "../parkour3d-mock/look.js?v=2";
 import * as Models from "../climb3d-mock/models.js?v=2";
-import * as Arcade from "../arcade-kit/arcade.js?v=6";
-import { CHARS, CHAR_NAMES, HATS, RADIO } from "/v3/assets/js/arcade-rules.js?v=1";
+import * as Arcade from "../arcade-kit/arcade.js?v=7";
+import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=2";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -252,6 +252,15 @@ const jukeLights = [];
   for (const sx of [-1.31, 1.31]) box(0.04, 0.08, 1.4, tube(COL.cyan), sx, 0.8, 0, ah); for (const sz of [-0.71, 0.71]) box(2.6, 0.08, 0.04, tube(COL.pink), 0, 0.8, sz, ah);
   const puck = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16), basic(COL.red)); puck.position.y = 0.79; ah.add(puck);
   scene.userData.puck = puck;
+  // two mallets (side 0 pink at the -x end, side 1 cyan at +x) and a scoreboard floating over the table
+  const mallet = (c) => { const g2 = new THREE.Group(); const base = new THREE.Mesh(new THREE.CylinderGeometry(HOCKEY.malletR, HOCKEY.malletR, 0.035, 20), basic(c)); base.position.y = 0.0175; g2.add(base);
+    const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.07, 14), std(c, { roughness: 0.3 })); knob.position.y = 0.07; g2.add(knob); g2.position.y = 0.775; ah.add(g2); return g2; };
+  scene.userData.mallets = [mallet(new THREE.Color(COL.pink).multiplyScalar(0.8)), mallet(new THREE.Color(COL.cyan).multiplyScalar(0.8))];
+  scene.userData.mallets[0].position.x = -0.9; scene.userData.mallets[1].position.x = 0.9;
+  const sbCanvas = document.createElement("canvas"); sbCanvas.width = 1024; sbCanvas.height = 200;
+  const sbTex = new THREE.CanvasTexture(sbCanvas); sbTex.colorSpace = THREE.SRGBColorSpace;
+  const sb = new THREE.Sprite(new THREE.SpriteMaterial({ map: sbTex, transparent: true, depthTest: false })); sb.scale.set(2.6, 0.5, 1); sb.position.set(0, 1.75, 0); sb.renderOrder = 6; sb.visible = false; ah.add(sb);
+  scene.userData.board = { canvas: sbCanvas, tex: sbTex, sprite: sb };
   block(1, 4, 2.7, 1.5);
   const cm = new THREE.Group(); cm.position.set(11.5, 0, 8.6); scene.add(cm);
   box(1.6, 0.9, 1.6, std(COL.pink, { emissive: COL.pink, emissiveIntensity: 0.18 }), 0, 0.45, 0, cm);
@@ -332,7 +341,7 @@ const A = await Arcade.start({
     <p><b>Enter</b> opens the chat, <b>Esc</b> the menu, <b>M</b> mutes.</p>`,
   lookHint: "Talk to Sydney at the prize counter to change your character and hat.",
   touch: { state: tstate, buttons: [{ id: "use", label: "E", cls: "alt", tap: () => { if (near) use(near); } }, { id: "jump", label: "JUMP" }] },
-  onHello: () => { for (const b of bots) dropPerson(b.mesh); bots = []; for (const p of A.people.values()) addRemote(p); renderOnline(); renderOutfit(); },
+  onHello: () => { if (A.hello?.hockey) onHk({ ...A.hello.hockey, top: A.hello.hockeyTop });  for (const b of bots) dropPerson(b.mesh); bots = []; for (const p of A.people.values()) addRemote(p); renderOnline(); renderOutfit(); },
   onOffline: () => { startBots(); renderOnline(); },
   onJoin: (p) => { addRemote(p); renderOnline(); },
   onLeave: (id) => { const r = remote.get(id); if (r) { dropPerson(r.mesh); remote.delete(id); } renderOnline(); },
@@ -341,6 +350,10 @@ const A = await Arcade.start({
   onLook: (id, look, mine) => {
     if (mine) { rebuildMe(); Sfx.play("checkpoint"); return; }
     const r = remote.get(id); if (!r) return; const pos = r.mesh.g.position.clone(), vis = r.mesh.g.visible; dropPerson(r.mesh); r.mesh = makePerson(look, r.p.name, Arcade.nameColor(r.p.login), r.p.avatar); r.mesh.g.position.copy(pos); r.mesh.g.visible = vis;
+  },
+  onMessage: (m) => {
+    if (m.t === "hkf") { hk.prev = hk.s; hk.s = m.s; if (m.e === "hit") Sfx.play("beep"); }
+    else if (m.t === "hk") onHk(m);
   },
   onDisconnect: () => { for (const r of remote.values()) dropPerson(r.mesh); remote.clear(); renderOnline(); },
   onLeaving: () => { entering = true; }
@@ -455,6 +468,83 @@ function renderOnline() {
   A.setFakePeople(bots.map((o) => ({ id: "bot:" + o.name, name: o.name, login: o.name, room: o.inGame ? "climb" : "lounge", where: o.inGame || doing[o.spot?.what] || "" })));
 }
 
+/* ------------------------------------------------------------------ air hockey (the room server runs it: arcade-rules.js HOCKEY, hkStep)
+   E at the table sits you at an end; the next person to sit plays you. While you're seated your character stands at your end, the camera
+   sits behind it, and the mouse (or a finger) steers your mallet: the page sends where it wants the mallet, the server moves it and the puck,
+   and everyone in the lounge is sent the table 30 times a second. E again stands you up (mid-match, that's a forfeit). */
+const hk = { state: null, s: [0, 0, -0.9, 0, 0.9, 0], prev: null, aimAt: 0, aim: null, top: [] };
+const hkSide = () => (A.online && A.me && hk.state ? hk.state.seats.indexOf(A.me.id) : -1);
+function hkPrompt() {
+  const h = hk.state, side = hkSide();
+  if (side >= 0) return h.phase === "wait" ? `<kbd>E</kbd> Stand up · waiting for someone to play you` : `<b>${h.score[side]} – ${h.score[1 - side]}</b> · move the mouse to steer · <kbd>E</kbd> stand up (forfeits)`;
+  if (!h || h.phase === "idle") return `<kbd>E</kbd> Sit down: air hockey, first to ${HOCKEY.winTo}`;
+  if (h.phase === "wait") return `<kbd>E</kbd> Play ${esc(h.names[h.seats[0] ? 0 : 1])} at air hockey`;
+  return `Air hockey: ${esc(h.names[0])} ${h.score[0]} – ${h.score[1]} ${esc(h.names[1])}`;
+}
+const _ray = new THREE.Raycaster(), _ndc = new THREE.Vector2(), _plane = new THREE.Plane(new V3(0, 1, 0), -0.8), _hit = new V3();
+function hkAim(e) {
+  const side = hkSide(); if (side < 0) return;
+  const r = canvas.getBoundingClientRect(); _ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  _ray.setFromCamera(_ndc, camera); if (!_ray.ray.intersectPlane(_plane, _hit)) return;
+  hk.aim = hkClampMallet(side, _hit.x - HOCKEY.at.x, _hit.z - HOCKEY.at.z);
+  const now = performance.now(); if (now - hk.aimAt < 1000 / HOCKEY.hz) return; hk.aimAt = now;
+  A.send({ t: "hm", x: hk.aim[0], z: hk.aim[1] });
+}
+function stepSeated() {
+  const side = hkSide(), seat = hkSeat(side);
+  me.p.set(seat.x, R, seat.z); me.v.set(0, 0, 0); me.grounded = true; me.facing = side ? Math.PI / 2 : -Math.PI / 2;
+  near = { kind: "hockey" };
+  const label = A.windowOpen() ? "" : hkPrompt(); const hp = $("hudPrompt"); if (hp.dataset.l !== label) { hp.dataset.l = label; hp.innerHTML = label; }
+  A.setWhere("air hockey"); A.sendPos(me.p.x, me.p.y, me.p.z, me.facing, 0);
+}
+function drawScoreboard() {
+  const B = scene.userData.board, h = hk.state; if (!B) return;
+  B.sprite.visible = Boolean(h && h.phase !== "idle");
+  if (!B.sprite.visible) return;
+  const g = B.canvas.getContext("2d"), w = 1024, H = 200; g.clearRect(0, 0, w, H);
+  g.fillStyle = "rgba(7,4,15,.82)"; g.beginPath(); g.roundRect(8, 8, w - 16, H - 16, 28); g.fill();
+  g.lineWidth = 6; g.strokeStyle = "#ff2d95"; g.stroke();
+  g.textBaseline = "middle"; g.font = "44px Bungee";
+  const n0 = h.names[0] || "OPEN", n1 = h.names[1] || "OPEN";
+  g.textAlign = "left"; g.fillStyle = "#ff7ac0"; g.fillText(n0.toUpperCase().slice(0, 14), 40, 70, 360);
+  g.textAlign = "right"; g.fillStyle = "#7af0ff"; g.fillText(n1.toUpperCase().slice(0, 14), w - 40, 70, 360);
+  g.textAlign = "center"; g.font = "84px Bungee"; g.fillStyle = "#ffd400"; g.fillText(`${h.score[0]} - ${h.score[1]}`, w / 2, 82);
+  g.font = "600 32px Rubik"; g.fillStyle = "#b4a6d6";
+  g.fillText(h.phase === "wait" ? "waiting for a challenger: walk up and press E" : h.phase === "over" ? (hk.last || "game over") : h.phase === "goal" ? "GOAL! ready…" : `first to ${HOCKEY.winTo}`, w / 2, 152);
+  B.tex.needsUpdate = true;
+}
+function onHk(m) {
+  const was = hk.state;
+  hk.state = { seats: m.seats, names: m.names, score: m.score, phase: m.phase, until: m.until };
+  if (m.s) { hk.prev = hk.s.slice(); hk.s = m.s; }
+  if (m.top) { hk.top = m.top; setHockeyBoard(); }
+  if (m.goal !== undefined) { Sfx.play("checkpoint"); A.notify(`<b>${esc(m.names[m.goal])}</b> scores! ${m.score[0]}–${m.score[1]}`, "🏒", "lime"); }
+  if (m.winner !== undefined) { hk.last = `${m.names[m.winner]} wins ${m.score[m.winner]}-${m.score[1 - m.winner]}`; Sfx.play("finish", "gold"); if (A.me && m.seats[m.winner] === A.me.id) A.notify("You win! 🏆", "🏒", "gold"); }
+  const mine = A.me && m.seats.includes(A.me.id), mineBefore = A.me && was?.seats.includes(A.me.id);
+  if (mine && !mineBefore) { A.notify(m.phase === "wait" ? "You're at the table. Waiting for someone to play you…" : "Game on! Move the mouse to steer your mallet.", "🏒", "lime"); camYaw = hkSide() ? Math.PI / 2 : -Math.PI / 2; }
+  if (!mine && mineBefore) { me.p.set(hkSeat(was.seats.indexOf(A.me.id)).x, R, HOCKEY.at.z + 1.6); }
+  if (was?.phase === "wait" && m.phase === "goal" && mine) A.notify("Someone sat down. Game on!", "🏒", "lime");
+  drawScoreboard();
+}
+function setHockeyBoard() {
+  const i = BOARDS.findIndex((b) => b.key === "hockey");
+  const bd = { key: "hockey", title: "AIR HOCKEY", unit: "MATCHES WON", col: COL.pink, rows: hk.top.map((r) => ({ name: r.name, n: r.wins, v: `${r.wins} WIN${r.wins === 1 ? "" : "S"}`, me: A.me && r.id === A.me.id })) };
+  if (!bd.rows.length) return;
+  if (i >= 0) BOARDS[i] = bd; else BOARDS.splice(2, 0, bd);
+}
+// the table drawn from the server's last two frames, eased so 30 updates a second look smooth
+function stepHockey(dt) {
+  const U = scene.userData; if (!A.online || !U.mallets) return;
+  const k = Math.min(1, dt * 20), s = hk.s, side = hkSide();
+  U.puck.position.x += (s[0] - U.puck.position.x) * k; U.puck.position.z += (s[1] - U.puck.position.z) * k; U.puck.position.y = 0.79;
+  for (let i = 0; i < 2; i++) {
+    const m = U.mallets[i];
+    // your own mallet follows your hand straight away; the server's copy catches up
+    const tx = i === side && hk.aim ? hk.aim[0] : s[2 + i * 2], tz = i === side && hk.aim ? hk.aim[1] : s[3 + i * 2];
+    m.position.x += (tx - m.position.x) * (i === side ? Math.min(1, dt * 30) : k); m.position.z += (tz - m.position.z) * (i === side ? Math.min(1, dt * 30) : k);
+  }
+}
+
 /* ------------------------------------------------------------------ input and movement */
 const keys = {};
 let dragId = null, camYaw = 0, camPitch = 0.42, dragging = false, lastX = 0, lastY = 0, jumpWas = false, near = null, entering = false;
@@ -465,9 +555,10 @@ addEventListener("keydown", (e) => {
 });
 addEventListener("keyup", (e) => { keys[e.code] = false; });
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
-canvas.addEventListener("pointerdown", (e) => { Sfx.ensure(); dragging = true; dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY; canvas.focus(); });
+canvas.addEventListener("pointerdown", (e) => { Sfx.ensure(); if (hkSide() >= 0) { hkAim(e); canvas.focus(); return; } dragging = true; dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY; canvas.focus(); });
 addEventListener("pointerup", (e) => { if (e.pointerId === dragId) dragging = false; });
 addEventListener("pointercancel", (e) => { if (e.pointerId === dragId) dragging = false; });
+canvas.addEventListener("pointermove", (e) => { if (hkSide() >= 0) hkAim(e); });
 addEventListener("pointermove", (e) => {
   if (!dragging || e.pointerId !== dragId) return; const k = settings.camSens;
   camYaw -= (e.clientX - lastX) * 0.006 * k; camPitch = clamp(camPitch + (e.clientY - lastY) * 0.004 * k * (settings.invertY ? -1 : 1), 0.05, 1.1); lastX = e.clientX; lastY = e.clientY;
@@ -486,9 +577,14 @@ function use(n) {
   else if (n.kind === "juke") A.openJukebox();
   else if (n.kind === "board") { setBoard(boardIdx + 1); Sfx.play("beep"); }
   else if (n.kind === "claw") A.notify(pick(["The claw grabs… and drops it. Classic.", "So close! It slipped.", "You won a plush! (On the site: a cosmetic.)"]), "🧸", "pink");
-  else if (n.kind === "hockey") A.notify("Air hockey is for two: once the room is live, the next person to press E plays you.", "🏒", "lime");
+  else if (n.kind === "hockey") {
+    if (!A.online) return A.notify("Air hockey needs the room server: it's for two real players.", "🏒", "lime");
+    const h = hk.state; if (h && (h.phase === "play" || h.phase === "goal" || h.phase === "over")) return A.notify("The table's busy. Watch, and you've got next.", "🏒");
+    A.send({ t: "hockey", op: "sit" });
+  }
 }
 function step(dt) {
+  if (hkSide() >= 0) return stepSeated();
   const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - tstate.y, s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + tstate.x;
   const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
   let x = fx * f + rx * s, z = fz * f + rz * s; const l = Math.hypot(x, z); if (l > 1) { x /= l; z /= l; }
@@ -501,9 +597,9 @@ function step(dt) {
   near = null; let best = 1e9;
   const consider = (kind, x2, z2, rad, extra = {}) => { const d = Math.hypot(me.p.x - x2, me.p.z - z2); if (d < rad && d < best) { best = d; near = { kind, ...extra }; } };
   for (const c of cabs) consider("cab", c.x, c.z, 1.4, { gm: c.gm });
-  consider("prizes", OUTFIT.x, OUTFIT.z, 2.6); consider("juke", JUKE.x + 1.3, JUKE.z, RADIO.reach - 0.4); consider("board", W - 3, BZ, 3.2); consider("claw", 11.5, 7.2, 1.6); consider("hockey", 1, 4, 2.4);
+  consider("prizes", OUTFIT.x, OUTFIT.z, 2.6); consider("juke", JUKE.x + 1.3, JUKE.z, RADIO.reach - 0.4); consider("board", W - 3, BZ, 3.2); consider("claw", 11.5, 7.2, 1.6); consider("hockey", HOCKEY.at.x, HOCKEY.at.z, HOCKEY.reach - 0.3);
   const label = !near || A.windowOpen() ? "" : near.kind === "cab" ? (near.gm.open ? `<kbd>E</kbd> Play ${near.gm.name}` : `<kbd>E</kbd> ${near.gm.name} · coming soon`)
-    : near.kind === "prizes" ? `<kbd>E</kbd> Talk to Sydney: change your look` : near.kind === "juke" ? `<kbd>E</kbd> Jukebox: pick the station` : near.kind === "board" ? `<kbd>E</kbd> Next board` : near.kind === "claw" ? `<kbd>E</kbd> Try the claw` : `<kbd>E</kbd> Air hockey`;
+    : near.kind === "prizes" ? `<kbd>E</kbd> Talk to Sydney: change your look` : near.kind === "juke" ? `<kbd>E</kbd> Jukebox: pick the station` : near.kind === "board" ? `<kbd>E</kbd> Next board` : near.kind === "claw" ? `<kbd>E</kbd> Try the claw` : hkPrompt();
   const hp = $("hudPrompt"); if (hp.dataset.l !== label) { hp.dataset.l = label; hp.innerHTML = label; }
   A.setWhere(near ? (near.kind === "cab" ? `at ${near.gm.name.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase())}` : doing[near.kind] || "") : "");
   const sp = Math.hypot(me.v.x, me.v.z);
@@ -519,6 +615,7 @@ function frame(now) {
   if (canvas.width !== Math.round(w * renderer.getPixelRatio())) { renderer.setSize(w, h, false); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
   if (!entering) step(dt);
   if (bots.length) stepBots(dt); else stepRemote(dt);
+  stepHockey(dt);
   const g = me.mesh.g; g.position.set(me.p.x, me.p.y - R, me.p.z); let dy = me.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3;
   { const dx = me.p.x - clerk.g.position.x, dz = me.p.z - clerk.g.position.z, want = Math.hypot(dx, dz) < 6 ? Math.atan2(dx, dz) : Math.PI / 2;
     let d = want - clerk.g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); clerk.g.rotation.y += d * Math.min(1, dt * 4); clerk.ch?.update(dt);
@@ -529,7 +626,9 @@ function frame(now) {
   if (oz > 0.01) dist = Math.min(dist, (D - 0.5 - me.p.z) / oz); if (oz < -0.01) dist = Math.min(dist, (-D + 0.5 - me.p.z) / oz);
   dist = Math.max(2.5, dist);
   _cam.set(me.p.x + ox * dist, me.p.y + 1.4 + Math.sin(camPitch) * dist, me.p.z + oz * dist);
-  camera.position.lerp(_cam, 0.15); _look.set(me.p.x, me.p.y + 1.1, me.p.z); camera.lookAt(_look);
+  if (hkSide() >= 0) { const sd = hkSide() ? 1 : -1; _cam.set(HOCKEY.at.x + sd * 2.9, 2.35, HOCKEY.at.z); _look.set(HOCKEY.at.x - sd * 0.25, 0.7, HOCKEY.at.z); }
+  else _look.set(me.p.x, me.p.y + 1.1, me.p.z);
+  camera.position.lerp(_cam, 0.15); camera.lookAt(_look);
 
   // the lights. The LED colour runs slowly round the room; the bulbs chase at 3 steps a second (no faster: photosensitivity)
   if (!CALM) {
@@ -537,7 +636,7 @@ function frame(now) {
     for (const S of spots) S.s.target.position.set(Math.sin(t * 0.35 + S.ph) * 9, 0, Math.cos(t * 0.27 + S.ph * 1.3) * 6 + 1);
     chaseT += dt; if (chaseT > 1 / 3) { chaseT = 0; chaseStep++; for (let k = 0; k < bulbPos.length; k++) bulbs.setColorAt(k, (k + chaseStep) % 3 === 0 ? BULB_ON : BULB_OFF); bulbs.instanceColor.needsUpdate = true; }
     signLight.intensity = 7 + Math.sin(t * 1.3) * 1.2;
-    const puck = scene.userData.puck; if (puck) puck.position.set(Math.sin(t * 2.1) * 1.05, 0.79, Math.sin(t * 3.3) * 0.5);
+    const puck = scene.userData.puck; if (puck && bots.length) puck.position.set(Math.sin(t * 2.1) * 1.05, 0.79, Math.sin(t * 3.3) * 0.5);
     const claw = scene.userData.claw; if (claw) claw.position.set(Math.sin(t * 0.6) * 0.45, 2.05, Math.cos(t * 0.45) * 0.45);
     scrT += dt; if (scrT > 0.6) { scrT = 0; scrPhase ^= 1; const c = cabs[0]; c.scr.material.map.dispose(); c.scr.material.map = screenTex(c.gm, scrPhase); }
     // the jukebox's tubes breathe while a station is on

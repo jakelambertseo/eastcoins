@@ -13,7 +13,7 @@
 
    Settings live in this browser (localStorage ecArcadeSettings) and every game reads the same ones: sound, music, the glow, quality,
    names over heads, camera. A game listens with onSettings. */
-import { ROOMS, CHARS, CHAR_NAMES, HATS, RADIO, NET, CHAT, cleanLook, DEFAULT_LOOK } from "/v3/assets/js/arcade-rules.js?v=1";
+import { ROOMS, CHARS, CHAR_NAMES, HATS, RADIO, NET, CHAT, cleanLook, DEFAULT_LOOK } from "/v3/assets/js/arcade-rules.js?v=2";
 
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
 // framed inside eastcoin.vip (v3-arcade.js, ?embed=1): moving between games and leaving go through the site's shell, so its address bar and nav follow
@@ -282,6 +282,7 @@ export async function start(opts) {
   A.setWhere = (w) => { w = String(w).slice(0, NET.where); if (w === where) return; where = w; send({ t: "where", where: w }); };
   A.setLook = (l) => { A.look = cleanLook(l, A.unlocks.concat(A.online ? [] : HATS.filter((h) => !h.free && opts.localUnlocks?.includes(h.key)).map((h) => h.key))); store.set("ecPlayer", A.look); send({ t: "look", ...A.look }); cb("onLook", A.me?.id || "me", A.look, true); };
   A.say = (text) => send({ t: "chat", text });
+  A.send = (o) => { if (A.online) send(o); };   // a game's own messages to the room server
 
   async function connect() {
     let url;
@@ -316,7 +317,7 @@ export async function start(opts) {
   function onMsg(m) {
     switch (m.t) {
       case "hello": {
-        A.online = true; A.me = m.you; A.unlocks = m.unlocks || []; A.look = m.look; store.set("ecPlayer", A.look);
+        A.online = true; A.hello = m; A.me = m.you; A.unlocks = m.unlocks || []; A.look = m.look; store.set("ecPlayer", A.look);
         A.people.clear(); for (const p of m.people) A.people.set(p.id, p);
         chatLog.innerHTML = ""; lines.length = 0; for (const c of m.chat || []) addChat(c); unreadN = 0; unread.hidden = true;
         A.radio = m.radio; syncRadio(); drawMe(); drawWho(); cb("onHello", A); cb("onLook", A.me.id, A.look, true); return;
@@ -329,6 +330,7 @@ export async function start(opts) {
       case "chat": addChat(m.m); cb("onChat", m.m); return;
       case "radio": { const before = A.radio?.id; A.radio = m.radio; syncRadio(); if (m.radio && m.radio.id !== before) A.notify(`<b>${esc(m.radio.by)}</b> put on ${esc(m.radio.name)}`, "📻", "lime"); else if (!m.radio && before) A.notify(`${esc(m.by || "Someone")} stopped the jukebox`, "📻"); if (open === "juke") drawJuke(); return; }
       case "err": A.notify(esc(m.text), "⚠️", "pink"); return;
+      default: cb("onMessage", m);   // a game's own messages (the lounge's air hockey: hk, hkf)
     }
   }
   /* TOUCH (2026-10-07, the owner: "add touch controls"). One kit for every game: a thumbstick bottom left, big round buttons bottom right,

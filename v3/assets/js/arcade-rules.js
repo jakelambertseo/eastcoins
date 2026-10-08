@@ -47,3 +47,58 @@ export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 
 // positions: the page sends at most this often; the server sends each room one batch per tick
 export const NET = { sendMs: 100, tickMs: 100, where: 40 };
+
+/* AIR HOCKEY (2026-10-07, the owner: "yes build air hockey"). The lounge's table, for two, run by the room server so both players and everyone
+   watching see one puck. Walk up, E to sit at an end; the next person to sit takes the other. Steer your mallet with the mouse (or a finger);
+   first to `winTo`. No stakes: wins go on the lounge's board. Coordinates are the table's own: x along its length (side 0 defends -x,
+   side 1 defends +x), z across, metres, 0,0 the centre spot. `at` is where the table stands in the lounge. */
+export const HOCKEY = {
+  at: { x: 1, z: 4 }, halfL: 1.2, halfW: 0.6, goalHalf: 0.24, puckR: 0.05, malletR: 0.08,
+  malletSpeed: 6, puckMax: 5.5, wallBounce: 0.9, hitBounce: 1.0, drag: 0.9985,
+  hz: 30, sub: 4, winTo: 7, goalPauseMs: 1500, overPauseMs: 4000, waitMs: 90000, reach: 3, serveX: 0.45
+};
+export const hkSeat = (side) => ({ x: HOCKEY.at.x + (side ? 1 : -1) * (HOCKEY.halfL + 0.55), z: HOCKEY.at.z });   // where a player stands
+// a mallet may go anywhere in its own half
+export function hkClampMallet(side, x, z) {
+  const H = HOCKEY, r = H.malletR;
+  const lo = side ? r : -H.halfL + r, hi = side ? H.halfL - r : -r;
+  return [Math.max(lo, Math.min(hi, Number(x) || 0)), Math.max(-H.halfW + r, Math.min(H.halfW - r, Number(z) || 0))];
+}
+export function hkNew() { return { puck: { x: 0, z: 0, vx: 0, vz: 0 }, m: [{ x: -0.9, z: 0, vx: 0, vz: 0, tx: -0.9, tz: 0 }, { x: 0.9, z: 0, vx: 0, vz: 0, tx: 0.9, tz: 0 }] }; }
+export function hkServe(h, toward) {   // the puck waits on the side that just conceded
+  h.puck = { x: toward ? HOCKEY.serveX : -HOCKEY.serveX, z: 0, vx: 0, vz: 0 };
+}
+/* One tick of the table. Returns "goal0" (side 0 scored, into +x), "goal1", "hit" or "". Mallets chase their targets at malletSpeed;
+   a mallet is immovable to the puck (infinite mass), so a moving one hits harder. */
+export function hkStep(h, dt) {
+  const H = HOCKEY, n = H.sub, d = dt / n, R = H.puckR + H.malletR;
+  let ev = "";
+  for (let s = 0; s < n; s++) {
+    for (const m of h.m) {
+      const dx = m.tx - m.x, dz = m.tz - m.z, dist = Math.hypot(dx, dz), step = Math.min(dist, H.malletSpeed * d);
+      const ox = m.x, oz = m.z;
+      if (dist > 1e-6) { m.x += (dx / dist) * step; m.z += (dz / dist) * step; }
+      m.vx = (m.x - ox) / d; m.vz = (m.z - oz) / d;
+    }
+    const p = h.puck;
+    p.x += p.vx * d; p.z += p.vz * d; p.vx *= H.drag; p.vz *= H.drag;
+    for (const m of h.m) {
+      const ex = p.x - m.x, ez = p.z - m.z, dist = Math.hypot(ex, ez);
+      if (dist < R && dist > 1e-6) {
+        const nx = ex / dist, nz = ez / dist;
+        p.x = m.x + nx * R; p.z = m.z + nz * R;
+        const vn = (p.vx - m.vx) * nx + (p.vz - m.vz) * nz;
+        if (vn < 0) { p.vx -= (1 + H.hitBounce) * vn * nx; p.vz -= (1 + H.hitBounce) * vn * nz; ev = ev || "hit"; }
+      }
+    }
+    const sp = Math.hypot(p.vx, p.vz); if (sp > H.puckMax) { p.vx *= H.puckMax / sp; p.vz *= H.puckMax / sp; }
+    const zMax = H.halfW - H.puckR;
+    if (p.z > zMax) { p.z = zMax; p.vz = -Math.abs(p.vz) * H.wallBounce; } else if (p.z < -zMax) { p.z = -zMax; p.vz = Math.abs(p.vz) * H.wallBounce; }
+    const xMax = H.halfL - H.puckR;
+    if (Math.abs(p.x) > xMax) {
+      if (Math.abs(p.z) < H.goalHalf - H.puckR * 0.5) { if (Math.abs(p.x) > H.halfL + H.puckR) return p.x > 0 ? "goal0" : "goal1"; }
+      else { p.x = Math.sign(p.x) * xMax; p.vx = -Math.sign(p.x) * Math.abs(p.vx) * H.wallBounce; }
+    }
+  }
+  return ev;
+}

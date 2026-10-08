@@ -9,7 +9,7 @@
    Bucks, ZCoins: none. It pays titles. Nothing calls /api/; the other climbers are bots standing in for the live room. */
 import * as THREE from "three";
 import { Sfx } from "../parkour3d-mock/look.js?v=2";
-import * as Arcade from "../arcade-kit/arcade.js?v=6";
+import * as Arcade from "../arcade-kit/arcade.js?v=7";
 import * as Models from "./models.js?v=2";
 
 const V3 = THREE.Vector3;
