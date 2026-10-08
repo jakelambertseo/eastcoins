@@ -667,7 +667,7 @@
       /* private mode — the preference simply doesn't persist */
     }
     chatHiddenSince = visible ? 0 : Date.now();
-    if (visible) mountChat();
+    if (visible && !SHORT_URL.has(state.route)) mountChat();   // (not in the arcade: start-up calls this before anything is idle; see arcadeRail)
   }
 
   // Chat is core to this site, not an extra, so it should not wait for a
