@@ -712,8 +712,10 @@ function applyQuality() {
   key.shadow.mapSize.set(q === "high" ? 2048 : 1024, q === "high" ? 2048 : 1024); key.shadow.map?.dispose(); key.shadow.map = null;
   renderer.setPixelRatio(q === "low" ? 0.75 : q === "medium" ? 1 : Math.min(1.5, window.devicePixelRatio || 1));   // (high was 2: four times the pixels on a retina screen)
   canvas.width = 0;
-  A.fpsNote?.(`${settings.quality === "auto" ? "auto→" : ""}${q} · ${LIGHTS.filter((L) => L.l.visible).length} lights`);
+  A.fpsNote?.(fpsLine());
 }
+// the FPS counter's note (top left, Settings > Graphics > Show FPS): the quality, the lights, and how long the lounge took to open
+const fpsLine = () => { const q = qualityNow(); return `${settings.quality === "auto" ? "auto→" : ""}${q} · ${LIGHTS.filter((L) => L.l.visible).length} lights${marks.total ? ` · opened in ${marks.total} ms` : ""}`; };
 A.onSettings((s) => {
   Object.assign(settings, s);
   applyQuality();
@@ -1230,6 +1232,7 @@ renderOnline();
 marks.build = Math.round(performance.now() - tBuild);
 { const t = performance.now(); ROOMS3D.all(); await renderer.compileAsync(scene, camera); marks.shaders = Math.round(performance.now() - t); }
 $("loadStat").textContent = `opened in ${loadMs + marks.build + marks.shaders} ms (models ${loadMs}, build ${marks.build}, shaders ${marks.shaders}, ${qualityNow()})`;
+marks.total = loadMs + marks.build + marks.shaders; A.fpsNote?.(fpsLine());
 console.log("lounge load (ms)", marks);   // the build's parts: lounge, extras (bar, patio, world, Dash, casino), cull, merge
 canvas.focus();
 requestAnimationFrame(frame);
