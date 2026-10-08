@@ -1,0 +1,101 @@
+/* The poker room's windows (2026-10-07 mockup): the flat table view, the sit & go lobby and the cashier. Built on the Arcade Kit's tokens. */
+
+/* ---- the table view: fills the stage */
+.pk { position: absolute; inset: 0; z-index: 7; display: grid; grid-template-rows: auto 1fr auto; background: radial-gradient(120% 90% at 50% 45%, #1a0f2e, #05030b 70%); color: var(--ak-text); font: 400 14px var(--ak-body); }
+.pk[hidden] { display: none; }
+.pk-top { display: flex; align-items: center; gap: 10px; padding: 10px 14px; flex-wrap: wrap; }
+.pk-top .ak-h3 { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pk-top .ak-chip b { color: var(--ak-yellow); font-family: var(--ak-disp); font-weight: 400; }
+.pk-mid { position: relative; min-height: 0; }
+/* the felt: an oval with a lit rail */
+.pk-felt { position: absolute; left: 50%; top: 50%; width: min(78%, 900px); aspect-ratio: 2.05 / 1; max-height: 74%; transform: translate(-50%, -50%); border-radius: 50% / 50%;
+  background: radial-gradient(ellipse at 50% 40%, #1f7a55, #0e4a32 62%, #0a3524); box-shadow: 0 0 0 10px #241434, 0 0 0 13px var(--ak-pink), 0 0 40px rgba(255, 45, 149, .45), inset 0 0 60px rgba(0, 0, 0, .55); }
+.pk-felt::after { content: "THE LOUNGE"; position: absolute; left: 50%; top: 84%; transform: translate(-50%, -50%); font: 400 clamp(12px, 2vw, 22px) var(--ak-sign); color: rgba(255, 255, 255, .1); letter-spacing: .1em; white-space: nowrap; }
+.pk-board { position: absolute; left: 50%; top: 44%; transform: translate(-50%, -50%); display: flex; gap: 6px; }
+.pk-pot { position: absolute; left: 50%; top: 63%; transform: translateX(-50%); padding: 4px 12px; border-radius: 999px; background: rgba(5, 3, 11, .55); font: 400 15px var(--ak-disp); color: var(--ak-yellow); white-space: nowrap; }
+.pk-pot small { font: 600 11.5px var(--ak-body); color: var(--ak-dim); margin-left: 6px; }
+/* cards: the four-colour deck the casino uses (spades black, hearts red, diamonds blue, clubs green), always with the suit */
+.pk-card { --c: #111; width: clamp(34px, 4.6vw, 56px); aspect-ratio: 5 / 7; border-radius: 6px; background: #fbf8ff; color: var(--c); display: grid; place-items: center; position: relative;
+  font: 400 clamp(15px, 2vw, 24px)/1 var(--ak-disp); box-shadow: 0 3px 8px rgba(0, 0, 0, .5); animation: pk-in .35s cubic-bezier(.2, 1.3, .4, 1); }
+.pk-card i { position: absolute; left: 4px; top: 3px; font: 400 clamp(9px, 1vw, 12px)/1 var(--ak-disp); font-style: normal; }
+.pk-card.s { --c: #15121c; } .pk-card.h { --c: #e0203f; } .pk-card.d { --c: #1f6fe0; } .pk-card.c { --c: #13a04a; }
+.pk-card.back { background: repeating-linear-gradient(45deg, #ff2d95 0 6px, #c21a72 6px 12px); box-shadow: inset 0 0 0 3px #fbf8ff, 0 3px 8px rgba(0, 0, 0, .5); color: transparent; }
+.pk-card.win { box-shadow: 0 0 0 3px var(--ak-yellow), 0 0 16px var(--ak-yellow); }
+.pk-card.dim { filter: brightness(.55); }
+@keyframes pk-in { from { transform: translateY(-14px) scale(.8); opacity: 0; } }
+/* seats: six round the felt, you at the bottom */
+.pk-seat { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 4px; width: 130px; transition: opacity .3s; }
+.pk-seat[data-pos="0"] { left: 50%; top: 88%; } .pk-seat[data-pos="1"] { left: 13%; top: 64%; } .pk-seat[data-pos="2"] { left: 13%; top: 24%; }
+.pk-seat[data-pos="3"] { left: 50%; top: 9%; } .pk-seat[data-pos="4"] { left: 87%; top: 24%; } .pk-seat[data-pos="5"] { left: 87%; top: 64%; }
+.pk-seat .cards { display: flex; gap: 3px; height: clamp(46px, 6.4vw, 78px); }
+.pk-seat .cards .pk-card { width: clamp(30px, 3.8vw, 46px); }
+.pk-plate { position: relative; display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border-radius: 999px; background: rgba(12, 6, 26, .92); box-shadow: inset 0 0 0 1.5px var(--ak-line); min-width: 120px; }
+.pk-plate b { display: block; font: 600 13px var(--ak-body); max-width: 86px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk-plate span.st { font: 400 13px var(--ak-disp); color: var(--ak-lime); }
+.pk-seat.turn .pk-plate { box-shadow: inset 0 0 0 2px var(--ak-cyan), 0 0 18px rgba(25, 227, 255, .5); }
+.pk-seat.folded { opacity: .45; }
+.pk-seat.out { opacity: .25; }
+.pk-seat.me .pk-plate b { color: var(--ak-cyan); }
+.pk-clock { position: absolute; left: 0; right: 0; bottom: -4px; height: 3px; border-radius: 2px; background: var(--ak-cyan); transform-origin: left; }
+.pk-bet { position: absolute; padding: 2px 8px; border-radius: 999px; background: rgba(5, 3, 11, .7); font: 400 12.5px var(--ak-disp); color: var(--ak-yellow); white-space: nowrap; }
+.pk-bet::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 50%; background: radial-gradient(circle, #fff 25%, var(--ak-pink) 30% 60%, #fff 65%); vertical-align: -1px; }
+.pk-seat[data-pos="0"] .pk-bet { top: -26px; } .pk-seat[data-pos="3"] .pk-bet { bottom: -26px; }
+.pk-seat[data-pos="1"] .pk-bet, .pk-seat[data-pos="2"] .pk-bet { right: -58px; top: 40%; } .pk-seat[data-pos="4"] .pk-bet, .pk-seat[data-pos="5"] .pk-bet { left: -58px; top: 40%; }
+.pk-dealer { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #fff; color: #111; font: 400 11px/22px var(--ak-disp); text-align: center; box-shadow: 0 2px 6px rgba(0, 0, 0, .5); }
+.pk-seat .pk-dealer { right: -4px; top: 20px; }
+.pk-said { position: absolute; top: -8px; padding: 2px 9px; border-radius: 8px; background: var(--ak-raise); font: 700 11.5px var(--ak-body); text-transform: uppercase; letter-spacing: .06em; animation: pk-in .25s; }
+.pk-said.raise { background: var(--ak-pink); color: #fff; } .pk-said.fold { color: var(--ak-mute); } .pk-said.win { background: var(--ak-yellow); color: #1a1400; }
+.pk-hand { font: 600 11.5px var(--ak-body); color: var(--ak-yellow); }
+/* your controls */
+.pk-bar { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px 14px 16px; flex-wrap: wrap; min-height: 64px; }
+.pk-bar .ak-btn { min-width: 110px; }
+.pk-raise { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 12px; background: var(--ak-raise); }
+.pk-raise input[type=range] { width: 160px; accent-color: var(--ak-pink); }
+.pk-raise output { min-width: 56px; font: 400 15px var(--ak-disp); color: var(--ak-yellow); text-align: right; }
+.pk-presets { display: flex; gap: 4px; }
+.pk-presets .ak-chip { border: 0; cursor: pointer; }
+.pk-wait { color: var(--ak-dim); font: 600 13.5px var(--ak-body); }
+.pk-fair { position: absolute; left: 14px; bottom: 6px; max-width: 30%; font: 500 11.5px var(--ak-body); color: var(--ak-mute); }
+.pk-fair code { color: var(--ak-dim); }
+.pk-log { position: absolute; right: 12px; bottom: 6px; width: min(230px, 26%); max-height: 18%; overflow: hidden; display: flex; flex-direction: column-reverse; gap: 2px; font: 500 12px var(--ak-body); color: var(--ak-dim); pointer-events: none;
+  -webkit-mask-image: linear-gradient(to top, #000 60%, transparent); mask-image: linear-gradient(to top, #000 60%, transparent); }
+.pk-log b { color: var(--ak-text); font-weight: 600; }
+.pk-result { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(5, 3, 11, .72); z-index: 3; }
+.pk-result > div { text-align: center; }
+.pk-result .big { font: 400 clamp(34px, 6vw, 64px) var(--ak-disp); color: #fff; text-shadow: var(--ak-glow-yellow); }
+.pk-result p { color: var(--ak-dim); margin: 8px 0 18px; }
+@media (max-width: 760px) {
+  .pk-felt { width: 92%; aspect-ratio: 1 / 1.25; border-radius: 46% / 40%; }
+  .pk-seat { width: 96px; } .pk-plate { min-width: 0; } .pk-plate b { max-width: 60px; }
+  .pk-seat[data-pos="1"] { left: 14%; top: 66%; } .pk-seat[data-pos="2"] { left: 14%; top: 30%; } .pk-seat[data-pos="4"] { left: 86%; top: 30%; } .pk-seat[data-pos="5"] { left: 86%; top: 66%; }
+  .pk-log { display: none; } .pk-fair { display: none; }
+}
+
+/* ---- the lobby and the cashier (shell windows) */
+.pk-sng { display: grid; gap: 10px; }
+.pk-sng .row { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 14px; border-radius: 12px; background: var(--ak-raise); box-shadow: inset 0 0 0 1.5px var(--ak-line); }
+.pk-sng .row b { font: 400 16px var(--ak-disp); }
+.pk-sng .row small { grid-column: 1; color: var(--ak-dim); }
+.pk-sng .row .ak-btn { grid-row: 1 / span 3; grid-column: 2; align-self: center; }
+.pk-seats { display: flex; gap: 4px; margin-top: 4px; }
+.pk-seats i { width: 18px; height: 18px; border-radius: 50%; background: #0a0614; box-shadow: inset 0 0 0 1.5px var(--ak-line); }
+.pk-seats i.on { background: var(--ak-lime); box-shadow: 0 0 8px rgba(182, 255, 46, .6); }
+.pk-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+.pk-facts div { padding: 8px 10px; border-radius: 10px; background: #0a0614; text-align: center; }
+.pk-facts b { display: block; font: 400 17px var(--ak-disp); color: var(--ak-yellow); }
+.pk-facts small { color: var(--ak-dim); font-size: 11.5px; }
+.pk-wallet { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.pk-wallet div { padding: 12px 14px; border-radius: 12px; background: #0a0614; box-shadow: inset 0 0 0 1.5px var(--ak-line); }
+.pk-wallet b { display: block; font: 400 26px var(--ak-disp); }
+.pk-wallet small { color: var(--ak-dim); text-transform: uppercase; letter-spacing: .12em; font-size: 11px; font-weight: 700; }
+.pk-wallet .tix b { color: var(--ak-pink); } .pk-wallet .zc b { color: var(--ak-yellow); }
+.pk-xch { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; background: var(--ak-raise); }
+.pk-xch .ak-input { text-align: right; font-family: var(--ak-disp); }
+.pk-xch .arrow { font: 400 20px var(--ak-disp); color: var(--ak-cyan); }
+.pk-xch .out { font: 400 22px var(--ak-disp); color: var(--ak-yellow); text-align: right; padding-right: 8px; }
+.pk-meter { height: 8px; border-radius: 4px; background: #0a0614; overflow: hidden; margin: 8px 0 2px; }
+.pk-meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--ak-lime), var(--ak-yellow)); }
+.pk-earn { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.pk-earn li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: var(--ak-raise); }
+.pk-earn li span { flex: 1; } .pk-earn li b { font: 400 13px var(--ak-disp); color: var(--ak-pink); white-space: nowrap; }
+.pk-earn li small { color: var(--ak-mute); }

@@ -34,7 +34,7 @@ export const GAMES = [
   { room: "party", name: "Party Mix", href: "../partymix3d-mock/", icon: "🎉", col: "var(--ak-pink)" }
 ];
 
-export const DEFAULT_SETTINGS = { master: 0.8, sfx: 0.8, music: 0.4, mute: false, musicInGames: true, glow: true, quality: "high", names: true, camSens: 1, invertY: false, chatOpen: true };
+export const DEFAULT_SETTINGS = { master: 0.8, sfx: 0.8, music: 0.4, mute: false, musicInGames: true, glow: true, quality: "auto", names: true, camSens: 1, invertY: false, chatOpen: true };
 const SET_KEY = "ecArcadeSettings";
 
 export async function start(opts) {
@@ -68,7 +68,7 @@ export async function start(opts) {
   stage.append(hud);
   const q = (s) => hud.querySelector(s);
   const chatBox = q(".ak-chatbox"), chatLog = q(".ak-chat"), chatIn = q(".ak-chatform input"), unread = q(".ak-unread"), overlay = q(".ak-overlay"), win = q(".ak-win");
-  const focusGame = () => stage.querySelector("canvas")?.focus();
+  const focusGame = () => stage.querySelector("canvas")?.focus({ preventScroll: true });
 
   function drawMe() {
     const el = q(".ak-me");
@@ -120,7 +120,7 @@ export async function start(opts) {
   let open = null;
   function openWin(kind) {
     open = kind; overlay.hidden = false; win.className = `ak-win ak-panel lit ak-win-${kind}`;
-    if (kind === "menu") drawMenu(); else if (kind === "look") drawLook(); else if (kind === "settings") drawSettings(); else if (kind === "juke") drawJuke(); else if (kind === "help") drawHelp();
+    if (kind === "menu") drawMenu(); else if (kind === "custom") drawCustom(); else if (kind === "look") drawLook(); else if (kind === "settings") drawSettings(); else if (kind === "juke") drawJuke(); else if (kind === "help") drawHelp();
     win.querySelector("button, input")?.focus({ preventScroll: true });
   }
   function closeWin() { open = null; overlay.hidden = true; win.innerHTML = ""; focusGame(); }
@@ -152,6 +152,13 @@ export async function start(opts) {
       <p class="ak-eyebrow">Hat</p><div class="ak-opick">${HATS.map((h) => `<button type="button" class="ak-btn sm${A.look.hat === h.key ? " yellow" : " ghost"}" data-hat="${h.key}" ${hasHat(h) ? "" : "disabled"} title="${esc(h.note || "")}">${esc(h.name)}${hasHat(h) ? "" : " 🔒"}</button>`).join("")}</div>
       <p class="ak-note">${A.online ? "Saved to your account: it follows you into every game, on any device." : "Saved in this browser."}${locked.length ? ` 🔒 ${locked.map((h) => esc(h.note)).join("; ")}.` : ""}</p>`;
   }
+  /* A game's own window, in the shell's frame: A.openCustom({ title, html, onClick(button, win), onOpen(win) }). The poker room's lobby
+     and cashier use it. `redraw` re-renders it in place. */
+  let custom = null;
+  A.openCustom = (c) => { custom = c; openWin("custom"); };
+  A.redrawCustom = () => { if (open === "custom") drawCustom(); };
+  function drawCustom() { win.innerHTML = `${head(esc(custom.title))}<div class="ak-custom">${typeof custom.html === "function" ? custom.html() : custom.html}</div>`; custom.onOpen?.(win); }
+  win.addEventListener("click", (e) => { if (open !== "custom") return; const b = e.target.closest("button, [data-c]"); if (b && !b.dataset.act) custom?.onClick?.(b, win); });
   function drawHelp() { win.innerHTML = `${head("HOW TO PLAY")}<div class="ak-help">${opts.help}</div>`; }
   const slider = (k, label) => `<label class="ak-set"><span>${label}</span><input type="range" min="0" max="100" value="${Math.round(settings[k] * 100)}" data-set="${k}" data-scale="100"><output>${Math.round(settings[k] * 100)}</output></label>`;
   const toggle = (k, label, sub = "") => `<div class="ak-set"><span>${label}${sub ? `<small>${sub}</small>` : ""}</span><button type="button" class="ak-toggle" aria-pressed="${Boolean(settings[k])}" data-tog="${k}" aria-label="${esc(label)}"></button></div>`;
@@ -160,7 +167,7 @@ export async function start(opts) {
       <div class="ak-sets">
         <section><p class="ak-eyebrow">Sound</p>${toggle("mute", "Mute everything", "M")}${slider("master", "Master")}${slider("sfx", "Effects")}${slider("music", "Jukebox")}${toggle("musicInGames", "Jukebox in the games", "the lounge's station follows you")}</section>
         <section><p class="ak-eyebrow">Graphics</p>${toggle("glow", "Neon glow", "turn off on a slow machine")}
-          <div class="ak-set"><span>Quality</span><span class="ak-seg">${["low", "medium", "high"].map((v) => `<button type="button" class="ak-chip${settings.quality === v ? " on" : ""}" data-qual="${v}">${v}</button>`).join("")}</span></div>
+          <div class="ak-set"><span>Quality</span><span class="ak-seg">${["auto", "low", "medium", "high"].map((v) => `<button type="button" class="ak-chip${settings.quality === v ? " on" : ""}" data-qual="${v}">${v}</button>`).join("")}</span></div>
           ${toggle("names", "Names over heads")}</section>
         <section><p class="ak-eyebrow">Camera</p><label class="ak-set"><span>Look speed</span><input type="range" min="40" max="200" value="${Math.round(settings.camSens * 100)}" data-set="camSens" data-scale="100"><output>${settings.camSens.toFixed(1)}×</output></label>${toggle("invertY", "Invert up and down")}</section>
         <section><p class="ak-eyebrow">Your look</p><p class="ak-note">${esc(opts.lookHint || "Your character and hat are changed at the prize counter in the lounge.")}</p></section>
