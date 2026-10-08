@@ -218,16 +218,125 @@ export function buildExtras(ctx) {
     /* DAYTIME (2026-10-07, the owner: "make the outside area light outside as well and remove the fireflies/string lights"). A sky
        round the garden (painted panels, unlit and unfogged, so they read the same from anywhere), a sun in it, and one wide warm
        spotlight from high above that lights the garden like daylight without reaching into the lounge. */
-    const skyTex = canvasTex(64, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#1f5fc8"); gr.addColorStop(0.65, "#4f9ae6"); gr.addColorStop(1, "#9fd0f2"); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
-    const cloudTex = canvasTex(1024, 512, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#1f5fc8"); gr.addColorStop(0.65, "#4f9ae6"); gr.addColorStop(1, "#9fd0f2"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
-      for (let k = 0; k < 9; k++) { const cx = rnd(60, w - 60), cy = rnd(60, h * 0.55); for (let j = 0; j < 7; j++) { g.fillStyle = "rgba(255,255,255,.75)"; g.beginPath(); g.ellipse(cx + rnd(-70, 70), cy + rnd(-14, 14), rnd(30, 60), rnd(16, 28), 0, 0, 7); g.fill(); } } });
-    const skyM = (tex) => new THREE.MeshBasicMaterial({ map: tex, color: 0xeeeeee, fog: false, side: THREE.DoubleSide });   // kept under the bloom threshold, or the sky glows white
-    // (only round the patio: earlier they ran over and through the building, and the sky showed inside)
-    const SX0 = W + 0.2, SX1 = PX1 + 9, SZ0 = PZ0 - 9, SZ1 = PZ1 + 9;
-    for (const [w, h, x, y, z, ry] of [[SZ1 - SZ0, 30, SX1, 13, (SZ0 + SZ1) / 2, -Math.PI / 2], [SX1 - SX0, 30, (SX0 + SX1) / 2, 13, SZ0, 0], [SX1 - SX0, 30, (SX0 + SX1) / 2, 13, SZ1, Math.PI]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), skyM(cloudTex)); m.position.set(x, y, z); m.rotation.y = ry; scene.add(m); }
-    { const top = new THREE.Mesh(new THREE.PlaneGeometry(SX1 - SX0, SZ1 - SZ0), skyM(skyTex)); top.rotation.x = Math.PI / 2; top.position.set((SX0 + SX1) / 2, 28, (SZ0 + SZ1) / 2); scene.add(top); }
+    /* THE WORLD OUTSIDE (2026-10-07, the owner, looking at the black round the building: "build 1 and 2, add the stadium").
+       1. A full sky: one dome round the whole place (unlit, unfogged, kept under the bloom threshold); the rooms' ceilings keep it out of
+          doors. Grass out to the horizon, a treeline, low hills, and a stadium in the distance with its light towers on and a blimp.
+          Outdoors the haze turns pale blue so the far ground melts into the sky instead of into black (see the tick below).
+       2. The building's outside: brick on the faces you can see from the garden, a roof with a parapet, AC units and a dish, a big neon
+          THE LOUNGE sign on the roof facing the patio, glowing windows, a game-day mural by the doors, lamps by the doors, a gutter.
+       Nothing here is a light: it all glows by itself or is lit by the daylight that's already there. */
+    const HORIZON = 0xb8dcf2;
+    {
+      const skyTex = canvasTex(1024, 512, (g, w, h) => {
+        const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#1f5fc8"); gr.addColorStop(0.42, "#4f9ae6"); gr.addColorStop(0.5, "#b8dcf2"); gr.addColorStop(1, "#b8dcf2"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+        for (let k = 0; k < 16; k++) { const cx = rnd(0, w), cy = rnd(h * 0.18, h * 0.44); for (let j = 0; j < 7; j++) { g.fillStyle = "rgba(255,255,255,.72)"; g.beginPath(); g.ellipse(cx + rnd(-50, 50), cy + rnd(-8, 8), rnd(22, 46), rnd(8, 16), 0, 0, 7); g.fill(); } }
+      });
+      skyTex.wrapS = THREE.RepeatWrapping;
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(150, 40, 20), new THREE.MeshBasicMaterial({ map: skyTex, color: 0xeeeeee, side: THREE.BackSide, fog: false, depthWrite: false }));
+      dome.position.set(10, 0, -5); dome.renderOrder = -1; scene.add(dome);
+    }
+    // grass to the horizon, under everything (the rooms' floors sit just above it)
+    {
+      const far = canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#4a8a38"; g.fillRect(0, 0, w, h); for (let k = 0; k < 900; k++) { g.fillStyle = pick(["#5a9a44", "#3f7a30", "#6aaa52", "#447f34"]); g.fillRect(Math.random() * w, Math.random() * h, 2, 4); } });
+      far.wrapS = far.wrapT = THREE.RepeatWrapping; far.repeat.set(70, 70);
+      const ground = new THREE.Mesh(new THREE.PlaneGeometry(320, 320), new THREE.MeshStandardMaterial({ map: far, roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.set(10, -0.03, -5); ground.receiveShadow = true; scene.add(ground);
+    }
+    // a treeline out past the fence (two instanced meshes, so ~140 trees cost two draws), and low hills behind
+    {
+      const trunks = [], tops = [], c = new V3(W + 8, 0, -11);
+      for (let k = 0; k < 150; k++) {
+        const a = rnd(0, Math.PI * 2), r = rnd(30, 75), x = c.x + Math.cos(a) * r, z = c.z + Math.sin(a) * r;
+        if (x < W + 3 && z > -16 && z < 24) continue;                       // not on the building
+        if (Math.hypot(x - 140, z + 85) < 50) continue;       // nor on the stadium
+        const h = rnd(4, 9), q = new THREE.Quaternion(), sc = new V3(h / 6, h / 6, h / 6);
+        trunks.push(new THREE.Matrix4().compose(new V3(x, h * 0.12, z), q, new V3(1, h / 4, 1)));
+        tops.push(new THREE.Matrix4().compose(new V3(x, h * 0.55, z), q, sc));
+      }
+      const tI = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.2, 0.3, 1, 6), std(0x3a2414, { roughness: 1 }), trunks.length); trunks.forEach((m, k) => tI.setMatrixAt(k, m)); scene.add(tI);
+      const cI = new THREE.InstancedMesh(new THREE.ConeGeometry(2, 6, 7), std(0x2f6a2a, { roughness: 1 }), tops.length); tops.forEach((m, k) => cI.setMatrixAt(k, m)); scene.add(cI);
+      for (let k = 0; k < 11; k++) { const a = (k / 11) * Math.PI * 2 + rnd(-0.2, 0.2), r = rnd(118, 135); if (Math.hypot(10 + Math.cos(a) * r - 140, -5 + Math.sin(a) * r + 85) < 70) continue; const hill = new THREE.Mesh(new THREE.SphereGeometry(rnd(28, 44), 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), std(pick([0x3f7a3a, 0x4a8a42, 0x356a32]), { roughness: 1 })); hill.scale.y = rnd(0.25, 0.45); hill.position.set(10 + Math.cos(a) * r, -0.5, -5 + Math.sin(a) * r); scene.add(hill); }
+    }
+    // THE STADIUM on the horizon, to the north-east: an oval bowl, an upper deck, light towers lit for a night game, a blimp over it
+    const blimp = new THREE.Group(), STAD = { x: 140, z: -85 };   // far enough to sit in the haze
+    {
+      const S = new THREE.Group(); S.position.set(STAD.x, 0, STAD.z); S.rotation.y = 0.5; scene.add(S);
+      const concrete = canvasTex(512, 128, (g, w, h) => { g.fillStyle = "#8a8c94"; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 16) { g.fillStyle = "#5a5c66"; g.fillRect(x, 20, 6, h - 40); } g.fillStyle = "#6a6c74"; g.fillRect(0, h * 0.48, w, 6); });
+      concrete.wrapS = THREE.RepeatWrapping; concrete.repeat.set(10, 1);
+      const bowl = new THREE.Mesh(new THREE.CylinderGeometry(24, 26, 15, 48, 1, true), new THREE.MeshStandardMaterial({ map: concrete, roughness: 0.9, side: THREE.DoubleSide })); bowl.scale.set(1.45, 1, 1); bowl.position.y = 7.5; S.add(bowl);
+      const deck = new THREE.Mesh(new THREE.CylinderGeometry(27, 24, 6, 48, 1, true), new THREE.MeshStandardMaterial({ color: 0x6a6c76, roughness: 0.9, side: THREE.DoubleSide })); deck.scale.set(1.45, 1, 1); deck.position.y = 18; S.add(deck);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(27, 0.5, 6, 64), basic(new THREE.Color(0xffffff).multiplyScalar(0.55))); rim.rotation.x = Math.PI / 2; rim.scale.set(1.45, 1, 1); rim.position.y = 21; S.add(rim);
+      const field = new THREE.Mesh(new THREE.CircleGeometry(22, 40), std(0x3f8a3a)); field.rotation.x = -Math.PI / 2; field.scale.set(1.45, 1, 1); field.position.y = 0.05; S.add(field);
+      const bank = basic(new THREE.Color(0xfff6d8).multiplyScalar(0.9)), steel = std(0x9a9ca4, { metalness: 0.6, roughness: 0.4 });
+      for (const [x, z] of [[-33, -20], [33, -20], [-33, 20], [33, 20]]) {
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 34, 8), steel); tower.position.set(x, 17, z); S.add(tower);
+        const lights = new THREE.Mesh(new THREE.BoxGeometry(6, 3.2, 0.6), bank); lights.position.set(x * 0.94, 34.5, z * 0.94); lights.lookAt(S.position.x, 0, S.position.z); S.add(lights);
+      }
+      // the blimp: an ellipsoid with a gondola and a sign, slowly circling
+      const env = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12), std(0xe8e8ee, { roughness: 0.5 })); env.scale.set(9, 2.6, 2.6); blimp.add(env);
+      const gon = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 1.1), std(0x2a2a34)); gon.position.y = -2.7; blimp.add(gon);
+      for (const fz of [-1, 1]) { const fin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.15, 1.6), std(0xff2d95)); fin.position.set(-8, 0, fz * 1.2); blimp.add(fin); }
+      const tag = canvasTex(1024, 220, (g, w, h) => { g.fillStyle = "#ff2d95"; g.fillRect(0, 0, w, h); g.fillStyle = "#fff"; g.font = "140px Bungee"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("EASTCOIN", w / 2, h / 2 + 6); });
+      for (const sz of [-1, 1]) { const p = new THREE.Mesh(new THREE.PlaneGeometry(9, 1.9), new THREE.MeshStandardMaterial({ map: tag, roughness: 0.6 })); p.position.set(0, 0, sz * 2.62); if (sz < 0) p.rotation.y = Math.PI; blimp.add(p); }
+      blimp.position.set(STAD.x, 44, STAD.z); scene.add(blimp);
+    }
+    // the building's outside: brick on the faces the garden can see, the roof, the sign, windows, the mural, lamps, a gutter
+    {
+      const brick = (w, h) => { const t = canvasTex(256, 128, (g, cw, ch) => { g.fillStyle = "#2a1a1c"; g.fillRect(0, 0, cw, ch); for (let r = 0; r < 8; r++) for (let c = -1; c < 9; c++) { g.fillStyle = pick(["#5a2a24", "#642e26", "#4e2420", "#6a3428"]); g.fillRect(c * 32 + (r % 2) * 16 + 1, r * 16 + 1, 30, 14); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w / 2, h / 1); return new THREE.MeshStandardMaterial({ map: t, roughness: 0.95 }); };
+      const face = (w, h, x, y, z, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), brick(w, h)); m.position.set(x, y, z); m.rotation.y = ry; m.receiveShadow = true; scene.add(m); return m; };
+      const ex = W + 0.32, WH = 6;
+      // the east face: round the patio doors, then the bar games room's side (5 high) further south
+      face(PO0 + D + 0.3, WH, ex, WH / 2, (-D - 0.3 + PO0) / 2, Math.PI / 2);
+      face(D - PO1, WH, ex, WH / 2, (PO1 + D) / 2, Math.PI / 2);
+      face(PO1 - PO0, WH - POH, ex, POH + (WH - POH) / 2, (PO0 + PO1) / 2, Math.PI / 2);
+      face(BZ1 + 0.3 - D, 5, ex, 2.5, (D + BZ1 + 0.3) / 2, Math.PI / 2);
+      face(2 * W + 0.6, WH, 0, WH / 2, -D - 0.32, Math.PI);   // the north face, seen at an angle from the garden
+      // the roof: tar and gravel, a parapet, AC units, a vent, a dish
+      const gravel = canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#3a3a40"; g.fillRect(0, 0, w, h); for (let k = 0; k < 2500; k++) { g.fillStyle = pick(["#4a4a52", "#2e2e34", "#55555c"]); g.fillRect(Math.random() * w, Math.random() * h, 2, 2); } }); gravel.wrapS = gravel.wrapT = THREE.RepeatWrapping; gravel.repeat.set(8, 6);
+      const roofM = new THREE.MeshStandardMaterial({ map: gravel, roughness: 1 });
+      const roof = (x0, x1, z0, z1, y) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), roofM); m.rotation.x = -Math.PI / 2; m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2); m.receiveShadow = true; scene.add(m); };
+      roof(-W - 0.3, W + 0.33, -D - 0.33, D + 0.3, WH + 0.02); roof(ctx.PK_X0 - 0.3, ctx.PK_X1 + 0.3, D + 0.3, ctx.PK_Z1 + 0.3, 5.02); roof(BX0 - 0.3, BX1 + 0.33, D + 0.3, BZ1 + 0.3, 5.02);
+      const cap = std(0x4a4a52, { roughness: 0.8 });
+      for (const [w, d, x, z] of [[2 * W + 0.66, 0.3, 0, -D - 0.33], [0.3, 2 * D + 0.6, W + 0.33, 0], [0.3, 2 * D + 0.6, -W - 0.3, 0]]) box(w, 0.55, d, cap, x, WH + 0.28, z);
+      const unit = (x, z) => { box(2.2, 1.2, 1.4, std(0xb8bcc4, { metalness: 0.4, roughness: 0.5 }), x, WH + 0.62, z); const fan = new THREE.Mesh(new THREE.CircleGeometry(0.42, 16), std(0x2a2a30)); fan.rotation.x = -Math.PI / 2; fan.position.set(x + 0.5, WH + 1.23, z); scene.add(fan); };
+      unit(9.5, -6.5); unit(6.5, -6.5);
+      mesh(new THREE.CylinderGeometry(0.25, 0.25, 1.4, 10), std(0x8a8c94, { metalness: 0.5 }), 3, WH + 0.7, -8);
+      { const dish = mesh(new THREE.SphereGeometry(0.7, 16, 8, 0, Math.PI * 2, 0, Math.PI / 3), std(0xd8d8de, { side: THREE.DoubleSide }), 12.6, WH + 1.2, -9.4); dish.rotation.x = -Math.PI / 2.4; dish.rotation.z = 0.6; }
+      // the rooftop sign, facing the garden
+      { const sg = new THREE.Group(); sg.position.set(W - 1.2, WH, -4.5); sg.rotation.y = Math.PI / 2; scene.add(sg);
+        for (const x of [-3.6, 3.6]) mesh(new THREE.BoxGeometry(0.12, 2.6, 0.12), std(0x2a2a30, { metalness: 0.6 }), x, 1.3, -0.2, sg);
+        mesh(new THREE.BoxGeometry(7.6, 0.1, 0.12), std(0x2a2a30, { metalness: 0.6 }), 0, 0.6, -0.2, sg);
+        const t = canvasTex(2048, 360, (g, w, h) => { g.textBaseline = "middle"; g.font = "220px Monoton"; g.textAlign = "left"; const a = g.measureText("THE ").width, b = g.measureText("LOUNGE").width, x0 = (w - a - b) / 2;
+          g.shadowBlur = 26; g.shadowColor = "#ff2d95"; g.fillStyle = "#ffc8e4"; g.fillText("THE", x0, h / 2 + 8); g.shadowColor = "#19e3ff"; g.fillStyle = "#c8f6ff"; g.fillText("LOUNGE", x0 + a, h / 2 + 8); });
+        const p = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 1.34), basic(0xffffff, { map: t, transparent: true })); p.position.set(0, 1.85, 0); sg.add(p); }
+      // windows with warm light behind the blinds
+      const win = canvasTex(128, 96, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, "#ffd890"); gr.addColorStop(1, "#ff9a50"); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = "rgba(80,30,10,.45)"; for (let y = 6; y < h; y += 10) g.fillRect(0, y, w, 3); g.fillStyle = "#222"; g.fillRect(w / 2 - 2, 0, 4, h); });
+      for (const [z, y, w, h] of [[2.2, 3.3, 1.8, 1.2], [5.6, 3.3, 1.8, 1.2], [14.2, 2.9, 1.6, 1.1], [17.6, 2.9, 1.6, 1.1]]) {
+        const fr = mesh(new THREE.BoxGeometry(0.08, h + 0.2, w + 0.2), std(0x1a1a20), ex + 0.02, y, z);
+        const g2 = new THREE.Mesh(new THREE.PlaneGeometry(w, h), basic(new THREE.Color(0xffffff).multiplyScalar(0.75), { map: win })); g2.position.set(ex + 0.07, y, z); g2.rotation.y = Math.PI / 2; scene.add(g2);
+      }
+      // the mural beside the doors: GAME DAY, a football in flight between the posts
+      { const t = canvasTex(1024, 640, (g, w, h) => {
+          const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, "#1a0f40"); gr.addColorStop(1, "#5a0f3a"); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+          g.strokeStyle = "#ffd400"; g.lineWidth = 18; g.beginPath(); g.moveTo(760, 600); g.lineTo(760, 300); g.moveTo(640, 300); g.lineTo(880, 300); g.moveTo(640, 300); g.lineTo(640, 120); g.moveTo(880, 300); g.lineTo(880, 120); g.stroke();
+          g.setLineDash([16, 18]); g.strokeStyle = "rgba(255,255,255,.6)"; g.lineWidth = 6; g.beginPath(); g.moveTo(180, 520); g.quadraticCurveTo(450, 40, 740, 200); g.stroke(); g.setLineDash([]);
+          g.save(); g.translate(740, 200); g.rotate(-0.5); g.fillStyle = "#8a4a22"; g.beginPath(); g.ellipse(0, 0, 70, 42, 0, 0, 7); g.fill(); g.strokeStyle = "#fff"; g.lineWidth = 6; g.beginPath(); g.moveTo(-30, 0); g.lineTo(30, 0); for (let k = -20; k <= 20; k += 13) { g.moveTo(k, -10); g.lineTo(k, 10); } g.stroke(); g.restore();
+          g.font = "150px Bungee"; g.textAlign = "left"; g.lineWidth = 14; g.strokeStyle = "#111"; g.strokeText("GAME", 50, 220); g.fillStyle = "#ff2d95"; g.fillText("GAME", 50, 220); g.strokeText("DAY", 50, 380); g.fillStyle = "#19e3ff"; g.fillText("DAY", 50, 380);
+          g.font = "600 40px Rubik"; g.fillStyle = "#ffe9b0"; g.fillText("every sunday · come on in", 56, 460); });
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 2.6), new THREE.MeshStandardMaterial({ map: t, roughness: 0.9 })); m.position.set(ex + 0.02, 2.0, -2.7); m.rotation.y = Math.PI / 2; scene.add(m); }
+      // lamps either side of the doors (a glow, not a light) and a gutter with a downpipe
+      for (const z of [PO0 - 0.5, PO1 + 0.5]) { box(0.18, 0.3, 0.18, std(0x1a1a20, { metalness: 0.5 }), ex + 0.1, 3.0, z); const b = mesh(new THREE.SphereGeometry(0.1, 10, 8), basic(0xfff0c0), ex + 0.22, 2.85, z); b.castShadow = false; }
+      box(0.16, 0.14, 2 * D + 0.6, std(0x3a3a42, { metalness: 0.5 }), ex + 0.08, WH - 0.1, 0);
+      mesh(new THREE.CylinderGeometry(0.06, 0.06, WH, 8), std(0x3a3a42, { metalness: 0.5 }), ex + 0.1, WH / 2, -D + 0.2);
+    }
     const sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: canvasTex(128, 128, (g, w) => { const gr = g.createRadialGradient(w / 2, w / 2, 6, w / 2, w / 2, w / 2); gr.addColorStop(0, "#fffef0"); gr.addColorStop(0.3, "#fff6c8"); gr.addColorStop(1, "rgba(255,240,180,0)"); g.fillStyle = gr; g.fillRect(0, 0, w, w); }), fog: false, depthWrite: false }));
-    sun.scale.setScalar(7); sun.material.color.setScalar(0.85); sun.position.set(PX1 + 8.5, 20, -16); scene.add(sun);
+    sun.scale.setScalar(16); sun.material.color.setScalar(0.85); sun.position.set(120, 70, 40); scene.add(sun);
+    // the haze: dark indoors (the arcade's), pale blue outdoors, switched as you go through the doors
+    const fogIn = { c: scene.fog.color.getHex(), near: scene.fog.near, far: scene.fog.far };
+    tickers.push((dt, t) => {
+      const out = me.p.x > W + 0.3 && me.p.z < PZ1 + 0.5;
+      if (out) { scene.fog.color.setHex(HORIZON); scene.fog.near = 50; scene.fog.far = 260; } else { scene.fog.color.setHex(fogIn.c); scene.fog.near = fogIn.near; scene.fog.far = fogIn.far; }
+      if (!CALM) { const a = t * 0.02; blimp.position.set(STAD.x + Math.cos(a) * 34, 46 + Math.sin(t * 0.3) * 0.6, STAD.z + Math.sin(a) * 26); blimp.rotation.y = -a - Math.PI / 2 + Math.PI; }
+    });
     const daylight = keep(new THREE.SpotLight(0xfff2dc, 2.4, 0, 0.62, 0.55, 0), 1); daylight.position.set(W + 8, 30, -11); daylight.target.position.set(W + 8, 0, -11); scene.add(daylight); scene.add(daylight.target);
     tickers.push((dt, t) => {
       if (CALM) return;

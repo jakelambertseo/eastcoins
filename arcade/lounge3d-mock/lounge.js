@@ -20,7 +20,7 @@ import * as Models from "../climb3d-mock/models.js?v=2";
 import * as Arcade from "../arcade-kit/arcade.js?v=10";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=2";
 import { openTable } from "../poker3d-mock/table.js?v=2";
-import { buildExtras } from "./extras.js?v=15";
+import { buildExtras } from "./extras.js?v=17";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -55,7 +55,7 @@ renderer.shadowMap.enabled = true;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x05030b);
 scene.fog = new THREE.Fog(0x05030b, 26, 60);
-const camera = new THREE.PerspectiveCamera(58, 16 / 9, 0.1, 200);
+const camera = new THREE.PerspectiveCamera(58, 16 / 9, 0.1, 330);   // far enough for the sky dome and the stadium
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 const bloom = new UnrealBloomPass(new THREE.Vector2(512, 512), 0.55, 0.45, 0.6);
@@ -550,7 +550,7 @@ function makeLabel(text, color = "#fff", avatar = null) {
   };
   draw(null);
   if (avatar) { const img = new Image(); img.crossOrigin = "anonymous"; img.onload = () => draw(img); img.src = avatar; }
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false })); s.scale.set(3, 0.45, 1); s.renderOrder = 5;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false })); s.scale.set(3, 0.45, 1); s.renderOrder = 5;   // walls hide it (it used to show through them)
   labels.push(s); s.visible = settings.names; return s;
 }
 function hatMesh(key) {
@@ -825,6 +825,7 @@ function stepHockey(dt) {
    Mockup: the wallet lives in this page; on the site it is THE ticket wallet EastScape uses, and the cashier is the site's exchange. */
 const wallet = { tickets: 12450, zc: 340, out24: 0, cap: 100, rate: 1000 };
 const EX = buildExtras({ THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM,
+  PK_X0: AX0, PK_X1: AX1, PK_Z1: AZ1,
   nameColor: Arcade.nameColor, botsOn: () => bots.length > 0 });
 applyQuality();   // the new rooms' lights join the budget
 let pokerOpen = null;
