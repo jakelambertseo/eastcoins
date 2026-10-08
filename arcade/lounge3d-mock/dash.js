@@ -63,7 +63,7 @@ export function buildDash(ctx) {
     const pyl = std(0x15182e, { roughness: 0.5, metalness: 0.3 }), y = 3.6;
     for (const x of [GX0 + 0.2, GX1 - 0.2]) mk(new THREE.BoxGeometry(0.3, y + 0.4, 0.3), pyl, x, (y + 0.4) / 2, BELL - 2);
     mk(new THREE.BoxGeometry(GX1 - GX0, 0.3, 0.3), pyl, MID, y + 0.3, BELL - 2);
-    bell.position.set(MID, y + 0.15, BELL - 2); scene.add(bell);
+    bell.position.set(MID, y + 0.15, BELL - 2); bell.userData.live = true; scene.add(bell);
     const gold = std(0xffc83a, { metalness: 0.85, roughness: 0.25, emissive: 0x6a4a00, emissiveIntensity: 0.6 });
     const b = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.48, 0.7, 20, 1, true), gold); b.material.side = THREE.DoubleSide; b.position.y = -0.45; bell.add(b);
     const top = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), gold); top.position.y = -0.1; bell.add(top);
@@ -108,7 +108,7 @@ export function buildDash(ctx) {
     mk(new THREE.CylinderGeometry(0.12, 0.16, 0.7, 12), std(0x2a2d4a, { metalness: 0.4 }), cx, 0.35, z);
     mk(new THREE.CylinderGeometry(0.13, 0.13, 0.05, 12), glow(0xff3ea5), cx, 0.72, z);
     block(cx, z, 0.3, 0.3);
-    const arm = new THREE.Group(); arm.position.set(cx, 0.3, z); scene.add(arm);
+    const arm = new THREE.Group(); arm.position.set(cx, 0.3, z); arm.userData.live = true; scene.add(arm);
     const len = (lane.x1 - lane.x0) / 2 - 0.12;
     for (const s of [1, -1]) { const a = new THREE.Mesh(new THREE.BoxGeometry(len, 0.14, 0.14), glow(0xff3ea5)); a.position.x = s * len / 2; arm.add(a); }
     things.push({ k: "arm", lane, z, cx, len, arm, phase, cool: 0 });

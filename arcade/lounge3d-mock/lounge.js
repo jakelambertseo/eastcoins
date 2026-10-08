@@ -13,6 +13,7 @@
 import * as THREE from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { Sfx } from "../parkour3d-mock/look.js?v=2";
@@ -20,7 +21,7 @@ import * as Models from "../climb3d-mock/models.js?v=2";
 import * as Arcade from "../arcade-kit/arcade.js?v=10";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=3";
 import { openTable } from "../poker3d-mock/table.js?v=2";
-import { buildExtras } from "./extras.js?v=20";
+import { buildExtras } from "./extras.js?v=21";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -76,7 +77,8 @@ composer.addPass(new OutputPass());
    setting is dimmer in the corners but never dark. "auto" (the default) measures the first seconds of frames and steps down if needed. */
 const LIGHTS = [];
 const keep = (l, rank) => { LIGHTS.push({ l, rank, base: l.intensity }); return l; };
-const sky = new THREE.HemisphereLight(0x7a6ab0, 0x2a1630, 0.75); scene.add(sky);
+const AMBIENT = 0.5;   // the general fill (2026-10-08, the owner: "very bright"; was 0.75). Costs nothing to render either way: it is the look
+const sky = new THREE.HemisphereLight(0x7a6ab0, 0x2a1630, AMBIENT); scene.add(sky);
 const key = new THREE.DirectionalLight(0xd8c8ff, 0.5); key.position.set(4, 16, 8); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
 Object.assign(key.shadow.camera, { left: -18, right: 18, top: 14, bottom: -14 }); scene.add(key);
 
@@ -681,7 +683,7 @@ function applyQuality() {
   const q = qualityNow(), maxRank = q === "low" ? 1 : q === "medium" ? 2 : 3;
   let off = 0;
   for (const L of LIGHTS) { L.l.visible = L.rank <= maxRank; if (!L.l.visible) off++; }
-  sky.intensity = 0.75 + off * 0.04;   // the room gets a little more general light for every light turned off
+  sky.intensity = AMBIENT + off * 0.04;   // the room gets a little more general light for every light turned off
   bloom.enabled = settings.glow && q !== "low";
   renderer.shadowMap.enabled = q !== "low";
   key.shadow.mapSize.set(q === "high" ? 2048 : 1024, q === "high" ? 2048 : 1024); key.shadow.map?.dispose(); key.shadow.map = null;
@@ -846,6 +848,7 @@ function stepHockey(dt) {
 /* ------------------------------------------------------------------ the poker room's lobby and table, and the cashier
    Mockup: the wallet lives in this page; on the site it is THE ticket wallet EastScape uses, and the cashier is the site's exchange. */
 const wallet = { tickets: 12450, zc: 340, out24: 0, cap: 100, rate: 1000 };
+for (const o of [scene.userData.puck, ...(scene.userData.mallets || []), scene.userData.claw, ...jukeLights]) if (o) o.userData.live = true;   // they move or change colour: never merged
 const EX = buildExtras({ THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM,
   PK_X0: AX0, PK_X1: AX1, PK_Z1: AZ1,
   nameColor: Arcade.nameColor, botsOn: () => bots.length > 0, setYaw: (y) => { camYaw = y; }, CO0, CO1, COH });
@@ -854,7 +857,7 @@ applyQuality();   // the new rooms' lights join the budget
 /* ROOM CULLING (2026-10-08, the owner: "FPS is starting to drop"). Measured first: only 30-50k triangles in view, but up to 858 draw
    calls and 20 lights, because every room was drawn, and every light was shaded, through the walls. Now each room's things sit on that
    room's camera LAYER, and a room is drawn only if the camera is in it or one of its openings is in view from a room that is (so you
-   still see through every arch and door). A light belongs to the room it hangs in, so its cost goes with the room. The far world
+   still see through every arch and door). (Lights were culled with their rooms too, at first: see the note in the loop.) The far world
    (stadium, hills, trees) is drawn only when the outdoors is. Anything that straddles rooms (walls, roofs, ceilings, the sky, the
    ground) and anything that moves between them (people) stays on layer 0, always drawn. Layers, not .visible, so nothing that hides
    and shows itself is overridden. */
@@ -874,14 +877,15 @@ const ROOMS3D = (() => {
   for (const o of [...scene.children]) {
     if (o.userData.mover || o === camera) continue;
     let zone = null;
-    if (o.isLight && !(o.isPointLight || o.isSpotLight)) continue;   // the sky and the key light (and its shadows) light every room
-    if (o.isLight) { const p = o.position; zone = zones.find((z) => z.r.some((g) => p.x >= g.x0 && p.x <= g.x1 && p.z >= g.z0 && p.z <= g.z1)); }
-    else {
+    // Lights are NOT culled: three.js builds a shader per light COUNT, so a count that changed as you walked rebuilt every material's
+    // shader (a stall on load and at every new room: the owner, 2026-10-08, "extremely laggy first loading in"). The rooms still are.
+    if (o.isLight) continue;
+    {
       box.setFromObject(o); if (box.isEmpty()) continue;
       zone = zones.find((z) => z.r.some((g) => inRect(box, g)));
       if (!zone && Z.world && !touches(box)) zone = Z.world;
     }
-    if (zone) { o.traverse((c) => c.layers.set(zone.layer)); if (o.isLight && o.target) o.target.layers.set(zone.layer); n++; }
+    if (zone) { o.traverse((c) => c.layers.set(zone.layer)); n++; }
   }
   const fr = new THREE.Frustum(), pm = new THREE.Matrix4();
   let lastMask = -1;
@@ -897,6 +901,49 @@ const ROOMS3D = (() => {
   }
   return { update, zones, count: n, all: () => { lastMask = -1; camera.layers.enableAll(); } };
 })();
+
+/* MERGING THE PROPS (2026-10-08, the owner: "merge the lounge props to cut more draw calls"). Everything lounge.js built that never moves
+   is baked, in world space, into one mesh per (room, material, shadow flags), so a room's hundreds of props cost a handful of draw calls.
+   Identical materials are folded into one first (std() makes a fresh material per call, so otherwise almost nothing would share).
+   Left alone: anything that moves or changes (userData.live: the puck, the mallets, the claw, the jukebox's tubes; people), anything
+   with children, see-through things (they need sorting), sprites, instanced meshes, mirrored meshes, multi-material meshes, and every
+   material that's changed later (a texture swapped in: the high-score board, a cabinet's screen), since those are kept unique. The
+   other files mark their own moving parts live (the casino's wheel, coin, reels, levers and buttons; the Dash's sweepers and bell; the
+   patio's flames and blimp), and the bar games corner isn't merged at all: skee-ball, darts and pong move their pieces. */
+const MERGED = (() => {
+  scene.updateMatrixWorld(true);
+  const keep = new Set(["position", "normal", "uv"]), cands = [];
+  const walk = (o) => {
+    if (o.userData.mover || o.userData.live || !o.visible) return;
+    if (o.isMesh && !o.isInstancedMesh && !o.isSkinnedMesh && !o.children.length && !Array.isArray(o.material) && !o.material.transparent
+      && o.geometry.attributes.position && o.geometry.attributes.normal && o.geometry.attributes.uv && !Object.keys(o.geometry.morphAttributes || {}).length
+      && o.matrixWorld.determinant() > 0) cands.push(o);
+    for (const c of o.children) walk(c);
+  };
+  const bar = ROOMS3D.zones.find((z) => z.n === "bar"), barMask = bar ? 1 << bar.layer : 0;
+  for (const o of scene.children) if (!(o.layers.mask & barMask)) walk(o);
+  // fold identical materials (only plain standard/basic ones; a material with a texture keeps its own unless it's the same texture)
+  const matKey = (m) => m.isMeshStandardMaterial ? ["S", m.color.getHex(), m.emissive.getHex(), m.emissiveIntensity, m.roughness, m.metalness, m.map?.uuid, m.emissiveMap?.uuid, m.side, m.flatShading, m.opacity].join("|")
+    : m.isMeshBasicMaterial ? ["B", m.color.getHex(), m.map?.uuid, m.side, m.toneMapped, m.fog, m.opacity].join("|") : m.uuid;
+  const canon = new Map();
+  for (const o of cands) { const k = matKey(o.material); if (!canon.has(k)) canon.set(k, o.material); o.userData.mat = canon.get(k); }
+  const groups = new Map();
+  for (const o of cands) { const k = [o.layers.mask, o.userData.mat.uuid, o.castShadow, o.receiveShadow].join("|"); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(o); }
+  let before = 0, after = 0;
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    const geos = list.map((o) => { let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone(); for (const a of Object.keys(g.attributes)) if (!keep.has(a)) g.deleteAttribute(a); g.morphAttributes = {}; g.clearGroups(); g.applyMatrix4(o.matrixWorld); return g; });
+    const merged = mergeGeometries(geos, false); if (!merged) continue;
+    const m = new THREE.Mesh(merged, list[0].userData.mat); m.layers.mask = list[0].layers.mask; m.castShadow = list[0].castShadow; m.receiveShadow = list[0].receiveShadow;
+    m.matrixAutoUpdate = false; scene.add(m);
+    for (const o of list) o.parent.remove(o);
+    for (const g of geos) if (g !== merged) g.dispose();
+    before += list.length; after++;
+  }
+  return { before, after };
+})();
+// build every shader now, with every room in view, rather than in the middle of a walk (each first look at a room used to stall)
+ROOMS3D.all(); renderer.compile(scene, camera);
 let pokerOpen = null;
 const fmt = (n) => Number(n).toLocaleString();
 function pokerLobby(tb) {
@@ -1151,4 +1198,4 @@ renderOnline();
 $("loadStat").textContent = `opened in ${loadMs} ms`;
 canvas.focus();
 requestAnimationFrame(frame);
-window.__lounge = { me, A, remote, clerk, camera, renderer, scene, ROOMS3D, LIGHTS, applyQuality, qualityNow, EX, wallet, get bots() { return bots; }, cabs, use, setBoard, cam: (y, p) => { camYaw = y; camPitch = p; } };
+window.__lounge = { me, A, remote, clerk, camera, renderer, scene, ROOMS3D, MERGED, LIGHTS, applyQuality, qualityNow, EX, wallet, get bots() { return bots; }, cabs, use, setBoard, cam: (y, p) => { camYaw = y; camPitch = p; } };

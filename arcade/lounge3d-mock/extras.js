@@ -10,8 +10,8 @@
    fish) so a result can't be made up, the way it runs air hockey. Tickets come from and go to the lounge's preview wallet.
 
    buildExtras(ctx) -> { spots, step(dt, t), cam(pos, look), active(), key(e, down), pointer(type, e) }  (see lounge.js) */
-import { buildDash } from "./dash.js?v=2";
-import { buildCasino } from "./casino.js?v=2";
+import { buildDash } from "./dash.js?v=3";
+import { buildCasino } from "./casino.js?v=3";
 
 export function buildExtras(ctx) {
   const { THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM } = ctx;
@@ -208,7 +208,7 @@ export function buildExtras(ctx) {
     const FIRE = new V3(W + 3.5, 0, -17.2);
     for (let k = 0; k < 10; k++) { const a = (k / 10) * Math.PI * 2; const st = mesh(new THREE.DodecahedronGeometry(0.16, 0), std(0x55555c, { roughness: 0.9 }), FIRE.x + Math.cos(a) * 0.62, 0.1, FIRE.z + Math.sin(a) * 0.62); st.rotation.set(a, a, 0); }
     for (let k = 0; k < 3; k++) { const lg = mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.8, 8), std(0x3a2410), FIRE.x, 0.1, FIRE.z); lg.rotation.z = Math.PI / 2; lg.rotation.y = k * 1.05; }
-    const flames = []; for (let k = 0; k < 4; k++) { const f = mesh(new THREE.ConeGeometry(0.16 - k * 0.025, 0.55 - k * 0.06, 8), basic(new THREE.Color(pick([0xff7a1a, 0xffb020, 0xff4a10])).multiplyScalar(0.85)), FIRE.x + rnd(-0.1, 0.1), 0.38, FIRE.z + rnd(-0.1, 0.1)); f.castShadow = false; flames.push({ f, ph: rnd(0, 6) }); }
+    const flames = []; for (let k = 0; k < 4; k++) { const f = mesh(new THREE.ConeGeometry(0.16 - k * 0.025, 0.55 - k * 0.06, 8), basic(new THREE.Color(pick([0xff7a1a, 0xffb020, 0xff4a10])).multiplyScalar(0.85)), FIRE.x + rnd(-0.1, 0.1), 0.38, FIRE.z + rnd(-0.1, 0.1)); f.castShadow = false; f.userData.live = true; flames.push({ f, ph: rnd(0, 6) }); }
     const fireLight = keep(new THREE.PointLight(0xff8a30, 6, 8, 1.6), 2); fireLight.position.set(FIRE.x, 1.0, FIRE.z); scene.add(fireLight);
     block(FIRE.x, FIRE.z, 1.4, 1.4);
     const chair = (x, z, ry, col) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; scene.add(g); const m = std(col, { roughness: 0.7 });
@@ -261,7 +261,7 @@ export function buildExtras(ctx) {
       for (let k = 0; k < 11; k++) { const a = (k / 11) * Math.PI * 2 + rnd(-0.2, 0.2), r = rnd(118, 135); if (Math.hypot(10 + Math.cos(a) * r - 140, -5 + Math.sin(a) * r + 85) < 70) continue; const hill = new THREE.Mesh(new THREE.SphereGeometry(rnd(28, 44), 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), std(pick([0x3f7a3a, 0x4a8a42, 0x356a32]), { roughness: 1 })); hill.scale.y = rnd(0.25, 0.45); hill.position.set(10 + Math.cos(a) * r, -0.5, -5 + Math.sin(a) * r); scene.add(hill); }
     }
     // THE STADIUM on the horizon, to the north-east: an oval bowl, an upper deck, light towers lit for a night game, a blimp over it
-    const blimp = new THREE.Group(), STAD = { x: 140, z: -85 };   // far enough to sit in the haze
+    const blimp = new THREE.Group(), STAD = { x: 140, z: -85 }; blimp.userData.live = true;   // far enough to sit in the haze
     {
       const S = new THREE.Group(); S.position.set(STAD.x, 0, STAD.z); S.rotation.y = 0.5; scene.add(S);
       const concrete = canvasTex(512, 128, (g, w, h) => { g.fillStyle = "#8a8c94"; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 16) { g.fillStyle = "#5a5c66"; g.fillRect(x, 20, 6, h - 40); } g.fillStyle = "#6a6c74"; g.fillRect(0, h * 0.48, w, 6); });

@@ -519,5 +519,7 @@ export function buildCasino(ctx) {
     if (!CALM && wheel.bulbs) wheel.bulbs.rotation.z = wheel.spin ? -t * 3 : 0;
   });
 
+  // the moving and changing parts, kept out of the lounge's merge pass (lounge.js MERGING THE PROPS)
+  for (const o of [wheel.disc, coin.m, ...plinko.buckets, ...slots.machines.flatMap((mc) => [mc.lever, ...mc.reels.map((r) => r.m)]), ...clickables.map((c) => c.g)]) o.userData.live = true;
   return { click, clickables, onShow, wheel, coin, plinko, slots, dropBall, spinMachine, onWheel, onCoin, inRoom, X0, X1, Z0, Z1 };
 }
