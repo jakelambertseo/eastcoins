@@ -20,6 +20,7 @@ import * as Models from "../climb3d-mock/models.js?v=2";
 import * as Arcade from "../arcade-kit/arcade.js?v=9";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=2";
 import { openTable } from "../poker3d-mock/table.js?v=2";
+import { buildExtras } from "./extras.js?v=7";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -77,6 +78,11 @@ const W = 15, D = 11, WALL_H = 6;
    having to open a door. This gives it a more social feeling"). The south wall has an 8 m arch (x OX0..OX1, OPEN_H tall) straight into a
    warmer annex (x AX0..AX1, z D..AZ1) with three ticket sit & gos. Same page, same scene, same room on the server: walking in is walking. */
 const OX0 = -12, OX1 = -4, OPEN_H = 4, AX0 = -14.5, AX1 = -1.5, AZ1 = D + 11;
+// (2026-10-07) two more open rooms, built in extras.js: the bar games corner through the south wall, the patio through the east wall
+const BO0 = 8.2, BO1 = 14.2, BOH = 4, PO0 = -10.6, PO1 = -5.8, POH = 3.6;
+/* where you can walk (boxes: [x0, x1, z0, z1], shrunk by your radius when used), the rooms the camera keeps inside, and extra rules
+   (the pond). extras.js adds its rooms to these. */
+const WALK = [], REGIONS = [{ name: "lounge", x0: -W, x1: W, z0: -D, z1: D }, { name: "poker", x0: AX0, x1: AX1, z0: D, z1: AZ1 }], HOOKS = [];
 const OBST = [];   // [x0, x1, z0, z1]: things you walk round
 const block = (x, z, w, d) => OBST.push([x - w / 2, x + w / 2, z - d / 2, z + d / 2]);
 const basic = (c, o = {}) => new THREE.MeshBasicMaterial({ color: c, ...o });
@@ -97,9 +103,14 @@ const wallMat = std(0x120a24, { roughness: 0.85 });
 box(2 * W + 0.6, WALL_H, 0.3, wallMat, 0, WALL_H / 2, -D - 0.15);
 // the south wall, in three pieces round the arch
 box(OX0 + W + 0.3, WALL_H, 0.3, wallMat, (-W - 0.3 + OX0) / 2, WALL_H / 2, D + 0.15);
-box(W + 0.3 - OX1, WALL_H, 0.3, wallMat, (OX1 + W + 0.3) / 2, WALL_H / 2, D + 0.15);
+box(BO0 - OX1, WALL_H, 0.3, wallMat, (OX1 + BO0) / 2, WALL_H / 2, D + 0.15);
+box(W + 0.3 - BO1, WALL_H, 0.3, wallMat, (BO1 + W + 0.3) / 2, WALL_H / 2, D + 0.15);
+box(BO1 - BO0, WALL_H - BOH, 0.3, wallMat, (BO0 + BO1) / 2, BOH + (WALL_H - BOH) / 2, D + 0.15);
 box(OX1 - OX0, WALL_H - OPEN_H, 0.3, wallMat, (OX0 + OX1) / 2, OPEN_H + (WALL_H - OPEN_H) / 2, D + 0.15);
-box(0.3, WALL_H, 2 * D, wallMat, -W - 0.15, WALL_H / 2, 0); box(0.3, WALL_H, 2 * D, wallMat, W + 0.15, WALL_H / 2, 0);
+box(0.3, WALL_H, 2 * D, wallMat, -W - 0.15, WALL_H / 2, 0);
+// the east wall, round the patio doors
+box(0.3, WALL_H, PO0 + D, wallMat, W + 0.15, WALL_H / 2, (-D + PO0) / 2); box(0.3, WALL_H, D - PO1, wallMat, W + 0.15, WALL_H / 2, (PO1 + D) / 2);
+box(0.3, WALL_H - POH, PO1 - PO0, wallMat, W + 0.15, POH + (WALL_H - POH) / 2, (PO0 + PO1) / 2);
 const leds = [];
 {
   const SEG = 1.5; let run = 0;
@@ -115,9 +126,9 @@ const leds = [];
     }
     run += n;
   };
-  edge(-W, -D, W, -D, 0, 1); edge(W, -D, W, D, -1, 0); edge(W, D, -W, D, 0, -1, (x) => x > OX0 && x < OX1); edge(-W, D, -W, -D, 1, 0);
+  edge(-W, -D, W, -D, 0, 1); edge(W, -D, W, D, -1, 0, (x, z) => z > PO0 && z < PO1); edge(W, D, -W, D, 0, -1, (x) => (x > OX0 && x < OX1) || (x > BO0 && x < BO1)); edge(-W, D, -W, -D, 1, 0);
 }
-for (const [x, z, c] of [[-W + 0.05, -6, COL.cyan], [-W + 0.05, 9, COL.pink], [W - 0.05, -9.5, COL.lime], [W - 0.05, 8.5, COL.purple]]) {
+for (const [x, z, c] of [[-W + 0.05, -6, COL.cyan], [-W + 0.05, 9, COL.pink], [W - 0.05, 8.5, COL.purple]]) {
   const t = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 4.2, 8), tube(c)); t.position.set(x, 2.8, z); scene.add(t);
 }
 /* ---- the sign: THE LOUNGE in tube letters over the cabinets */
@@ -381,7 +392,7 @@ hang(poster(1.2, 1.55, (c, w, h) => {
   c.fillStyle = "#e9d6a8"; c.font = font(60, "Georgia, serif", "bold"); c.fillText("?", w / 2, 222);
   c.fillStyle = "#3a2410"; c.font = font(21, "Georgia, serif", "bold"); c.fillText("WHOEVER LEFT NACHOS", w / 2, 362); c.fillText("ON THE AIR HOCKEY TABLE", w / 2, 390);
   c.font = font(30, "Georgia, serif", "bold"); c.fillText("REWARD: 500 TICKETS", w / 2, 450);
-}, 0x3a2410), 11.3, 3.4, D - 0.05, Math.PI);
+}, 0x3a2410), 7.25, 2.7, D - 0.05, Math.PI);
 // 5. EMPLOYEE OF THE MONTH (lounge, west wall, by the cabinets): The Climb's mace
 hang(poster(1.2, 1.5, (c, w, h) => {
   c.fillStyle = "#f3efe6"; c.fillRect(0, 0, w, h); c.strokeStyle = "#c9a227"; c.lineWidth = 10; c.strokeRect(18, 18, w - 36, h - 36);
@@ -391,7 +402,7 @@ hang(poster(1.2, 1.5, (c, w, h) => {
   c.fillStyle = "#111"; c.beginPath(); c.arc(w / 2 - 22, 228, 7, 0, 7); c.arc(w / 2 + 22, 228, 7, 0, 7); c.fill(); c.strokeStyle = "#111"; c.lineWidth = 5; c.beginPath(); c.arc(w / 2, 248, 26, 0.2, Math.PI - 0.2); c.stroke();
   c.fillStyle = "#1a1a2a"; c.font = font(28); c.fillText("THE MACE", w / 2, 380);
   c.font = font(19, "Rubik", "600"); c.fillStyle = "#555"; c.fillText("The Chain Hall · 4,112 knockdowns", w / 2, 414); c.fillText("\"Never misses a shift.\"", w / 2, 444);
-}, 0x2a2a3a), -W + 0.05, 2.8, -9.2, Math.PI / 2);
+}, 0x2a2a3a), -W + 0.05, 3.75, -9.2, Math.PI / 2);
 
 /* ---- THE CASHIER, in the main room against the south wall (the owner: "ticket guy / cashier should be in the main lounge room"):
    ZCoins buy tickets, tickets cash out to ZCoins at EastScape's rate and limit. One ticket wallet, shared with EastScape. */
@@ -428,7 +439,7 @@ const CAGE = new V3(4, 0, 9.85), CAGE_AT = new V3(4, 0, 8.4);
   const sb = new THREE.Sprite(new THREE.SpriteMaterial({ map: sbTex, transparent: true, depthTest: false })); sb.scale.set(2.6, 0.5, 1); sb.position.set(0, 1.75, 0); sb.renderOrder = 6; sb.visible = false; ah.add(sb);
   scene.userData.board = { canvas: sbCanvas, tex: sbTex, sprite: sb };
   block(1, 4, 2.7, 1.5);
-  const cm = new THREE.Group(); cm.position.set(11.5, 0, 8.6); scene.add(cm);
+  const cm = new THREE.Group(); cm.position.set(-13.3, 0, -8.7); cm.rotation.y = -Math.PI / 2; scene.add(cm);   // (moved out of the bar games doorway)
   box(1.6, 0.9, 1.6, std(COL.pink, { emissive: COL.pink, emissiveIntensity: 0.18 }), 0, 0.45, 0, cm);
   const glass = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.4, 1.5), new THREE.MeshStandardMaterial({ color: 0xcff6ff, transparent: true, opacity: 0.15, roughness: 0.05 })); glass.position.y = 1.6; cm.add(glass);
   box(1.6, 0.35, 1.6, std(0x241a44), 0, 2.48, 0, cm);
@@ -437,7 +448,7 @@ const CAGE = new V3(4, 0, 9.85), CAGE_AT = new V3(4, 0, 8.4);
   for (let k = 0; k < 14; k++) { const c = pick(Object.values(COL)); const p = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), std(c, { emissive: c, emissiveIntensity: 0.15 })); p.position.set(rnd(-0.55, 0.55), 1.05 + rnd(0, 0.25), rnd(-0.55, 0.55)); cm.add(p); }
   const claw = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.2, 3), std(0xdddddd, { metalness: 0.8, roughness: 0.3 })); claw.position.set(0, 2.05, 0); claw.rotation.x = Math.PI; cm.add(claw); scene.userData.claw = claw;
 
-  block(11.5, 8.6, 1.7, 1.7);
+  block(-13.3, -8.7, 1.7, 1.7);
   for (const [tx, tz, c] of [[-7.5, 1.5, COL.cyan], [-2.5, 8.2, COL.orange], [9.5, 6, COL.lime]]) {
     const top2 = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.07, 28), std(0x241a44, { roughness: 0.3 })); top2.position.set(tx, 1.0, tz); top2.castShadow = true; scene.add(top2);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.8, 0.022, 6, 40), tube(c)); ring.rotation.x = Math.PI / 2; ring.position.set(tx, 1.0, tz); scene.add(ring);
@@ -489,7 +500,7 @@ const CAGE = new V3(4, 0, 9.85), CAGE_AT = new V3(4, 0, 8.4);
   add(bottle(), 9.3, 1.035, 6.2); add(bottle(), 9.6, 1.035, 5.8); add(bottle(0x2a5a1a, 0xf0f0f0), 9.85, 1.035, 6.15); add(popcorn(false), 9.2, 1.035, 5.75);
   // on the floor: cans by a stool, a bucket that got knocked over, a foam finger on a stool, a full bin
   add(can(0xd02a3a), -6.1, 0.0, 2.4); const knocked = add(popcorn(false), 0.0, 0.07, 6.2, 0.7); knocked.rotation.z = Math.PI / 2; spill(0.3, 6.3, 12);
-  add(foamFinger(0x2a6ad0), 10.65, 0.7, 6.49, -0.4); add(bin(), 13.9, 0, 9.9); add(bin(), -13.9, 0, -0.6);
+  add(foamFinger(0x2a6ad0), 10.65, 0.7, 6.49, -0.4); add(bin(), 14.3, 0, 7.4); add(bin(), -13.9, 0, -0.6);
   add(cup(), 2.9, 0.0, 9.1); add(can(0x2a6ad0), 5.6, 0.0, 9.2);
   // near the air hockey table, the nachos the WANTED poster is about
   { const tray = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.03, 0.18), std(0xe8e8e8)); tray.position.set(2.05, 0.8, 3.42); scene.add(tray); for (let k = 0; k < 8; k++) { const n = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.01, 3), std(0xf0c040)); n.position.set(2.05 + rnd(-0.09, 0.09), 0.82, 3.42 + rnd(-0.06, 0.06)); n.rotation.set(rnd(0, 1), rnd(0, 6), 0); scene.add(n); } }
@@ -543,10 +554,11 @@ function pushOut(p, r) {
   }
   // the walkable floor is three boxes: the lounge, the arch, the poker room. Off it, you're put back on the nearest one.
   let best = null, bd = 1e9;
-  for (const [x0, x1, z0, z1] of [[-W + r, W - r, -D + r, D - r], [OX0 + r, OX1 - r, D - r, D + r], [AX0 + r, AX1 - r, D + r, AZ1 - r]]) {
+  for (const [x0, x1, z0, z1] of [[-W + r, W - r, -D + r, D - r], [OX0 + r, OX1 - r, D - r, D + r], [AX0 + r, AX1 - r, D + r, AZ1 - r], ...WALK]) {
     const cx = clamp(p.x, x0, x1), cz = clamp(p.z, z0, z1), d = (cx - p.x) ** 2 + (cz - p.z) ** 2; if (d < bd) { bd = d; best = [cx, cz]; }
   }
   p.x = best[0]; p.z = best[1];
+  for (const h of HOOKS) h(p, r);
 }
 
 /* ------------------------------------------------------------------ the shell: who you are, the menu, chat, settings, the jukebox */
@@ -563,7 +575,7 @@ const A = await Arcade.start({
     📻 the <b>jukebox</b> picks the station the whole arcade hears · 🧸 the <b>claw</b>, and 🏒 <b>air hockey</b> (for two, once the room is live).</p>
     <p><b>Enter</b> opens the chat, <b>Esc</b> the menu, <b>M</b> mutes.</p>`,
   lookHint: "Talk to Sydney at the prize counter to change your character and hat.",
-  touch: { state: tstate, buttons: [{ id: "use", label: "E", cls: "alt", tap: () => { if (near) use(near); } }, { id: "jump", label: "JUMP" }] },
+  touch: { state: tstate, buttons: [{ id: "use", label: "E", cls: "alt", tap: () => { if (EX?.active()) EX.key({ code: "KeyE" }, true); else if (near) use(near); } }, { id: "jump", label: "JUMP" }] },
   onHello: () => { if (A.hello?.hockey) onHk({ ...A.hello.hockey, top: A.hello.hockeyTop });  for (const b of bots) dropPerson(b.mesh); bots = []; for (const p of A.people.values()) addRemote(p); renderOnline(); renderOutfit(); },
   onOffline: () => { startBots(); renderOnline(); },
   onJoin: (p) => { addRemote(p); renderOnline(); },
@@ -644,7 +656,7 @@ const SPOTS = [
   { x: -7.5, z: 3.1, face: Math.PI, what: "table" }, { x: -9, z: 0.8, face: Math.PI / 2, what: "table" }, { x: -2.5, z: 6.6, face: 0, what: "table" }, { x: 9.5, z: 4.4, face: 0, what: "table" }, { x: 11, z: 6.9, face: -Math.PI / 2, what: "table" },
   { x: -10.6, z: 14.2, face: 0.9, what: "poker" }, { x: -5.4, z: 17.8, face: -2.3, what: "poker" }, { x: -8, z: 18.1, face: Math.PI, what: "poker" }, { x: 4.5, z: 8.6, face: Math.PI, what: "cashier" },
   { x: W - 3.2, z: -2, face: Math.PI / 2, what: "board" }, { x: W - 3.4, z: 0.4, face: Math.PI / 2, what: "board" },
-  { x: 11.5, z: 7, face: 0, what: "claw" }, { x: OUTFIT.x + 0.4, z: 3.2, face: -Math.PI / 2, what: "prizes" }, { x: JUKE.x + 1.6, z: JUKE.z, face: -Math.PI / 2, what: "juke" }
+  { x: -11.6, z: -8.7, face: -Math.PI / 2, what: "claw" }, { x: OUTFIT.x + 0.4, z: 3.2, face: -Math.PI / 2, what: "prizes" }, { x: JUKE.x + 1.6, z: JUKE.z, face: -Math.PI / 2, what: "juke" }
 ];
 const WHERE = ["floor 34", "floor 61", "floor 88", "the roof"];
 const BANTER = ["who's doing the climb tonight", "gg", "anyone want air hockey", "the chain hall swings are so mean", "floor 61 ice nearly made me quit", "rang the bell, crown is sick", "that claw machine is rigged", "lightning took my ledge mid-jump", "race you to floor 20", "this carpet goes hard"];
@@ -785,6 +797,9 @@ function stepHockey(dt) {
 /* ------------------------------------------------------------------ the poker room's lobby and table, and the cashier
    Mockup: the wallet lives in this page; on the site it is THE ticket wallet EastScape uses, and the cashier is the site's exchange. */
 const wallet = { tickets: 12450, zc: 340, out24: 0, cap: 100, rate: 1000 };
+const EX = buildExtras({ THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM,
+  nameColor: Arcade.nameColor, botsOn: () => bots.length > 0 });
+applyQuality();   // the new rooms' lights join the budget
 let pokerOpen = null;
 const fmt = (n) => Number(n).toLocaleString();
 function pokerLobby(tb) {
@@ -859,16 +874,19 @@ function cashier(tab = "buy") {
 const keys = {};
 let dragId = null, camYaw = 0, camPitch = 0.42, dragging = false, lastX = 0, lastY = 0, jumpWas = false, near = null, entering = false;
 addEventListener("keydown", (e) => {
-  if (document.activeElement !== canvas || A.windowOpen() || pokerOpen) return; Sfx.ensure(); keys[e.code] = true;
+  if (document.activeElement !== canvas || A.windowOpen() || pokerOpen) return; Sfx.ensure();
+  if (EX.active()) { EX.key(e, true); if (e.code === "Space") e.preventDefault(); return; }
+  keys[e.code] = true;
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) e.preventDefault();
   if (e.code === "KeyE" && near) use(near);
 });
-addEventListener("keyup", (e) => { keys[e.code] = false; });
+addEventListener("keyup", (e) => { keys[e.code] = false; if (EX.active()) EX.key(e, false); });
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
-canvas.addEventListener("pointerdown", (e) => { Sfx.ensure(); if (hkSide() >= 0) { hkAim(e); canvas.focus(); return; } dragging = true; dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY; canvas.focus(); });
+canvas.addEventListener("pointerdown", (e) => { Sfx.ensure(); if (EX.active()) { EX.pointer("move", e); EX.pointer("down", e); canvas.focus({ preventScroll: true }); return; } if (hkSide() >= 0) { hkAim(e); canvas.focus(); return; } dragging = true; dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY; canvas.focus(); });
 addEventListener("pointerup", (e) => { if (e.pointerId === dragId) dragging = false; });
 addEventListener("pointercancel", (e) => { if (e.pointerId === dragId) dragging = false; });
-canvas.addEventListener("pointermove", (e) => { if (hkSide() >= 0) hkAim(e); });
+canvas.addEventListener("pointermove", (e) => { if (EX.active()) EX.pointer("move", e); else if (hkSide() >= 0) hkAim(e); });
+addEventListener("pointerup", (e) => { if (EX.active()) EX.pointer("up", e); });
 addEventListener("pointermove", (e) => {
   if (!dragging || e.pointerId !== dragId) return; const k = settings.camSens;
   camYaw -= (e.clientX - lastX) * 0.006 * k; camPitch = clamp(camPitch + (e.clientY - lastY) * 0.004 * k * (settings.invertY ? -1 : 1), 0.05, 1.1); lastX = e.clientX; lastY = e.clientY;
@@ -882,6 +900,7 @@ function enterGame(gm) {
   setTimeout(() => { if (gm.room) A.go(gm.room); else location.href = gm.href; }, 600);
 }
 function use(n) {
+  if (n.kind === "ex") return n.it.use();
   if (n.kind === "cab") enterGame(n.gm);
   else if (n.kind === "prizes") { A.openLook({ ...CLERK, line: pick(CLERK_LINES) }); Sfx.play("beep"); }
   else if (n.kind === "juke") A.openJukebox();
@@ -896,7 +915,7 @@ function use(n) {
   }
 }
 function step(dt) {
-  if (pokerOpen) return;
+  if (pokerOpen || EX.active()) return;
   if (hkSide() >= 0) return stepSeated();
   const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - tstate.y, s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + tstate.x;
   const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
@@ -910,12 +929,13 @@ function step(dt) {
   near = null; let best = 1e9;
   const consider = (kind, x2, z2, rad, extra = {}) => { const d = Math.hypot(me.p.x - x2, me.p.z - z2); if (d < rad && d < best) { best = d; near = { kind, ...extra }; } };
   for (const c of cabs) consider("cab", c.x, c.z, 1.4, { gm: c.gm });
-  consider("prizes", OUTFIT.x, OUTFIT.z, 2.6); consider("juke", JUKE.x + 1.3, JUKE.z, RADIO.reach - 0.4); consider("board", W - 3, BZ, 3.2); consider("claw", 11.5, 7.2, 1.6); consider("hockey", HOCKEY.at.x, HOCKEY.at.z, HOCKEY.reach - 0.3); consider("cashier", CAGE_AT.x, CAGE_AT.z, 2.6);
+  consider("prizes", OUTFIT.x, OUTFIT.z, 2.6); consider("juke", JUKE.x + 1.3, JUKE.z, RADIO.reach - 0.4); consider("board", W - 3, BZ, 3.2); consider("claw", -11.8, -8.7, 1.6); consider("hockey", HOCKEY.at.x, HOCKEY.at.z, HOCKEY.reach - 0.3); consider("cashier", CAGE_AT.x, CAGE_AT.z, 2.6);
   for (const tb of PK.tables) consider("ptable", tb.at.x, tb.at.z, 2.9, { tb });
-  const label = !near || A.windowOpen() ? "" : near.kind === "cab" ? (near.gm.open ? `<kbd>E</kbd> Play ${near.gm.name}` : `<kbd>E</kbd> ${near.gm.name} · coming soon`)
+  for (const it of EX.spots) consider("ex", it.x, it.z, it.r, { it });
+  const label = !near || A.windowOpen() ? "" : near.kind === "ex" ? near.it.label() : near.kind === "cab" ? (near.gm.open ? `<kbd>E</kbd> Play ${near.gm.name}` : `<kbd>E</kbd> ${near.gm.name} · coming soon`)
     : near.kind === "prizes" ? `<kbd>E</kbd> Talk to Sydney: change your look` : near.kind === "juke" ? `<kbd>E</kbd> Jukebox: pick the station` : near.kind === "board" ? `<kbd>E</kbd> Next board` : near.kind === "claw" ? `<kbd>E</kbd> Try the claw` : near.kind === "cashier" ? `<kbd>E</kbd> Cashier: buy tickets, cash out` : near.kind === "ptable" ? `<kbd>E</kbd> ${near.tb.s.name}: ${near.tb.s.sub}` : hkPrompt();
   const hp = $("hudPrompt"); if (hp.dataset.l !== label) { hp.dataset.l = label; hp.innerHTML = label; }
-  A.setWhere(near ? (near.kind === "cab" ? `at ${near.gm.name.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase())}` : doing[near.kind] || "") : "");
+  A.setWhere(near ? (near.kind === "ex" ? ({ skee: "at skee-ball", darts: "at the darts", pong: "at beer pong", fish: "by the pond", fire: "by the fire" })[near.it.kind] || "" : near.kind === "cab" ? `at ${near.gm.name.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase())}` : doing[near.kind] || "") : "");
   const sp = Math.hypot(me.v.x, me.v.z);
   A.sendPos(me.p.x, me.p.y, me.p.z, me.facing, !me.grounded ? 2 : sp > 0.6 ? 1 : 0);
 }
@@ -941,18 +961,22 @@ function frame(now) {
   if (!entering) step(dt);
   if (bots.length) stepBots(dt); else stepRemote(dt);
   stepHockey(dt);
+  EX.step(dt, t);
   const g = me.mesh.g; g.position.set(me.p.x, me.p.y - R, me.p.z); let dy = me.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3;
   { const dx = me.p.x - clerk.g.position.x, dz = me.p.z - clerk.g.position.z, want = Math.hypot(dx, dz) < 6 ? Math.atan2(dx, dz) : Math.PI / 2;
     let d = want - clerk.g.rotation.y; d = Math.atan2(Math.sin(d), Math.cos(d)); clerk.g.rotation.y += d * Math.min(1, dt * 4); clerk.ch?.update(dt); lucky.ch?.update(dt);
     if (!CALM) { clerkMark.position.y = 2.7 + Math.sin(t * 2.4) * 0.07; clerkMark.rotation.y = t * 1.5; } }
   const sp = Math.hypot(me.v.x, me.v.z); me.mesh.ch?.play(!me.grounded ? "jump" : sp > 0.6 ? "walk" : "idle"); me.mesh.ch?.update(dt);
   const ox = Math.sin(camYaw) * Math.cos(camPitch), oz = Math.cos(camYaw) * Math.cos(camPitch); let dist = 9;
-  const inPk = me.p.z > D, RX0 = inPk ? AX0 : -W, RX1 = inPk ? AX1 : W, RZ1 = inPk ? AZ1 : D;
+  const RG = REGIONS.find((g) => me.p.x >= g.x0 && me.p.x <= g.x1 && me.p.z >= g.z0 && me.p.z <= g.z1) || REGIONS[0];
+  const RX0 = RG.x0, RX1 = RG.x1, RZ0 = RG.z0, RZ1 = RG.z1;
+  // (outdoors too: the patio's edges are the building on one side and the fence on the others, and a camera through the wall looks indoors)
   if (ox > 0.01) dist = Math.min(dist, (RX1 - 0.5 - me.p.x) / ox); if (ox < -0.01) dist = Math.min(dist, (RX0 + 0.5 - me.p.x) / ox);
-  if (oz > 0.01) dist = Math.min(dist, (RZ1 - 0.5 - me.p.z) / oz); if (oz < -0.01) dist = Math.min(dist, (-D + 0.5 - me.p.z) / oz);
+  if (oz > 0.01) dist = Math.min(dist, (RZ1 - 0.5 - me.p.z) / oz); if (oz < -0.01) dist = Math.min(dist, (RZ0 + 0.5 - me.p.z) / oz);
   dist = Math.max(2.5, dist);
   _cam.set(me.p.x + ox * dist, me.p.y + 1.4 + Math.sin(camPitch) * dist, me.p.z + oz * dist);
-  if (hkSide() >= 0) { const sd = hkSide() ? 1 : -1; _cam.set(HOCKEY.at.x + sd * 2.9, 2.35, HOCKEY.at.z); _look.set(HOCKEY.at.x - sd * 0.25, 0.7, HOCKEY.at.z); }
+  if (EX.cam(_cam, _look)) { /* a game is driving the camera */ }
+  else if (hkSide() >= 0) { const sd = hkSide() ? 1 : -1; _cam.set(HOCKEY.at.x + sd * 2.9, 2.35, HOCKEY.at.z); _look.set(HOCKEY.at.x - sd * 0.25, 0.7, HOCKEY.at.z); }
   else _look.set(me.p.x, me.p.y + 1.1, me.p.z);
   camera.position.lerp(_cam, 0.15); camera.lookAt(_look);
 
@@ -982,4 +1006,4 @@ renderOnline();
 $("loadStat").textContent = `opened in ${loadMs} ms`;
 canvas.focus();
 requestAnimationFrame(frame);
-window.__lounge = { me, A, remote, clerk, camera, LIGHTS, applyQuality, qualityNow, get bots() { return bots; }, cabs, use, setBoard, cam: (y, p) => { camYaw = y; camPitch = p; } };
+window.__lounge = { me, A, remote, clerk, camera, LIGHTS, applyQuality, qualityNow, EX, wallet, get bots() { return bots; }, cabs, use, setBoard, cam: (y, p) => { camYaw = y; camPitch = p; } };
