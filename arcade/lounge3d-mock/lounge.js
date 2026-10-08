@@ -20,7 +20,7 @@ import * as Models from "../climb3d-mock/models.js?v=2";
 import * as Arcade from "../arcade-kit/arcade.js?v=10";
 import { CHARS, CHAR_NAMES, HATS, RADIO, HOCKEY, hkSeat, hkClampMallet } from "/v3/assets/js/arcade-rules.js?v=3";
 import { openTable } from "../poker3d-mock/table.js?v=2";
-import { buildExtras } from "./extras.js?v=18";
+import { buildExtras } from "./extras.js?v=19";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -87,6 +87,8 @@ const W = 15, D = 11, WALL_H = 6;
 const OX0 = -12, OX1 = -4, OPEN_H = 4, AX0 = -14.5, AX1 = -1.5, AZ1 = D + 11;
 // (2026-10-07) two more open rooms, built in extras.js: the bar games corner through the south wall, the patio through the east wall
 const BO0 = 8.2, BO1 = 14.2, BOH = 4, PO0 = -10.6, PO1 = -5.8, POH = 3.6;
+// (2026-10-07) and a third: the casino, through an arch in the west wall between the claw and the jukebox (casino.js)
+const CO0 = -7.4, CO1 = -3.9, COH = 4;
 /* where you can walk (boxes: [x0, x1, z0, z1], shrunk by your radius when used), the rooms the camera keeps inside, and extra rules
    (the pond). extras.js adds its rooms to these. */
 const WALK = [], REGIONS = [{ name: "lounge", x0: -W, x1: W, z0: -D, z1: D, ceil: WALL_H }, { name: "poker", x0: AX0, x1: AX1, z0: D, z1: AZ1, ceil: 5 }], HOOKS = [];
@@ -114,7 +116,9 @@ box(BO0 - OX1, WALL_H, 0.3, wallMat, (OX1 + BO0) / 2, WALL_H / 2, D + 0.15);
 box(W + 0.3 - BO1, WALL_H, 0.3, wallMat, (BO1 + W + 0.3) / 2, WALL_H / 2, D + 0.15);
 box(BO1 - BO0, WALL_H - BOH, 0.3, wallMat, (BO0 + BO1) / 2, BOH + (WALL_H - BOH) / 2, D + 0.15);
 box(OX1 - OX0, WALL_H - OPEN_H, 0.3, wallMat, (OX0 + OX1) / 2, OPEN_H + (WALL_H - OPEN_H) / 2, D + 0.15);
-box(0.3, WALL_H, 2 * D, wallMat, -W - 0.15, WALL_H / 2, 0);
+// the west wall, round the casino arch
+box(0.3, WALL_H, CO0 + D, wallMat, -W - 0.15, WALL_H / 2, (-D + CO0) / 2); box(0.3, WALL_H, D - CO1, wallMat, -W - 0.15, WALL_H / 2, (CO1 + D) / 2);
+box(0.3, WALL_H - COH, CO1 - CO0, wallMat, -W - 0.15, COH + (WALL_H - COH) / 2, (CO0 + CO1) / 2);
 // the east wall, round the patio doors
 box(0.3, WALL_H, PO0 + D, wallMat, W + 0.15, WALL_H / 2, (-D + PO0) / 2); box(0.3, WALL_H, D - PO1, wallMat, W + 0.15, WALL_H / 2, (PO1 + D) / 2);
 box(0.3, WALL_H - POH, PO1 - PO0, wallMat, W + 0.15, POH + (WALL_H - POH) / 2, (PO0 + PO1) / 2);
@@ -133,9 +137,9 @@ const leds = [];
     }
     run += n;
   };
-  edge(-W, -D, W, -D, 0, 1); edge(W, -D, W, D, -1, 0, (x, z) => z > PO0 && z < PO1); edge(W, D, -W, D, 0, -1, (x) => (x > OX0 && x < OX1) || (x > BO0 && x < BO1)); edge(-W, D, -W, -D, 1, 0);
+  edge(-W, -D, W, -D, 0, 1); edge(W, -D, W, D, -1, 0, (x, z) => z > PO0 && z < PO1); edge(W, D, -W, D, 0, -1, (x) => (x > OX0 && x < OX1) || (x > BO0 && x < BO1)); edge(-W, D, -W, -D, 1, 0, (x, z) => z > CO0 && z < CO1);
 }
-for (const [x, z, c] of [[-W + 0.05, -6, COL.cyan], [-W + 0.05, 9, COL.pink], [W - 0.05, 8.5, COL.purple]]) {
+for (const [x, z, c] of [[-W + 0.05, -0.4, COL.cyan], [-W + 0.05, 9, COL.pink], [W - 0.05, 8.5, COL.purple]]) {
   const t = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 4.2, 8), tube(c)); t.position.set(x, 2.8, z); scene.add(t);
 }
 /* ---- the sign: THE LOUNGE in tube letters over the cabinets */
@@ -609,7 +613,7 @@ const A = await Arcade.start({
     <p><b>Enter</b> opens the chat, <b>Esc</b> the menu, <b>M</b> mutes.</p>`,
   lookHint: "Talk to Sydney at the prize counter to change your character and hat.",
   touch: { state: tstate, buttons: [{ id: "use", label: "E", cls: "alt", tap: () => { if (EX?.active()) EX.key({ code: "KeyE" }, true); else if (near) use(near); } }, { id: "slide", label: "SLIDE", cls: "alt" }, { id: "jump", label: "JUMP" }] },
-  onHello: () => { if (A.hello?.hockey) onHk({ ...A.hello.hockey, top: A.hello.hockeyTop }); if (A.hello?.dash) EX?.onDash(A.hello.dash);  for (const b of bots) dropPerson(b.mesh); bots = []; for (const p of A.people.values()) addRemote(p); renderOnline(); renderOutfit(); },
+  onHello: () => { if (A.hello?.hockey) onHk({ ...A.hello.hockey, top: A.hello.hockeyTop }); if (A.hello?.dash) EX?.onDash(A.hello.dash);  for (const b of bots) dropPerson(b.mesh); bots = []; for (const p of A.people.values()) addRemote(p); renderOnline(); },
   onOffline: () => { startBots(); renderOnline(); },
   onJoin: (p) => { addRemote(p); renderOnline(); },
   onLeave: (id) => { const r = remote.get(id); if (r) { dropPerson(r.mesh); remote.delete(id); } renderOnline(); },
@@ -623,6 +627,7 @@ const A = await Arcade.start({
     if (m.t === "hkf") { hk.prev = hk.s; hk.s = m.s; if (m.e === "hit") Sfx.play("beep"); }
     else if (m.t === "hk") onHk(m);
     else if (m.t === "dash" || m.t === "dashr") EX.onDash(m);
+    else if (m.t === "cshow") EX.onShow(m);
   },
   onDisconnect: () => { for (const r of remote.values()) dropPerson(r.mesh); remote.clear(); renderOnline(); },
   onLeaving: () => { entering = true; }
@@ -835,7 +840,7 @@ function stepHockey(dt) {
 const wallet = { tickets: 12450, zc: 340, out24: 0, cap: 100, rate: 1000 };
 const EX = buildExtras({ THREE, scene, camera, canvas, A, Sfx, me, R, D, W, COL, HEX, box, std, basic, tube, canvasTex, block, keep, makePerson, rnd, pick, clamp, esc, WALK, REGIONS, HOOKS, wallet, tstate, CALM,
   PK_X0: AX0, PK_X1: AX1, PK_Z1: AZ1,
-  nameColor: Arcade.nameColor, botsOn: () => bots.length > 0, setYaw: (y) => { camYaw = y; } });
+  nameColor: Arcade.nameColor, botsOn: () => bots.length > 0, setYaw: (y) => { camYaw = y; }, CO0, CO1, COH });
 applyQuality();   // the new rooms' lights join the budget
 let pokerOpen = null;
 const fmt = (n) => Number(n).toLocaleString();
@@ -991,7 +996,7 @@ function step(dt) {
   const label = !near || A.windowOpen() ? "" : near.kind === "ex" ? near.it.label() : near.kind === "cab" ? (near.gm.open ? `<kbd>E</kbd> Play ${near.gm.name}` : `<kbd>E</kbd> ${near.gm.name} · coming soon`)
     : near.kind === "prizes" ? `<kbd>E</kbd> Talk to Sydney: change your look` : near.kind === "juke" ? `<kbd>E</kbd> Jukebox: pick the station` : near.kind === "board" ? `<kbd>E</kbd> Next board` : near.kind === "claw" ? `<kbd>E</kbd> Try the claw` : near.kind === "cashier" ? `<kbd>E</kbd> Cashier: buy tickets, cash out` : near.kind === "ptable" ? `<kbd>E</kbd> ${near.tb.s.name}: ${near.tb.s.sub}` : hkPrompt();
   const hp = $("hudPrompt"); if (hp.dataset.l !== label) { hp.dataset.l = label; hp.innerHTML = label; }
-  A.setWhere(near ? (near.kind === "ex" ? ({ skee: "at skee-ball", darts: "at the darts", pong: "at beer pong", fish: "by the pond", fire: "by the fire" })[near.it.kind] || "" : near.kind === "cab" ? `at ${near.gm.name.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase())}` : doing[near.kind] || "") : "");
+  A.setWhere(near ? (near.kind === "ex" ? ({ skee: "at skee-ball", darts: "at the darts", pong: "at beer pong", fish: "by the pond", fire: "by the fire", wheel: "at the wheel", coin: "at the coin flip", plinko: "at plinko", slots: "at the slots", dash: "at the Dash" })[near.it.kind] || "" : near.kind === "cab" ? `at ${near.gm.name.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase())}` : doing[near.kind] || "") : "");
   const sp = Math.hypot(me.v.x, me.v.z);
   A.sendPos(me.p.x, me.p.y, me.p.z, me.facing, me.slide ? 3 : !me.grounded ? 2 : sp > 0.6 ? 1 : 0);
 }
