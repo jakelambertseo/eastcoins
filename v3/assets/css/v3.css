@@ -208,6 +208,9 @@ img{max-width:100%}
 }
 body.chat-hidden .shell{grid-template-columns:minmax(0,1fr)}
 body.chat-hidden .chatrail{display:none}
+/* the arcade (/lounge, /climb): the rail is closed from the first paint (v3-shell.js arcadeRail) */
+html.arcade-route .shell{grid-template-columns:minmax(0,1fr)}
+html.arcade-route .chatrail{display:none!important}
 
 .view{min-width:0;padding:20px 18px 60px}
 .viewhead{

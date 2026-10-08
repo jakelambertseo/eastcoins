@@ -431,7 +431,21 @@
     if (state.route === "events") views.events?.onPrefs?.(prefs);
   });
 
+  /* THE ARCADE AND THE TWITCH RAIL (2026-10-08, the owner, watching /lounge open: "it looks visually like the twitch chat container
+     is loading before the game"). It was: the rail was painted and Twitch's embed mounted on the first idle moment, and only when the
+     arcade's own script arrived (after the session read) was the rail hidden, so the game loaded behind a chat that was still
+     running. Now the shell knows the arcade routes itself: html.arcade-route closes the rail on the first paint (index.html sets it
+     inline before anything draws), Twitch is not mounted at all while an arcade route is up, and it mounts when you leave. The chat
+     preference is untouched; nothing already mounted is reloaded. */
+  let wasArcade = false;
+  function arcadeRail() {
+    const arcade = SHORT_URL.has(state.route);
+    document.documentElement.classList.toggle("arcade-route", arcade);
+    if (wasArcade && !arcade && chatVisible() && !chatMounted) mountChat();
+    wasArcade = arcade;
+  }
   function render() {
+    arcadeRail();
     // A members-only route is decided before its scripts are fetched.
     // Until the session read lands, hold the space rather than guess.
     const gated = Object.prototype.hasOwnProperty.call(MEMBERS_ONLY, state.route);
@@ -662,7 +676,7 @@
   // keeps the original performance win without the page sitting there
   // half-built until someone happens to touch it.
   function armChatLoad() {
-    if (!chatVisible()) return;
+    if (!chatVisible() || SHORT_URL.has(routeFromUrl())) return;   // (in the arcade the rail is closed: it mounts on leaving, see arcadeRail)
     const start = () => mountChat();
     if ("requestIdleCallback" in window) {
       window.requestIdleCallback(start, { timeout: 1500 });
