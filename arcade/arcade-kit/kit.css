@@ -1,0 +1,346 @@
+/* The Arcade Kit (2026-10-07): the look of the Game Lounge and every game behind its doors. Its own identity, apart from
+   EastScape's parchment kit (tools/ui-kit): a 2000s arcade at night — black carpet with blacklight shapes, neon tubes, chasing
+   marquee bulbs, chunky lit buttons, scores in big sign letters.
+
+   Prefix ak-. Tokens first; every component reads them, so a re-theme is one block.
+   Faces: Bungee (display, scores), Rubik (everything you read), Monoton (the neon sign, wordmark only). None are pixel faces.
+   Motion: nothing flashes faster than 3 times a second, and everything moving stops under prefers-reduced-motion. */
+
+:root {
+  --ak-ink: #0a0614;           /* the room in the dark */
+  --ak-deep: #120a24;          /* panels */
+  --ak-raise: #1c1236;         /* rows, inputs */
+  --ak-line: #3a2a66;          /* quiet borders */
+  --ak-text: #f4ecff;
+  --ak-dim: #b4a6d6;
+  --ak-mute: #7c6ea6;
+
+  --ak-pink: #ff2d95;          /* the brand colour: primary buttons, the sign */
+  --ak-cyan: #19e3ff;          /* links, focus, secondary */
+  --ak-lime: #b6ff2e;          /* wins, online, go */
+  --ak-yellow: #ffd400;        /* gold, first place, tickets */
+  --ak-orange: #ff7a1a;        /* hot, streaks */
+  --ak-purple: #9b5cff;        /* rare, cosmetics */
+  --ak-red: #ff3b4e;           /* losses, errors only */
+
+  --ak-glow-pink: 0 0 6px rgba(255, 45, 149, .9), 0 0 18px rgba(255, 45, 149, .55), 0 0 36px rgba(255, 45, 149, .3);
+  --ak-glow-cyan: 0 0 6px rgba(25, 227, 255, .9), 0 0 18px rgba(25, 227, 255, .5), 0 0 36px rgba(25, 227, 255, .25);
+  --ak-glow-lime: 0 0 6px rgba(182, 255, 46, .9), 0 0 18px rgba(182, 255, 46, .45);
+  --ak-glow-yellow: 0 0 6px rgba(255, 212, 0, .9), 0 0 18px rgba(255, 212, 0, .45);
+
+  --ak-disp: "Bungee", "Arial Black", Impact, sans-serif;
+  --ak-sign: "Monoton", "Bungee", sans-serif;
+  --ak-body: "Rubik", system-ui, sans-serif;
+  --ak-r: 14px;
+  --ak-carpet: url("carpet.svg");
+}
+
+/* ------------------------------------------------------------------ the room */
+.ak-room { background: var(--ak-ink) var(--ak-carpet) 0 0 / 240px 240px; color: var(--ak-text); font: 400 15px/1.55 var(--ak-body); }
+.ak-room::before { /* the dark vignette that keeps the carpet behind the content, not in front of it */
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(1200px 700px at 50% 0%, rgba(10, 6, 20, .55), rgba(10, 6, 20, .88) 70%), linear-gradient(rgba(10, 6, 20, .35), rgba(10, 6, 20, .35));
+}
+.ak-room > * { position: relative; z-index: 1; }
+.ak-room a { color: var(--ak-cyan); }
+.ak-room :focus-visible { outline: 3px solid var(--ak-cyan); outline-offset: 2px; }
+
+/* ------------------------------------------------------------------ type */
+.ak-h1, .ak-h2, .ak-h3 { font-family: var(--ak-disp); font-weight: 400; letter-spacing: .02em; margin: 0; line-height: 1.05; }
+.ak-h1 { font-size: clamp(30px, 5vw, 52px); }
+.ak-h2 { font-size: 26px; }
+.ak-h3 { font-size: 17px; }
+.ak-eyebrow { font: 700 12px var(--ak-body); text-transform: uppercase; letter-spacing: .16em; color: var(--ak-cyan); }
+.ak-num { font-family: var(--ak-disp); font-variant-numeric: tabular-nums; }
+.ak-neon { color: #fff; text-shadow: var(--ak-glow-pink); }
+.ak-neon.cyan { text-shadow: var(--ak-glow-cyan); }
+.ak-neon.lime { text-shadow: var(--ak-glow-lime); }
+.ak-neon.yellow { text-shadow: var(--ak-glow-yellow); }
+
+/* the sign: the wordmark in tube letters, with a rare flicker */
+.ak-sign { font: 400 clamp(40px, 8vw, 92px)/1 var(--ak-sign); color: #ffe6f4; text-shadow: var(--ak-glow-pink); letter-spacing: .04em; margin: 0; }
+.ak-sign b { font-weight: 400; color: #e6fbff; text-shadow: var(--ak-glow-cyan); }
+.ak-sign .flick { animation: ak-flicker 7s infinite; }
+@keyframes ak-flicker { 0%, 91%, 93%, 96%, 100% { opacity: 1; } 92%, 95% { opacity: .35; } }
+
+/* ------------------------------------------------------------------ marquee bulbs */
+.ak-bulbs { --c1: var(--ak-yellow); --c2: #5a4a10; height: 12px; border-radius: 6px;
+  background: radial-gradient(circle at 6px 6px, var(--c1) 3.5px, transparent 4.5px) 0 0 / 24px 12px,
+              radial-gradient(circle at 18px 6px, var(--c2) 3.5px, transparent 4.5px) 0 0 / 24px 12px;
+  filter: drop-shadow(0 0 4px rgba(255, 212, 0, .6)); animation: ak-chase .6s steps(2) infinite; }
+@keyframes ak-chase { to { background-position: 24px 0, 24px 0; } }
+.ak-bulbs.pink { --c1: var(--ak-pink); --c2: #5a1036; filter: drop-shadow(0 0 4px rgba(255, 45, 149, .6)); }
+
+/* the LED strip: a slow colour run along an edge */
+.ak-led { height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--ak-pink), var(--ak-orange), var(--ak-yellow), var(--ak-lime), var(--ak-cyan), var(--ak-purple), var(--ak-pink)) 0 0 / 200% 100%;
+  box-shadow: 0 0 10px rgba(255, 45, 149, .5); animation: ak-run 6s linear infinite; }
+@keyframes ak-run { to { background-position: 200% 0; } }
+
+/* ------------------------------------------------------------------ buttons: chunky, lit, they press in */
+.ak-btn { --b: var(--ak-pink); --bd: #a3105c; --t: #fff;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 12px;
+  font: 400 15px var(--ak-disp); letter-spacing: .03em; color: var(--t); background: linear-gradient(180deg, color-mix(in srgb, var(--b) 85%, #fff), var(--b));
+  box-shadow: 0 5px 0 var(--bd), 0 8px 18px rgba(0, 0, 0, .5), 0 0 18px color-mix(in srgb, var(--b) 45%, transparent);
+  cursor: pointer; transition: transform .08s, box-shadow .08s, filter .15s; text-decoration: none; }
+.ak-btn:hover { filter: brightness(1.12); }
+.ak-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--bd), 0 3px 8px rgba(0, 0, 0, .5), 0 0 12px color-mix(in srgb, var(--b) 45%, transparent); }
+.ak-btn.cyan { --b: var(--ak-cyan); --bd: #0a7c8f; --t: #06121a; }
+.ak-btn.lime { --b: var(--ak-lime); --bd: #5f8a10; --t: #0f1a04; }
+.ak-btn.yellow { --b: var(--ak-yellow); --bd: #9a7c00; --t: #1a1400; }
+.ak-btn.ghost { background: transparent; color: var(--ak-cyan); box-shadow: inset 0 0 0 2px var(--ak-cyan), 0 0 14px rgba(25, 227, 255, .25); }
+.ak-btn.ghost:active { transform: none; }
+.ak-btn.sm { min-height: 32px; padding: 0 12px; font-size: 12.5px; border-radius: 9px; box-shadow: 0 3px 0 var(--bd), 0 0 12px color-mix(in srgb, var(--b) 35%, transparent); }
+.ak-btn.sm.ghost { box-shadow: inset 0 0 0 2px var(--ak-cyan); }
+.ak-btn.big { min-height: 64px; padding: 0 34px; font-size: 22px; border-radius: 16px; }
+.ak-btn:disabled { filter: grayscale(1) brightness(.6); cursor: not-allowed; transform: none; }
+.ak-btn.round { width: 44px; padding: 0; border-radius: 50%; }
+/* the round arcade push button, for the one big action on a screen */
+.ak-push { width: 92px; height: 92px; border-radius: 50%; border: 0; cursor: pointer; font: 400 14px var(--ak-disp); color: #fff;
+  background: radial-gradient(circle at 40% 32%, #ff9ccc, var(--ak-pink) 45%, #a3105c 75%);
+  box-shadow: 0 0 0 6px #241434, 0 0 0 9px #3a2a66, 0 8px 0 9px #120a24, 0 0 30px rgba(255, 45, 149, .6); transition: transform .08s; }
+.ak-push:active { transform: translateY(5px) scale(.98); }
+
+/* ------------------------------------------------------------------ panels */
+.ak-panel { background: linear-gradient(180deg, rgba(28, 18, 54, .92), rgba(18, 10, 36, .94)); border-radius: var(--ak-r); padding: 16px;
+  box-shadow: inset 0 0 0 1.5px var(--ak-line), 0 0 0 1px rgba(0, 0, 0, .6), 0 12px 30px rgba(0, 0, 0, .45); position: relative; backdrop-filter: blur(4px); }
+.ak-panel.lit { box-shadow: inset 0 0 0 2px var(--ak-pink), 0 0 22px rgba(255, 45, 149, .35), 0 12px 30px rgba(0, 0, 0, .45); }
+.ak-panel.lit.cyan { box-shadow: inset 0 0 0 2px var(--ak-cyan), 0 0 22px rgba(25, 227, 255, .3), 0 12px 30px rgba(0, 0, 0, .45); }
+.ak-panel-head { display: flex; align-items: center; gap: 10px; margin: -2px 0 12px; }
+.ak-panel-head .ak-h3 { flex: 1; }
+.ak-panel-head::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ak-lime); box-shadow: var(--ak-glow-lime); }
+
+/* the cabinet: a panel with a lit marquee across the top, for anything that IS a game */
+.ak-cab { border-radius: 18px 18px var(--ak-r) var(--ak-r); overflow: hidden; background: var(--ak-deep); box-shadow: inset 0 0 0 2px var(--ak-line), 0 14px 34px rgba(0, 0, 0, .5); }
+.ak-cab-marq { --g: var(--ak-pink); padding: 14px 14px 12px; text-align: center; font: 400 20px var(--ak-disp); color: #fff; text-shadow: 0 0 10px var(--g);
+  background: radial-gradient(120% 140% at 50% 0%, color-mix(in srgb, var(--g) 55%, #fff 0%), color-mix(in srgb, var(--g) 22%, #0a0614) 70%); border-bottom: 3px solid var(--g); box-shadow: 0 6px 22px color-mix(in srgb, var(--g) 40%, transparent); }
+.ak-cab-body { padding: 14px; }
+
+/* ------------------------------------------------------------------ tabs, chips, badges, toggles, inputs */
+.ak-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #0a0614; box-shadow: inset 0 0 0 1.5px var(--ak-line); }
+.ak-tab { flex: 1; min-height: 34px; border: 0; border-radius: 9px; background: none; color: var(--ak-dim); font: 700 13px var(--ak-body); text-transform: uppercase; letter-spacing: .08em; cursor: pointer; }
+.ak-tab[aria-selected="true"] { color: #fff; background: linear-gradient(180deg, #ff5aaf, var(--ak-pink)); box-shadow: 0 0 14px rgba(255, 45, 149, .5); }
+.ak-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--ak-raise); box-shadow: inset 0 0 0 1.5px var(--ak-line); font: 600 12.5px var(--ak-body); color: var(--ak-dim); }
+.ak-chip.on { color: #06121a; background: var(--ak-cyan); box-shadow: 0 0 12px rgba(25, 227, 255, .5); }
+.ak-badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font: 400 11px var(--ak-disp); letter-spacing: .06em; color: #0a0614; background: var(--ak-yellow); vertical-align: middle; }
+.ak-badge.live { background: var(--ak-red); color: #fff; animation: ak-pulse 1.4s ease-in-out infinite; }
+.ak-badge.new { background: var(--ak-lime); }
+.ak-badge.hot { background: var(--ak-orange); color: #fff; }
+.ak-badge.rare { background: var(--ak-purple); color: #fff; }
+@keyframes ak-pulse { 50% { box-shadow: 0 0 12px rgba(255, 59, 78, .8); } }
+.ak-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--ak-lime); box-shadow: var(--ak-glow-lime); }
+.ak-dot.away { background: var(--ak-yellow); box-shadow: var(--ak-glow-yellow); }
+.ak-dot.off { background: var(--ak-mute); box-shadow: none; }
+.ak-toggle { position: relative; width: 52px; height: 28px; border-radius: 999px; border: 0; background: var(--ak-raise); box-shadow: inset 0 0 0 1.5px var(--ak-line); cursor: pointer; }
+.ak-toggle::after { content: ""; position: absolute; top: 4px; left: 4px; width: 20px; height: 20px; border-radius: 50%; background: var(--ak-mute); transition: left .15s, background .15s; }
+.ak-toggle[aria-pressed="true"] { background: #0f2a10; box-shadow: inset 0 0 0 1.5px var(--ak-lime), 0 0 12px rgba(182, 255, 46, .35); }
+.ak-toggle[aria-pressed="true"]::after { left: 28px; background: var(--ak-lime); box-shadow: var(--ak-glow-lime); }
+.ak-input { width: 100%; box-sizing: border-box; min-height: 42px; padding: 0 14px; border-radius: 10px; border: 0; background: #0a0614; color: var(--ak-text); font: 500 14.5px var(--ak-body); box-shadow: inset 0 0 0 1.5px var(--ak-line); }
+.ak-input:focus { outline: none; box-shadow: inset 0 0 0 2px var(--ak-cyan), 0 0 14px rgba(25, 227, 255, .3); }
+
+/* ------------------------------------------------------------------ the high-score board */
+.ak-board { display: grid; gap: 5px; counter-reset: rank; margin: 0; padding: 0; list-style: none; }
+.ak-board li { display: grid; grid-template-columns: 38px 34px 1fr auto; align-items: center; gap: 10px; padding: 7px 12px 7px 8px; border-radius: 10px; background: var(--ak-raise); counter-increment: rank; }
+.ak-board li::before { content: counter(rank); font: 400 18px var(--ak-disp); text-align: center; color: var(--ak-dim); }
+.ak-board li:nth-child(1)::before { color: var(--ak-yellow); text-shadow: var(--ak-glow-yellow); }
+.ak-board li:nth-child(2)::before { color: #dfe6ff; text-shadow: 0 0 8px rgba(223, 230, 255, .7); }
+.ak-board li:nth-child(3)::before { color: var(--ak-orange); text-shadow: 0 0 8px rgba(255, 122, 26, .7); }
+.ak-board li:nth-child(1) { background: linear-gradient(90deg, rgba(255, 212, 0, .18), var(--ak-raise) 60%); box-shadow: inset 0 0 0 1.5px rgba(255, 212, 0, .5); }
+.ak-board li.me { box-shadow: inset 0 0 0 2px var(--ak-cyan), 0 0 14px rgba(25, 227, 255, .3); }
+.ak-board b { font: 600 14.5px var(--ak-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ak-board .ak-num { font-size: 16px; color: var(--ak-lime); text-shadow: 0 0 8px rgba(182, 255, 46, .5); }
+
+/* ------------------------------------------------------------------ people */
+.ak-av { --ring: var(--ak-cyan); width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 400 14px var(--ak-disp); color: #fff; overflow: hidden; position: relative;
+  background: linear-gradient(135deg, var(--ak-purple), var(--ak-pink)); box-shadow: 0 0 0 2px var(--ak-ink), 0 0 0 4px var(--ring), 0 0 12px color-mix(in srgb, var(--ring) 60%, transparent); }
+.ak-av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ak-av.lg { width: 76px; height: 76px; font-size: 28px; }
+.ak-player { display: flex; align-items: center; gap: 14px; }
+.ak-player .who { flex: 1; min-width: 0; }
+.ak-player .who b { display: block; font: 400 19px var(--ak-disp); }
+.ak-player .who span { color: var(--ak-dim); font-size: 13.5px; }
+.ak-xp { height: 10px; border-radius: 5px; background: #0a0614; box-shadow: inset 0 0 0 1.5px var(--ak-line); overflow: hidden; margin-top: 6px; }
+.ak-xp i { display: block; height: 100%; width: var(--p, 50%); background: linear-gradient(90deg, var(--ak-cyan), var(--ak-lime)); box-shadow: 0 0 10px rgba(182, 255, 46, .6); }
+.ak-roster { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.ak-roster li { display: flex; align-items: center; gap: 10px; padding: 5px 6px; border-radius: 9px; }
+.ak-roster li:hover { background: var(--ak-raise); }
+.ak-roster b { font: 600 14px var(--ak-body); }
+.ak-roster small { flex: 1; color: var(--ak-mute); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ak-roster .me b { color: var(--ak-cyan); }
+
+/* ------------------------------------------------------------------ chat */
+.ak-chat { display: grid; gap: 6px; max-height: 220px; overflow: auto; padding-right: 4px; font-size: 14px; }
+.ak-chat p { margin: 0; padding: 6px 10px; border-radius: 4px 12px 12px 12px; background: var(--ak-raise); width: fit-content; max-width: 92%; }
+.ak-chat p b { color: var(--c, var(--ak-cyan)); margin-right: 6px; font-weight: 700; }
+.ak-chat p.me { margin-left: auto; border-radius: 12px 4px 12px 12px; background: #2a0f2a; box-shadow: inset 0 0 0 1.5px rgba(255, 45, 149, .5); }
+.ak-chat p.sys { background: none; color: var(--ak-mute); font-style: italic; padding: 0 2px; }
+.ak-chatform { display: flex; gap: 8px; margin-top: 10px; }
+
+/* ------------------------------------------------------------------ toasts */
+.ak-toasts { position: absolute; left: 14px; top: 14px; display: grid; gap: 8px; width: min(340px, calc(100% - 28px)); pointer-events: none; z-index: 5; }
+.ak-toast { --t: var(--ak-cyan); display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; background: rgba(12, 6, 24, .92);
+  box-shadow: inset 4px 0 0 var(--t), inset 0 0 0 1.5px color-mix(in srgb, var(--t) 50%, transparent), 0 0 18px color-mix(in srgb, var(--t) 30%, transparent);
+  font: 500 13.5px var(--ak-body); animation: ak-in .35s cubic-bezier(.2, 1.4, .4, 1); }
+.ak-toast i { font-style: normal; font-size: 20px; }
+.ak-toast b { color: #fff; }
+.ak-toast.gold { --t: var(--ak-yellow); }
+.ak-toast.pink { --t: var(--ak-pink); }
+.ak-toast.lime { --t: var(--ak-lime); }
+.ak-toast.out { opacity: 0; transform: translateX(-12px); transition: opacity .5s, transform .5s; }
+@keyframes ak-in { from { opacity: 0; transform: translateX(-24px) scale(.96); } }
+
+/* ------------------------------------------------------------------ game cards: a cabinet front you can click */
+.ak-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.ak-game { --g: var(--ak-pink); display: grid; text-decoration: none; color: var(--ak-text); border-radius: 16px 16px 12px 12px; overflow: hidden; background: var(--ak-deep);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--g) 50%, var(--ak-line)), 0 10px 26px rgba(0, 0, 0, .5); transition: transform .15s, box-shadow .15s; }
+.ak-game:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 2px var(--g), 0 0 26px color-mix(in srgb, var(--g) 45%, transparent), 0 14px 30px rgba(0, 0, 0, .5); }
+.ak-game .marq { padding: 10px 8px; text-align: center; font: 400 15px var(--ak-disp); color: #fff; text-shadow: 0 0 10px var(--g); background: color-mix(in srgb, var(--g) 35%, #0a0614); border-bottom: 2px solid var(--g); }
+.ak-game .screen { aspect-ratio: 4 / 3; margin: 10px 10px 0; border-radius: 10px; display: grid; place-items: center; font-size: 46px; position: relative; overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--g) 40%, #0a0614), #05030b 75%); box-shadow: inset 0 0 0 3px #05030b, inset 0 0 24px rgba(0, 0, 0, .8); }
+.ak-game .screen::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .04) 0 2px, transparent 2px 4px); pointer-events: none; }
+.ak-game .foot { display: flex; align-items: center; gap: 8px; padding: 10px 12px 12px; font-size: 12.5px; color: var(--ak-dim); }
+.ak-game .foot > span:first-child { flex: 1; }
+.ak-game.soon { filter: saturate(.5) brightness(.75); }
+.ak-game.soon:hover { transform: none; }
+
+/* ------------------------------------------------------------------ HUD pieces (inside a game) */
+.ak-score { display: inline-grid; padding: 8px 16px 10px; border-radius: 12px; background: rgba(5, 3, 11, .8); box-shadow: inset 0 0 0 2px var(--ak-line); text-align: center; }
+.ak-score small { font: 700 11px var(--ak-body); letter-spacing: .16em; text-transform: uppercase; color: var(--ak-dim); }
+.ak-score b { font: 400 34px/1 var(--ak-disp); color: var(--ak-yellow); text-shadow: var(--ak-glow-yellow); font-variant-numeric: tabular-nums; }
+.ak-timer { --p: 70; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font: 400 20px var(--ak-disp);
+  background: radial-gradient(closest-side, #0a0614 78%, transparent 80% 100%), conic-gradient(var(--ak-lime) calc(var(--p) * 1%), #2a2040 0); filter: drop-shadow(0 0 8px rgba(182, 255, 46, .4)); }
+.ak-burst { display: inline-block; font: 400 44px var(--ak-disp); color: #fff; -webkit-text-stroke: 2px var(--ak-pink); text-shadow: 0 4px 0 #a3105c, var(--ak-glow-pink); transform: rotate(-6deg); animation: ak-pop 1.6s ease-in-out infinite; }
+@keyframes ak-pop { 0%, 100% { transform: rotate(-6deg) scale(1); } 50% { transform: rotate(-4deg) scale(1.08); } }
+
+/* ------------------------------------------------------------------ the modal */
+.ak-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: rgba(5, 3, 11, .78); backdrop-filter: blur(6px); }
+.ak-modal[hidden] { display: none; }
+.ak-modal > div { width: min(420px, calc(100% - 32px)); text-align: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ak-room *, .ak-room *::before, .ak-room *::after { animation: none !important; transition: none !important; }
+}
+
+/* ------------------------------------------------------------------ THE ARCADE SHELL (arcade.js): the chrome every game in the arcade
+   wears inside its stage. Menu top left, you top right, chat bottom left (like EastScape's), windows in the middle. */
+.ak-stage { position: relative; }
+.ak-hud { position: absolute; inset: 0; pointer-events: none; z-index: 4; font: 400 14px/1.45 var(--ak-body); color: var(--ak-text); }
+.ak-hud > * { pointer-events: auto; }
+.ak-hud-tl { position: absolute; left: 12px; top: 12px; display: flex; align-items: center; gap: 8px; }
+.ak-roomchip { padding: 5px 12px; border-radius: 999px; background: rgba(10, 6, 20, .78); font: 400 12.5px var(--ak-disp); letter-spacing: .04em; box-shadow: inset 0 0 0 1.5px var(--ak-line); }
+.ak-hud-tr { position: absolute; right: 12px; top: 12px; display: flex; align-items: center; gap: 8px; }
+.ak-me { display: flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; background: rgba(10, 6, 20, .8); box-shadow: inset 0 0 0 1.5px var(--ak-line); }
+.ak-me b { font: 600 13.5px var(--ak-body); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ak-me small { color: var(--ak-mute); font-size: 11.5px; }
+.ak-me:has(.ak-btn) { padding: 0; background: none; box-shadow: none; }
+.ak-av.sm { width: 28px; height: 28px; font-size: 12px; }
+.ak-av.xs { width: 20px; height: 20px; font-size: 10px; box-shadow: 0 0 0 1.5px var(--ring); flex: none; }
+.ak-np { display: flex; align-items: center; gap: 8px; max-width: 220px; padding: 6px 12px; border: 0; border-radius: 999px; cursor: pointer; background: rgba(10, 6, 20, .8);
+  color: var(--ak-lime); font: 600 12.5px var(--ak-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: inset 0 0 0 1.5px rgba(182, 255, 46, .45); }
+.ak-np[hidden] { display: none; }
+.ak-eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; flex: none; }
+.ak-eq i { width: 3px; height: 100%; background: var(--ak-lime); border-radius: 1px; animation: ak-eq .9s ease-in-out infinite; transform-origin: bottom; }
+.ak-eq i:nth-child(2) { animation-delay: -.3s; } .ak-eq i:nth-child(3) { animation-delay: -.6s; }
+.ak-eq.off i { animation: none; transform: scaleY(.3); background: var(--ak-mute); }
+@keyframes ak-eq { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+.ak-toasts-hud { top: 60px; left: 12px; }
+/* chat: bottom left, a button and a box above it */
+.ak-hud-bl { position: absolute; left: 12px; bottom: 12px; display: grid; justify-items: start; gap: 8px; width: min(360px, calc(100% - 24px)); pointer-events: none; }
+.ak-hud-bl > * { pointer-events: auto; }
+.ak-chatbtn { position: relative; font-size: 18px; }
+.ak-unread { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--ak-red); color: #fff; font: 700 11px/18px var(--ak-body); box-shadow: 0 0 10px rgba(255, 59, 78, .7); }
+.ak-unread[hidden] { display: none; }
+.ak-chatbox { width: 100%; box-sizing: border-box; padding: 10px; background: rgba(12, 6, 26, .86); }
+.ak-chatbox[hidden] { display: none; }
+.ak-chatbox .ak-chat { height: 190px; max-height: none; font-size: 13.5px; }
+.ak-chatbox .ak-chat p { display: block; }
+.ak-chatbox .ak-chat p .ak-av.xs { display: inline-grid; vertical-align: -5px; margin-right: 6px; }
+.ak-chat p small { color: var(--ak-mute); font-size: 11.5px; margin-right: 6px; }
+.ak-chatbox .ak-chatform { margin-top: 8px; }
+.ak-chatbox .ak-input { min-height: 36px; font-size: 13.5px; }
+/* windows: the menu, settings, the jukebox */
+.ak-overlay { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; padding: 14px; background: rgba(5, 3, 11, .66); backdrop-filter: blur(5px); }
+.ak-overlay[hidden] { display: none; }
+.ak-win { width: min(560px, 100%); max-height: calc(100% - 10px); overflow: auto; box-sizing: border-box; padding: 18px 20px 20px; animation: ak-in .25s cubic-bezier(.2, 1.4, .4, 1); }
+.ak-win-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.ak-menu-main { display: grid; gap: 10px; }
+.ak-menu-main .ak-btn { width: 100%; }
+.ak-menu-games { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.ak-mg { --g: var(--ak-pink); display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; text-align: left; padding: 9px 12px; border: 0; border-radius: 12px; cursor: pointer;
+  background: var(--ak-raise); color: var(--ak-text); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--g) 45%, var(--ak-line)); }
+.ak-mg i { grid-row: span 2; font-style: normal; font-size: 24px; }
+.ak-mg b { font: 400 13px var(--ak-disp); }
+.ak-mg small { color: var(--ak-dim); font-size: 12px; }
+.ak-mg:hover { box-shadow: inset 0 0 0 2px var(--g), 0 0 14px color-mix(in srgb, var(--g) 40%, transparent); }
+.ak-mg.here { box-shadow: inset 0 0 0 2px var(--g); }
+.ak-mg.soon { opacity: .55; }
+.ak-menu-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }
+.ak-menu-foot small { color: var(--ak-mute); }
+.ak-sets { display: grid; gap: 16px; }
+.ak-sets section { display: grid; gap: 6px; }
+.ak-set { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 10px; background: var(--ak-raise); }
+.ak-set > span:first-child small { display: block; color: var(--ak-mute); font-size: 12px; }
+.ak-set input[type=range] { width: 160px; accent-color: var(--ak-pink); }
+.ak-set output { min-width: 34px; text-align: right; font: 400 13px var(--ak-disp); color: var(--ak-lime); }
+.ak-set .ak-toggle { grid-column: 2 / 4; justify-self: end; }
+.ak-seg { grid-column: 2 / 4; justify-self: end; display: flex; gap: 4px; }
+.ak-seg .ak-chip { cursor: pointer; border: 0; text-transform: capitalize; }
+.ak-note { margin: 6px 0; color: var(--ak-dim); font-size: 13px; }
+.ak-opick { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.ak-opick .ak-chip { border: 0; cursor: pointer; }
+.ak-help { color: var(--ak-dim); }
+.ak-help b { color: var(--ak-text); }
+.ak-juke-now { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #0a0614; box-shadow: inset 0 0 0 1.5px rgba(182, 255, 46, .4); }
+.ak-juke-now > div { flex: 1; min-width: 0; }
+.ak-juke-now b { display: block; font: 400 16px var(--ak-disp); }
+.ak-juke-now small { color: var(--ak-dim); font-size: 12.5px; }
+.ak-juke-now .ak-eq { height: 22px; } .ak-juke-now .ak-eq i { width: 4px; }
+.ak-juke-list { display: grid; gap: 5px; max-height: 240px; overflow: auto; margin: 8px 0 12px; }
+.ak-station { display: grid; grid-template-columns: 1fr auto; text-align: left; gap: 0 10px; padding: 8px 12px; border: 0; border-radius: 10px; cursor: pointer; background: var(--ak-raise); color: var(--ak-text); }
+.ak-station b { font: 600 14px var(--ak-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ak-station small { grid-row: 2; color: var(--ak-mute); font-size: 12px; }
+.ak-station span { grid-row: span 2; align-self: center; color: var(--ak-lime); }
+.ak-station:hover { box-shadow: inset 0 0 0 2px var(--ak-lime); }
+@media (max-width: 640px) { .ak-roomchip { display: none; } .ak-me b { max-width: 90px; } .ak-chatbox .ak-chat { height: 130px; } }
+/* who's online: a button beside you, a drop-down of every room */
+.ak-hud-tr { flex-wrap: wrap; justify-content: flex-end; }
+.ak-whobtn { display: flex; align-items: center; gap: 7px; padding: 7px 12px; border: 0; border-radius: 999px; cursor: pointer; background: rgba(10, 6, 20, .8); color: var(--ak-text);
+  font: 600 13px var(--ak-body); box-shadow: inset 0 0 0 1.5px var(--ak-line); }
+.ak-whobtn b { font: 400 14px var(--ak-disp); color: var(--ak-lime); }
+.ak-whobtn[aria-expanded="true"], .ak-whobtn:hover { box-shadow: inset 0 0 0 2px var(--ak-lime), 0 0 14px rgba(182, 255, 46, .3); }
+.ak-who { position: absolute; top: calc(100% + 8px); right: 0; width: min(330px, calc(100vw - 24px)); max-height: min(420px, 70vh); overflow: auto; box-sizing: border-box; padding: 12px; background: rgba(12, 6, 26, .95); animation: ak-in .2s ease-out; }
+.ak-who[hidden] { display: none; }
+.ak-who .ak-eyebrow { margin: 0 0 8px; }
+.ak-who-room + .ak-who-room { margin-top: 10px; }
+.ak-who-head { --g: var(--ak-cyan); display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 10px; border-radius: 9px; background: color-mix(in srgb, var(--g) 16%, var(--ak-raise)); box-shadow: inset 3px 0 0 var(--g); }
+.ak-who-head span { flex: 1; font: 400 13px var(--ak-disp); }
+.ak-who-head small { color: var(--ak-dim); font: 600 12px var(--ak-body); }
+.ak-who .ak-roster { margin-top: 4px; }
+.ak-who .ak-roster li { padding: 4px 6px; }
+/* a character speaking in a window (the prize clerk) */
+.ak-npcsay { display: flex; gap: 12px; align-items: flex-start; margin: 0 0 14px; }
+.ak-npcsay .ak-av { width: 44px; height: 44px; font-size: 22px; flex: none; background: var(--ak-raise); }
+.ak-npcsay p { margin: 0; padding: 10px 14px; border-radius: 4px 14px 14px 14px; background: var(--ak-raise); color: var(--ak-text); box-shadow: inset 0 0 0 1.5px rgba(182, 255, 46, .35); }
+.ak-npcsay p b { display: block; font: 400 13px var(--ak-disp); color: var(--ak-lime); margin-bottom: 2px; }
+.ak-btn:disabled.ghost { box-shadow: inset 0 0 0 2px var(--ak-line); color: var(--ak-mute); filter: none; }
+/* framed inside eastcoin.vip (?embed=1): the game is the whole page */
+html.ak-embed body { background: #05030b; }
+html.ak-embed main { max-width: none; padding: 0; }
+html.ak-embed main > :not(.wrap), html.ak-embed .wrap > :not(:first-child), html.ak-embed .keys { display: none !important; }
+html.ak-embed .wrap { display: block; }
+html.ak-embed .stage { height: 100vh; height: 100dvh; min-height: 0; border-radius: 0; box-shadow: none; }
+html.ak-embed .ak-room::before { display: none; }
+/* touch: a stick bottom left, buttons bottom right; the chat dock moves up above the stick */
+.ak-touch { display: none; }
+.ak-touching .ak-touch { display: block; }
+.ak-touching .ak-hud-bl { bottom: 168px; }
+.ak-touching .ak-chatbox .ak-chat { height: 120px; }
+.ak-stick { position: absolute; left: 22px; bottom: 22px; width: 128px; height: 128px; border-radius: 50%; touch-action: none; pointer-events: auto;
+  background: radial-gradient(circle, rgba(25, 227, 255, .10), rgba(10, 6, 20, .55) 70%); box-shadow: inset 0 0 0 2px rgba(25, 227, 255, .45), 0 0 18px rgba(25, 227, 255, .2); }
+.ak-stick i { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8ff4ff, var(--ak-cyan) 55%, #0a7c8f);
+  box-shadow: 0 0 14px rgba(25, 227, 255, .6); }
+.ak-tbtns { position: absolute; right: 18px; bottom: 22px; display: grid; grid-template-columns: repeat(2, auto); gap: 14px; align-items: end; pointer-events: auto; }
+.ak-tbtn { width: 74px; height: 74px; border: 0; border-radius: 50%; touch-action: none; user-select: none; -webkit-user-select: none; font: 400 15px var(--ak-disp); color: #fff;
+  background: radial-gradient(circle at 40% 32%, #ff9ccc, var(--ak-pink) 50%, #a3105c); box-shadow: 0 6px 0 #6a0a3c, 0 0 18px rgba(255, 45, 149, .5); }
+.ak-tbtn.alt { width: 60px; height: 60px; font-size: 13px; background: radial-gradient(circle at 40% 32%, #b8ffe9, var(--ak-lime) 50%, #5f8a10); color: #0f1a04; box-shadow: 0 5px 0 #3a5a08, 0 0 16px rgba(182, 255, 46, .45); }
+.ak-tbtn.on { transform: translateY(4px); box-shadow: 0 2px 0 #6a0a3c, 0 0 24px rgba(255, 45, 149, .8); }
+.ak-touching .ak-hud-tr .ak-me b { max-width: 70px; }

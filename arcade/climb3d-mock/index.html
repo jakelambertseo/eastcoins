@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>The Climb</title>
+<!-- (2026-10-07, the owner: "100 total levels… a giant dungeon… the parkour takes place mainly on the edges, and if you fall in the middle you
+     start over"). First slice: zone 1, The Cellar, floors 1-10 and the landing room. climb.js; models.js (KayKit Dungeon, Kenney Platformer,
+     the Tycoon's Kenney characters, all CC0); sounds from ../parkour3d-mock/look.js. DESIGN.md has the whole tower. Saves in this browser.
+     Nothing calls /api/: the other climbers are bots standing in for the live room. Local only; built into /gameplan. -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<!-- the arcade's shell (menu, settings, chat, you): the Arcade Kit's faces and sheet. The page around the game moves onto the kit next. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="../arcade-kit/kit.css?v=4">
+<script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("ak-embed");   /* framed inside eastcoin.vip */</script>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }</script>
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0912;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 8% -10%,#2a1a10,transparent),radial-gradient(900px 600px at 100% 30%,#1a1030,transparent),#0b0912}
+main{max-width:1320px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 38px/1.1 Cinzel,Georgia,serif;color:#ffd27a}
+.lede{margin:0 0 14px;color:#cdc2a8;max-width:1000px;line-height:1.6}.lede b{color:#fff0cc}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}@media (max-width:1050px){.wrap{grid-template-columns:1fr}}
+.stage{position:relative;border-radius:12px;overflow:hidden;box-shadow:0 0 0 2px #4a2a1a,0 14px 40px rgba(0,0,0,.6);background:#0c0a10;height:min(72vh,680px);min-height:420px}
+.stage canvas{display:block;width:100%;height:100%;outline:none;touch-action:none;cursor:grab}
+.thud{position:absolute;left:14px;top:58px;display:grid;gap:2px;pointer-events:none;color:#fff;text-shadow:0 2px 6px #000}
+.thud .fl{display:flex;align-items:center;gap:6px;font:900 30px Cinzel,serif;color:#ffd27a}.thud .fl img{width:34px;height:34px}.thud small{display:flex;align-items:center;gap:5px}.thud small img{width:20px;height:20px}.thud .zn{display:flex;align-items:center;gap:6px}.thud .zi{width:26px;height:26px}
+h1 .logo{display:block;height:auto;max-width:min(384px,80vw);filter:drop-shadow(0 6px 14px rgba(0,0,0,.6))}.thud .zn{font:800 14px Lora,serif;color:#f0e6cc}.thud small{font:700 12.5px Lora,serif;color:#cdc2a8}
+#hudMsg{position:absolute;left:0;right:0;top:30%;text-align:center;font:900 30px Cinzel,serif;color:#ffd27a;text-shadow:0 3px 10px #000;pointer-events:none}
+/* the height bar: the zone's ten floors, you and everyone else on it */
+#bar{position:absolute;right:16px;top:60px;bottom:60px;width:10px;border-radius:6px;background:linear-gradient(#3a2a4a,#1a1418);box-shadow:inset 0 0 0 1px #5a4a6a;pointer-events:none}
+#bar .tick{position:absolute;right:16px;transform:translateY(50%);font:800 10px Lora,serif;color:#8a7a9a;font-style:normal}
+#bar .dot{position:absolute;left:50%;width:12px;height:12px;margin-left:-6px;transform:translateY(50%);border-radius:50%;box-shadow:0 0 0 2px #000}
+#bar .dot.me{width:16px;height:16px;margin-left:-8px;background:#ffd27a;box-shadow:0 0 0 2px #000,0 0 10px #ffd27a;z-index:2}
+#bar::after{content:"LANDING";position:absolute;top:-22px;right:-14px;font:800 10px Lora,serif;color:#ffd27a}
+#cleared{position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,6,14,.6);text-align:center;padding:16px}
+#cleared[hidden]{display:none}#cleared .box{max-width:460px;display:grid;gap:10px;justify-items:center}
+#cleared b{font:900 34px Cinzel,serif;color:#ffd27a}#cleared p{margin:0;font:600 15px/1.55 Lora,serif;color:#f0e6cc}
+.keys{font:600 12.5px/1.7 Lora,serif;color:#b8a888;margin-top:8px}.keys kbd{font:800 11.5px Lora,serif;padding:1px 6px;border-radius:4px;background:#24142a;box-shadow:0 0 0 1px #5a2a5a;color:#ffe8b0}
+.side{display:grid;gap:12px}
+#pick{display:flex;flex-wrap:wrap;gap:6px}
+.flo{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:8px}.flo .k-btn{margin:0;padding-left:0;padding-right:0}.flo [data-land]{grid-column:span 5}
+.zl{margin:0;padding:0;list-style:none;font:600 12.5px/1.6 Lora,serif}.zl li{display:flex;align-items:center;gap:8px;margin:2px 0}.zl .ze{width:34px;height:34px;flex:none}.zl li.on{color:#ffd27a;font-weight:800}.zl li.off{opacity:.5}
+</style>
+</head>
+<body>
+<main>
+  <p style="margin:0 0 6px"><a href="../lounge3d-mock/" style="color:#cdb0ff;font:700 13.5px Lora,serif">← Back to the lounge</a></p>
+  <h1><img class="logo" src="img/logo.webp?v=1" alt="The Climb" width="384" onerror="this.replaceWith('The Climb')"></h1>
+  <p class="lede">A 100-floor dungeon tower, climbed together. <b>The ledges are on the walls; the middle is a long way down.</b> Miss a jump and you land
+    wherever you land: a floor below, or ten. Every tenth floor is a landing room whose stone floor catches you, and its brazier saves your place.
+    Built so far: <b>The Cellar</b> (floors 1–10, plain jumping) , <b>The Barracks</b> (11–20: narrow beams, and gaps only the dive crosses), <b>The Well</b> (21–30: chimneys you climb by kicking between two glowing walls), <b>The Forge</b> (31–40: brass platforms to ride across, fire vents to time), <b>The Crypt</b> (41–50: slabs that crumble under you, in the dark), <b>The Clockworks</b> (51–60: turntables, clock hands and conveyor belts), <b>The Frost Vault</b> (61–70: ice that won't let you stop, and falling icicles), <b>The Gale Gallery</b> (71–80: spring pads, and gusts that blow you off the walls), <b>The Chain Hall</b> (81–90: swings you ride and let go of, and maces) and <b>The Storm Spire</b> (91–100: everything at once, and lightning). At the top: the roof, the bell, the crown.</p>
+  <div class="wrap">
+    <div>
+      <div class="stage">
+        <canvas id="cv" tabindex="0" aria-label="The tower. WASD to move, Space to jump, Shift to dive, drag to look around."></canvas>
+        <div class="thud"><span class="fl"><img src="img/icon-ladder.webp?v=1" alt=""><b id="hudFloor">Floor 1</b></span><span class="zn"><img src="img/zone-01-cellar.webp?v=1" alt="" class="zi"><span id="hudZone"></span></span><small><img src="img/icon-boot.webp?v=1" alt=""><span id="hudBest"></span></small><small><img src="img/icon-skull-fall.webp?v=1" alt=""><span id="hudFalls"></span></small></div>
+        <div id="bar"></div>
+        <div id="hudMsg"></div>
+        <div id="cleared" hidden><div class="box"><img src="img/icon-brazier-lit.webp?v=1" alt="" width="110" height="110"><b>The Cellar: cleared</b><p></p><button type="button" class="k-btn sm">Keep exploring</button></div></div>
+      </div>
+      <p class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Space</kbd> jump · <kbd>Shift</kbd> dive (a long, low lunge) · <kbd>Space</kbd> again on a glowing wall to kick · <b>drag</b> or <kbd>Q</kbd>/<kbd>E</kbd> to look ·
+        <kbd>M</kbd> sound · <button type="button" class="k-btn sec sm" id="muteBtn">Sound on</button> <button type="button" class="k-btn sec sm" id="resetBtn">Start over</button></p>
+    </div>
+    <div class="side">
+      <div class="k-win k-paper" id="admin" hidden><div class="k-head"><b>Admin: fly and test</b></div><div class="k-body"></div></div>
+      <div class="k-win k-paper"><div class="k-head"><b>Your climber</b></div><div class="k-body"><div id="pick"></div><p class="k-note" style="margin:8px 0 0">The same characters as Franchise Tycoon.</p></div></div>
+      <div class="k-win k-paper"><div class="k-head"><b>The tower</b></div><div class="k-body"><ol class="zl">
+        <li class="on"><img class="ze" src="img/zone-01-cellar.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Cellar · jumping</li><li class="on"><img class="ze" src="img/zone-02-barracks.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Barracks · beams, the dive</li><li class="on"><img class="ze" src="img/zone-03-well.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Well · wall-kicks</li><li class="on"><img class="ze" src="img/zone-04-forge.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Forge · moving platforms, fire</li>
+        <li class="on"><img class="ze" src="img/zone-05-crypt.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Crypt · crumbling, the dark</li><li class="on"><img class="ze" src="img/zone-06-clockworks.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Clockworks · spinners, belts</li><li class="on"><img class="ze" src="img/zone-07-frost-vault.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Frost Vault · ice</li><li class="on"><img class="ze" src="img/zone-08-gale-gallery.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Gale Gallery · wind, springs</li>
+        <li class="on"><img class="ze" src="img/zone-09-chain-hall.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Chain Hall · swings</li><li class="on"><img class="ze" src="img/zone-10-storm-spire.webp?v=1" alt="" onerror="this.style.visibility='hidden'">The Storm Spire · everything</li></ol></div></div>
+      <div class="k-win k-paper"><div class="k-head"><b>Climbing with you</b></div><div class="k-body"><p class="k-note" style="margin:0;line-height:1.6">Five other climbers are in the tower: bots
+        standing in for the live room, where everyone online shares one tower. You pass through each other; nobody can knock you off. The bar on the right of the
+        tower shows who is where.</p></div></div>
+    </div>
+  </div>
+</main>
+<script type="module" src="climb.js?v=22"></script>
+</body>
+</html>

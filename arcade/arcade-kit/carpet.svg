@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <!-- The lounge carpet: one repeating tile, black with blacklight shapes. Shared by the kit's pages and the 3D lounge floor. -->
+  <rect width="240" height="240" fill="#0b0618"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 34 q10 -14 20 0 t20 0 t20 0" stroke="#ff2d95" stroke-width="5"/>
+    <path d="M150 18 l22 38 h-44 z" stroke="#19e3ff" stroke-width="4.5"/>
+    <circle cx="108" cy="112" r="14" stroke="#9b5cff" stroke-width="5"/>
+    <polyline points="20,160 34,146 48,160 62,146 76,160" stroke="#b6ff2e" stroke-width="5"/>
+    <path d="M168 150 q12 -16 24 0 t24 0" stroke="#19e3ff" stroke-width="5"/>
+    <path d="M60 84 a16 16 0 0 1 28 -10" stroke="#ff7a1a" stroke-width="5"/>
+    <path d="M196 206 a14 14 0 0 1 24 -8" stroke="#ff2d95" stroke-width="4.5"/>
+    <circle cx="52" cy="214" r="9" stroke="#ffd400" stroke-width="4"/>
+    <path d="M120 190 l14 22 h-28 z" stroke="#ff7a1a" stroke-width="4"/>
+    <polyline points="176,86 188,98 200,86 212,98" stroke="#ff2d95" stroke-width="4.5"/>
+  </g>
+  <path d="M220 22 l-8 14 h7 l-6 13 l14 -18 h-8 l6 -9 z" fill="#ffd400"/>
+  <path d="M96 40 l9 -15 l9 15 z" fill="#ff2d95"/>
+  <circle cx="214" cy="128" r="6" fill="#ffd400"/>
+  <circle cx="142" cy="96" r="4" fill="#b6ff2e"/>
+  <circle cx="30" cy="104" r="4" fill="#19e3ff"/>
+  <rect x="80" y="146" width="12" height="12" rx="2" transform="rotate(20 86 152)" fill="#9b5cff"/>
+  <g fill="#f4ecff" opacity=".85"><circle cx="128" cy="60" r="1.8"/><circle cx="12" cy="74" r="1.5"/><circle cx="160" cy="232" r="1.8"/><circle cx="232" cy="170" r="1.5"/><circle cx="88" cy="232" r="1.5"/><circle cx="150" cy="128" r="1.5"/><circle cx="190" cy="54" r="1.4"/><circle cx="40" cy="190" r="1.4"/></g>
+</svg>

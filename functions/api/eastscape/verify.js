@@ -24,5 +24,9 @@ export async function onRequestPost(context) {
   /* THIS is where the game server learns who somebody is — it reads this response, not the ticket it was minted with.
      `role` therefore has to be sent from here or a mod arrives as an ordinary player. `admin` stays beside it because
      older builds of the worker read that alone. */
-  return Response.json({ ok: true, user: { id: String(row.user_id), login: row.login, name: row.display, admin: isAdminLogin(row.login), role: roleOf(row.login), cos } }, { headers: noStore });
+  /* (2026-10-07) the small Twitch picture, for the Arcade's room server (the lounge shows it beside your name and in its chat). EastScape
+     ignores the field. A failed read is just no picture. */
+  let avatar = null;
+  try { const a = await db.prepare(`SELECT avatar_url FROM users WHERE twitch_id = ?`).bind(String(row.user_id)).first(); if (a?.avatar_url) avatar = String(a.avatar_url).replace("-300x300.", "-70x70."); } catch (e) { /* no picture */ }
+  return Response.json({ ok: true, user: { id: String(row.user_id), login: row.login, name: row.display, admin: isAdminLogin(row.login), role: roleOf(row.login), cos, avatar } }, { headers: noStore });
 }

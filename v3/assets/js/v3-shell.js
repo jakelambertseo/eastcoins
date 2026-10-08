@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store", "eastscape"];   /* (2026-09-28) eastscape: the game in the shell, a test */
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store", "eastscape", "lounge", "climb"];   /* (2026-09-28) eastscape: the game in the shell, a test; (2026-10-07) lounge, climb: the arcade framed in the shell */
 
   /* ------------------------------------------------------ loading views
 
@@ -79,6 +79,7 @@
     wrapped: [...LOGOS, "v3-wrapped.js"],
     highlights: ["v3-highlights.js"],
     eastscape: ["v3-eastscape.js"],   /* (2026-09-28) the game framed inside the site, a test, not linked */
+    lounge: ["v3-arcade.js"], climb: ["v3-arcade.js"],   /* (2026-10-07) the arcade framed inside the site, a test, not linked */
     // The store's preview is the real profile card, so it loads the profile script too.
     store: [...LOGOS, "v3-profile.js", "v3-store.js"],
     users: ["eastcoins-music-config.js", "v3-users.js"],
@@ -116,8 +117,10 @@
     multiview: ["MultiView is for members", "Log in with Twitch to watch several streams at once."],
     picks: ["Picks is for members", "Log in with Twitch to make picks and follow the ledger."],
     casino: ["The casino is for members", "Log in with Twitch to play with your ZCoins."],
-    store: ["The store is for members", "Log in with Twitch to spend your ZCoins on your card and profile."]
+    store: ["The store is for members", "Log in with Twitch to spend your ZCoins on your card and profile."],
+    lounge: ["The Lounge is for members", "Log in with Twitch to hang out, chat and play with everyone."]
   };
+  MEMBERS_ONLY.climb = MEMBERS_ONLY.lounge;
   for (const room of ["flip", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing"]) MEMBERS_ONLY[room] = MEMBERS_ONLY.casino;
 
   // True once the first session read has finished, whether it worked or
@@ -288,6 +291,9 @@
     if (/^\/wrapped(\/|$)/i.test(location.pathname)) return "wrapped";
     // /movie/inception and /tv/lost-s1-ep1 are the Movies & TV view.
     if (/^\/(movie|tv)\/./i.test(location.pathname)) return "screen";
+    // /lounge and /climb: the arcade's short addresses (functions/lounge.js, climb.js)
+    const short = location.pathname.match(/^\/(lounge|climb)\/?$/i);
+    if (short) return short[1].toLowerCase();
     const view = new URL(location.href).searchParams.get("view");
     return ROUTES.includes(view) ? view : "events";
   }
@@ -300,6 +306,7 @@
     if (state.route === name) render();
   }
 
+  const SHORT_URL = new Set(["lounge", "climb"]);   // routes with their own short address
   function go(name, { push = true } = {}) {
     if (!ROUTES.includes(name)) name = "events";
     state.route = name;
@@ -307,7 +314,7 @@
     // The game view owns its own URL (/g/<slug>); every other view is
     // reached by name.
     if (push && name !== "game" && name !== "profile" && name !== "wrapped") {
-      const url = name === "events" ? "/" : `/?view=${name}`;
+      const url = name === "events" ? "/" : SHORT_URL.has(name) ? `/${name}` : `/?view=${name}`;
       history.pushState({ view: name }, "", url);
     }
     render();
@@ -317,6 +324,7 @@
     wrapped: "EastCoin Wrapped",
     highlights: "Highlights — EastCoin",
     eastscape: "EastScape — EastCoin",
+    lounge: "The Lounge — EastCoin", climb: "The Climb — EastCoin",
     store: "Store — EastCoin",
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
