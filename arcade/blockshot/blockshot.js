@@ -444,7 +444,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 buildMap(mapKey); reset(); state = "menu"; $("hudGun").textContent = GUNS.ar.n; $("hudMag").textContent = `/ ${GUNS.ar.mag}`; drawProfile(); showMenu("play");
-syncFromServer().then((me2) => { if (me2) { redressMe(); drawProfile(); if (!$("over").hidden) drawMenu(); } });
+syncFromServer().then((me2) => { if (me2) { redressMe(); drawProfile(); } if (!$("over").hidden) drawMenu(); });   // redrawn for a guest too: that is when the sign-in row appears
 window.__bs = { beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
   sim(seconds) { for (let k = 0; k < seconds * 60; k++) advance(1 / 60); draw(1 / 60); hud(1 / 60); } };
 requestAnimationFrame(frame);
