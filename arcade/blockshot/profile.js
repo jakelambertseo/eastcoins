@@ -6,7 +6,7 @@
    them here (`adopt`). Then nothing on this page can grant XP: practice rounds against bots are practice. A guest, or anyone playing the
    page outside the site, keeps this browser's copy (localStorage) and earns local XP from practice, the way it was. The skin worn is
    saved to the server when there is one. Settings are always the browser's. The XP table and level curve are the shared rules'. */
-import { XP, need } from "/v3/assets/js/blockshot-rules.js?v=10";
+import { XP, need } from "/v3/assets/js/blockshot-rules.js?v=11";
 export { XP, need };
 const KEY = "ecBlockshotProfile";
 export const COLORS = { yellow: 0xffd84a, pink: 0xff6a8a, sky: 0x6ad0ff, lime: 0x8ae07a, violet: 0xc48aff, orange: 0xff9a3a, mint: 0x5ae0c0, red: 0xff5a5a, white: 0xf0f0f0, navy: 0x3a4a8a, black: 0x202028, gold: 0xffc83a };
@@ -22,7 +22,7 @@ export const titleFor = (lvl) => TITLES.filter(([l]) => lvl >= l).pop()[1];
 
 const blank = () => ({ xp: 0, level: 1, server: false, name: "", skin: { body: "yellow", pattern: "plain", visor: "white", gun: "plain" },
   stats: { kills: 0, deaths: 0, headshots: 0, shots: 0, hits: 0, wins: 0, rounds: 0, bestStreak: 0, seconds: 0, byGun: {}, byMap: {} },
-  settings: { sens: 1, fov: 80, volume: 0.8, invertY: false, crosshair: "cross" } });
+  settings: { sens: 1, fov: 80, volume: 0.8, invertY: false, crosshair: "cross", crosshairColor: "white", crosshairSize: 1, smooth: false, adsToggle: false } });
 /** Whether the page is on the site at all (the site answered /api/blockshot/me): then a guest can be offered the Twitch sign-in. */
 export const site = { on: false };
 let P = blank();

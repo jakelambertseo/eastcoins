@@ -13,7 +13,7 @@ export const VERSION = 1;
 export const PHYS = { G: -26, JUMP: 9.4, RUN: 7.2, ACC_GROUND: 42, ACC_AIR: 13, R: 0.5, STEP: 1 / 120, STEP60: 1 / 60, EYE: 0.85, HEAD_Y: 0.62, STEP_UP: 0.62 };   // STEP60: the server's tick, and the page's when online
 // slide-hop, the lounge's numbers: a slide keeps your speed, a hop out keeps it plus a kick, slide again as you land for more
 export const SL = { min: 3, start: 0.9, perfect: 1.1, window: 0.3, decay: 0.35, long: 1.4, hop: 0.4, max: 15, drain: 5, cd: 0.5 };
-export const RULES = { PLAYERS: 12, ROUND_S: 300, MAX_HP: 100, REGEN_AFTER: 5, REGEN_RATE: 12, RESPAWN_S: 3, FALL_Y: -10 };
+export const RULES = { PLAYERS: 12, ROUND_S: 240, MAX_HP: 100, REGEN_AFTER: 5, REGEN_RATE: 12, RESPAWN_S: 3, FALL_Y: -10 };
 /* The guns are Krunker's numbers (the Krunker.io wiki, v6.0.0 / v5.6.9; the owner, 2026-10-08: "the rate of fire seems too high, at least
    for the AK. can we pick up that data anywhere and replicate?"): the assault rifle 23 a hit every 130 ms, 28 rounds, 1.5 s reload,
    headshots ×1.5; the sniper 109 (163.5 to the head) once a second, 3 rounds, 1.9 s, scope 2.7×; the shotgun five pellets of 50 every

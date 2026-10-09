@@ -11,13 +11,13 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");   /* framed on eastcoin.vip: the class is set before the first paint, or the full page with its sidebar shows for a second */</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap">
-<link rel="stylesheet" href="blockshot.css?v=8">
+<link rel="stylesheet" href="blockshot.css?v=9">
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/" } }</script>
 </head>
 <body>
 <main>
   <h1>Blockshot</h1>
-  <p class="lede"><b>A Krunker-style free-for-all on big open maps built for slide-hopping.</b> One match, always running: press Play and you're in the round in progress; bots hold the slots nobody's in. Three guns with Krunker's numbers, five-minute rounds, levels that unlock skins, lifetime stats.</p>
+  <p class="lede"><b>A Krunker-style free-for-all on big open maps built for slide-hopping.</b> One match, always running: press Play and you're in the round in progress; bots hold the slots nobody's in. Three guns with Krunker's numbers, four-minute rounds, levels that unlock skins, lifetime stats.</p>
   <section class="sec" style="margin-top:18px;border-top:0;padding-top:0">
     <div class="play">
       <div>
@@ -28,10 +28,12 @@
           <div class="dmgdir" id="dmgDir"><i></i></div>
           <div class="hud-top">
             <div class="chip"><b id="hudName">You</b><span class="lv" id="hudLevel"></span><span class="kd"><span id="hudK">0</span> <span id="hudKD">kills</span></span></div>
-            <div class="clock"><b id="hudT">5:00</b><small id="hudPlace"></small><small id="hudMap"></small><small id="hudPing"></small></div>
+            <div class="clock"><b id="hudT">4:00</b><small id="hudPlace"></small><small id="hudMap"></small><small id="hudPing"></small></div>
             <div class="feed" id="feed"></div>
           </div>
           <div class="streak" id="hudMsg"></div><div class="sub" id="hudSub"></div>
+          <div id="reloadBar" hidden><span>Reloading</span><div class="rb"><i id="reloadFill"></i></div></div>
+          <div id="hint" hidden></div>
           <div id="killcard" hidden><small>You got</small><b id="kcName"></b><span id="kcTag" hidden>Headshot</span><em id="kcXp"></em></div>
           <div id="lockHint" hidden>Click to aim with the mouse</div>
           <div class="hud-bot">
@@ -63,6 +65,6 @@
     </div>
   </section>
 </main>
-<script type="module" src="blockshot.js?v=15"></script>
+<script type="module" src="blockshot.js?v=16"></script>
 </body>
 </html>

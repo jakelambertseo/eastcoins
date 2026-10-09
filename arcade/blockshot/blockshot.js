@@ -9,11 +9,11 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=10";
-import { createNet } from "./net.js?v=10";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=11";
+import { createNet } from "./net.js?v=11";
 import { material, skin as skinTex } from "./tex.js?v=1";
-import { play, setVolume, ensure as audioOn } from "./audio.js?v=5";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=6";
+import { play, setVolume, ensure as audioOn } from "./audio.js?v=6";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=7";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -90,26 +90,32 @@ const randomSkin = () => ({ body: pick(SKINS.body).k, pattern: pick(["plain", "p
 const beans = [];
 for (let i = 0; i < PLAYERS; i++) { const b = newBean(i, i ? BOT_NAMES[i - 1] : "You", i > 0); b.skill = rnd(BOTS.skill[0], BOTS.skill[1]); b.mesh = makeBean(i ? randomSkin() : profile.skin); beans.push(b); }
 let me = beans[0]; me.mesh.g.visible = false;   // first person: you don't see your own bean (online, `me` is whichever slot the server gives)
-function redressMe() { scene.remove(me.mesh.g); me.mesh = makeBean(profile.skin); me.mesh.g.visible = false; viewGunBody.material = skinMat(profile.skin.gun, "black"); }
+function redressMe() { scene.remove(me.mesh.g); me.mesh = makeBean(profile.skin); me.mesh.g.visible = false; for (const m of viewGunBodies) m.material = skinMat(profile.skin.gun, "black"); }
 
 // the gun in your hands
-const viewGun = new THREE.Group(); let viewGunBody;
+/* THE GUNS IN YOUR HANDS (2026-10-09, the owner: "different gun models for the different gun selections"): four models built from
+   boxes and tubes, one shown at a time, all hung from the same group so the kick, the bob and the reload dip are shared. The receiver
+   of each wears the gun skin from the Locker (`viewGunBodies`). */
+const viewGun = new THREE.Group(); const viewGunBodies = [], gunModels = {};
 {
-  viewGunBody = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 0.62), skinMat(profile.skin.gun, "black"));
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.4, 10), new THREE.MeshStandardMaterial({ color: 0x55555f })); barrel.rotation.x = Math.PI / 2; barrel.position.z = -0.45;
-  const grip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.2, 0.1), new THREE.MeshStandardMaterial({ color: 0x5a3a20 })); grip.position.set(0, -0.14, 0.14);
-  const mag = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.16, 0.12), new THREE.MeshStandardMaterial({ color: 0x1a1a22 })); mag.position.set(0, -0.12, -0.08);
-  viewGun.add(viewGunBody, barrel, grip, mag); viewGun.scale.setScalar(0.55); viewGun.position.set(0.2, -0.17, -0.42); camera.add(viewGun);
+  const M = (c, r = 0.6, m = 0.3) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+  const steel = M(0x55555f, 0.45, 0.6), dark = M(0x1a1a22), wood = M(0x6b4423, 0.8, 0), glass = M(0x3a6a9a, 0.2, 0.8);
+  const box = (w, h, d, mat, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); o.position.set(x, y, z); return o; };
+  const tube = (r, len, mat, x, y, z, r2 = r) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r2, len, 10), mat); o.rotation.x = Math.PI / 2; o.position.set(x, y, z); return o; };
+  const body = (w, h, d, x, y, z) => { const o = box(w, h, d, skinMat(profile.skin.gun, "black"), x, y, z); viewGunBodies.push(o); return o; };
+  // the rifle: receiver, barrel, a foregrip, the magazine, the grip, a stock, a sight on top
+  const ar = new THREE.Group(); ar.add(body(0.12, 0.14, 0.62, 0, 0, 0), tube(0.035, 0.4, steel, 0, 0.01, -0.5, 0.04), box(0.07, 0.09, 0.16, dark, 0, -0.05, -0.33), box(0.07, 0.18, 0.12, dark, 0, -0.14, -0.06), box(0.08, 0.2, 0.1, wood, 0, -0.14, 0.16), box(0.09, 0.11, 0.24, dark, 0, -0.01, 0.42), box(0.03, 0.05, 0.14, dark, 0, 0.09, -0.08));
+  // the sniper: a long receiver, a long barrel, the scope on its mounts, a bolt on the right, a wooden stock
+  const sn = new THREE.Group(); sn.add(body(0.1, 0.12, 0.7, 0, 0, 0), tube(0.025, 0.7, steel, 0, 0.01, -0.68, 0.03), tube(0.045, 0.32, dark, 0, 0.13, -0.04), tube(0.05, 0.03, glass, 0, 0.13, -0.21), box(0.03, 0.06, 0.03, dark, 0, 0.08, 0.06), box(0.03, 0.06, 0.03, dark, 0, 0.08, -0.14), tube(0.012, 0.07, steel, 0.075, 0.01, 0.1), box(0.08, 0.2, 0.1, wood, 0, -0.14, 0.18), box(0.08, 0.14, 0.3, wood, 0, -0.02, 0.48));
+  // the shotgun: a fat barrel over the magazine tube, a wooden pump, a short receiver, a wooden stock
+  const sg = new THREE.Group(); sg.add(body(0.11, 0.13, 0.4, 0, 0, 0.04), tube(0.045, 0.62, steel, 0, 0.025, -0.5), tube(0.03, 0.5, steel, 0, -0.04, -0.46), box(0.09, 0.09, 0.18, wood, 0, -0.04, -0.3), box(0.08, 0.2, 0.1, wood, 0, -0.14, 0.14), box(0.09, 0.13, 0.3, wood, 0, -0.02, 0.4));
+  // the pistol: a slide, a stub of barrel, the grip, a trigger guard
+  const pi = new THREE.Group(); pi.add(body(0.08, 0.09, 0.3, 0, 0.02, 0.08), tube(0.02, 0.1, steel, 0, 0.02, -0.11), box(0.07, 0.2, 0.1, dark, 0, -0.1, 0.17), box(0.03, 0.03, 0.08, dark, 0, -0.04, 0.1));
+  Object.assign(gunModels, { ar, sniper: sn, shotgun: sg, pistol: pi }); for (const g of Object.values(gunModels)) { g.visible = false; viewGun.add(g); }
+  viewGun.scale.setScalar(0.55); viewGun.position.set(0.2, -0.17, -0.42); camera.add(viewGun);
 }
-/** The same four parts, proportioned per gun: a long barrel on the sniper, a fat one on the shotgun, a stub with no magazine on the pistol. */
-const GUN_SHAPE = { ar: [1, 1, 1, 1], sniper: [1.3, 1.9, 1, 0.6], shotgun: [1.1, 1.4, 1, 0], pistol: [0.45, 0.5, 1.15, 0] };   // body length, barrel length, grip, magazine
 let shownGun = "";
-function fitViewGun(k) {
-  if (k === shownGun) return; shownGun = k; const [bl, br, gr, mg] = GUN_SHAPE[k] || GUN_SHAPE.ar, [body, barrel, grip, mag] = viewGun.children;
-  body.scale.z = bl; body.position.z = (1 - bl) * 0.31; const front = body.position.z - 0.31 * bl;   // the body keeps its back where it was; the barrel hangs off its front
-  barrel.scale.y = br; barrel.scale.x = barrel.scale.z = k === "shotgun" ? 1.5 : 1; barrel.position.z = front - 0.2 * br;
-  grip.scale.setScalar(gr); mag.visible = mg > 0; mag.scale.y = mg || 1;
-}
+function fitViewGun(k) { if (k === shownGun) return; shownGun = k; for (const [n, g] of Object.entries(gunModels)) g.visible = n === k; }
 
 /* ------------------------------------------------------------------ input */
 const keys = {};
@@ -124,6 +130,7 @@ addEventListener("keydown", (e) => {
     if (state === "play" && !me.dead && nextGun !== me.gun) swapTo(nextGun); else if (online) net.setGun(nextGun);
   }
   if (e.code === "KeyQ" || e.code === "Digit4") swapTo(me.gun === "pistol" ? nextGun : "pistol");   // the sidearm, and back
+  if (e.code === "BracketLeft" || e.code === "BracketRight") { profile.settings.sens = clamp(Math.round((profile.settings.sens + (e.code === "BracketRight" ? 0.1 : -0.1)) * 10) / 10, 0.3, 3); save(); hint(`Sensitivity ${profile.settings.sens.toFixed(1)}×`); }
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.code)) e.preventDefault();
 });
 addEventListener("keyup", (e) => { keys[e.code] = false; if (e.code === "Tab") $("board").hidden = true; });
@@ -135,11 +142,18 @@ function grabMouse() { try { const r = canvas.requestPointerLock?.(); r?.catch?.
 canvas.addEventListener("click", () => { if (state === "play" || state === "count") grabMouse(); canvas.focus(); audioOn(); });
 document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === canvas; $("lockHint").hidden = locked || state !== "play"; });
 addEventListener("mousemove", (e) => {
-  if (locked) { yaw -= e.movementX * sens(); pitch = clamp(pitch - e.movementY * sens() * inv(), -1.45, 1.45); }
+  if (locked) { if (profile.settings.smooth) { mdx += e.movementX; mdy += e.movementY; } else { yaw -= e.movementX * sens(); pitch = clamp(pitch - e.movementY * sens() * inv(), -1.45, 1.45); } }
   else if (dragLook) { yaw -= (e.clientX - lastX) * 0.005; pitch = clamp(pitch - (e.clientY - lastY) * 0.005 * inv(), -1.45, 1.45); lastX = e.clientX; lastY = e.clientY; }
 });
-canvas.addEventListener("mousedown", (e) => { if (e.button === 0) { mouseFire = true; if (!locked) { dragLook = true; lastX = e.clientX; lastY = e.clientY; } } if (e.button === 2 && !me.dead) scoping = true; });
-addEventListener("mouseup", (e) => { if (e.button === 0) { mouseFire = false; dragLook = false; } if (e.button === 2) scoping = false; });
+canvas.addEventListener("mousedown", (e) => { if (e.button === 0) { mouseFire = true; if (!locked) { dragLook = true; lastX = e.clientX; lastY = e.clientY; } } if (e.button === 2 && !me.dead) scoping = profile.settings.adsToggle ? !scoping : true; });
+addEventListener("mouseup", (e) => { if (e.button === 0) { mouseFire = false; dragLook = false; } if (e.button === 2 && !profile.settings.adsToggle) scoping = false; });
+/* Settings that matter while playing (2026-10-09): mouse smoothing is two-frame averaging of the deltas (off by default, raw is right for
+   most), ADS can be a toggle, [ and ] change the sensitivity mid-fight with a hint, and the crosshair has a colour and a size. */
+let mdx = 0, mdy = 0;
+function smoothMouse() { if (!mdx && !mdy) return; yaw -= mdx * 0.5 * sens(); pitch = clamp(pitch - mdy * 0.5 * sens() * inv(), -1.45, 1.45); mdx *= 0.5; mdy *= 0.5; if (Math.abs(mdx) < 0.05) mdx = 0; if (Math.abs(mdy) < 0.05) mdy = 0; }
+function hint(text) { const el = $("hint"); el.textContent = text; el.hidden = false; clearTimeout(hint.t); hint.t = setTimeout(() => { el.hidden = true; }, 1500); }
+const XHAIR_COLORS = { white: "#ffffff", green: "#7dff6a", cyan: "#6ad0ff", yellow: "#ffd84a", pink: "#ff6ad5", red: "#ff5a5a" };
+function applyXhair() { const st = profile.settings, x = $("xhair"); x.dataset.style = st.crosshair; x.style.setProperty("--c", XHAIR_COLORS[st.crosshairColor] || "#fff"); x.style.setProperty("--len", `${(8 * st.crosshairSize).toFixed(1)}px`); x.style.setProperty("--w", `${Math.max(1, 2 * st.crosshairSize).toFixed(1)}px`); }
 canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 const lookDir = () => new V(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
 function playerInput() {
@@ -170,7 +184,7 @@ function floatText(p, text, col) {
   const x = F.c.getContext("2d"); x.clearRect(0, 0, 128, 64); x.textAlign = "center"; x.font = "800 36px Rajdhani, sans-serif"; x.lineWidth = 6; x.strokeStyle = "#000"; x.strokeText(text, 64, 44); x.fillStyle = col; x.fillText(text, 64, 44); F.s.material.map.needsUpdate = true;
   F.s.position.set(p.x + rnd(-0.3, 0.3), p.y + 1.3, p.z); F.s.visible = true; F.life = 0.7;
 }
-let hitTimer = 0, killTimer = 0, hsTimer = 0, dmgT = 0, dmgAngle = 0, kcT = 0, lastPlace = 0;
+let hitTimer = 0, killTimer = 0, hsTimer = 0, dmgT = 0, dmgAngle = 0, kcT = 0, lastPlace = 0, roll = 0, landDip = 0, wasGrounded = true, vyPrev = 0;
 /** Left-right placement of a sound from a world position, against where the camera looks. */
 const panTo = (p) => { const dx = p.x - camera.position.x, dz = p.z - camera.position.z, l = Math.hypot(dx, dz) || 1; return clamp((dx * Math.cos(yaw) + dz * -Math.sin(yaw)) / l, -1, 1); };
 /** The kill card under the crosshair: who, headshot or not, and what it paid. */
@@ -209,7 +223,7 @@ function onEvent(e) {
     }
     case "spawn": if (e.b !== me) e.b.mesh.g.visible = true; paintTag(e.b); if (e.b === me) { const face = () => { yaw = me.facing; pitch = -0.05; }; if (online) setTimeout(face, 150); else face(); $("hudGun").textContent = GUNS[me.gun].n; $("death").hidden = true; say(""); play("spawn"); if (state === "play" && !locked) grabMouse(); } return;
     case "jump": if (mine) play("jump"); return;
-    case "slide": if (mine) play("slide"); return;
+    case "slide": if (mine) play("slide", clamp(Math.hypot(e.b.v.x, e.b.v.z) / 14, 0.4, 1)); return;
     case "pad": play("pad", mine ? 1 : 0.2); return;
     case "reload": if (mine) play("reload", GUNS[e.b.gun].reload / 1.5); return;
     case "swap": if (mine) { play("swap"); swapAt = performance.now() / 1000; } return;
@@ -290,8 +304,8 @@ function endOnline(m) {
   }
   showMenu("result", resultHtml({ headline: y.won ? "You win!" : `${esc(ranks[0].name)} wins`, sub: esc(world.map.name), meSlot: me.i, ranks,
     line: `You came <b>${ord(y.place)}</b> of ${PLAYERS} · <b>${y.kills}</b> kills, <b>${y.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${y.streak}`,
-    xpHtml, foot: `<div class="vote"><span class="eyebrow inl">Next map</span>${MAP_LIST.map((k) => `<button data-vote="${k}">${esc(MAPS[k]().name)}<i>0</i></button>`).join("")}<span class="next" id="nextIn"></span></div>` }));
-  drawPodium(ranks.slice(0, 3).map((r) => r.s)); fillBars(); nextCountdown(10);
+    xpHtml, foot: "", top: `<div class="vote"><span class="eyebrow inl">Vote the next map</span>${MAP_LIST.map((k) => `<button data-vote="${k}">${esc(MAPS[k]().name)}<i>0</i></button>`).join("")}<span class="next" id="nextIn"></span></div>` }));
+  drawPodium(ranks.slice(0, 3).map((r) => r.s)); fillBars(); nextCountdown(m.gap || 18);
 }
 async function playOnline() {
   $("panel").innerHTML = `<b>Connecting…</b><p>Finding the match.</p>`;
@@ -394,7 +408,11 @@ function drawMenu() {
       <label class="set"><span>Volume</span><input type="range" min="0" max="1" step="0.05" value="${st.volume}" data-set="volume"><output>${Math.round(st.volume * 100)}%</output></label>
       <label class="set"><span>Invert mouse Y</span><input type="checkbox" ${st.invertY ? "checked" : ""} data-set="invertY"><output></output></label>
       <label class="set"><span>Crosshair</span><select data-set="crosshair"><option value="cross"${st.crosshair === "cross" ? " selected" : ""}>Cross</option><option value="dot"${st.crosshair === "dot" ? " selected" : ""}>Dot</option></select><output></output></label>
-      <p class="note">Saved in this browser.</p>`;
+      <label class="set"><span>Crosshair colour</span><select data-set="crosshairColor">${Object.keys(XHAIR_COLORS).map((c) => `<option value="${c}"${st.crosshairColor === c ? " selected" : ""}>${c[0].toUpperCase()}${c.slice(1)}</option>`).join("")}</select><output><i class="sw" style="background:${XHAIR_COLORS[st.crosshairColor] || "#fff"}"></i></output></label>
+      <label class="set"><span>Crosshair size</span><input type="range" min="0.6" max="1.8" step="0.1" value="${st.crosshairSize}" data-set="crosshairSize"><output>${Number(st.crosshairSize).toFixed(1)}×</output></label>
+      <label class="set"><span>Scope is a toggle</span><input type="checkbox" ${st.adsToggle ? "checked" : ""} data-set="adsToggle"><output></output></label>
+      <label class="set"><span>Mouse smoothing</span><input type="checkbox" ${st.smooth ? "checked" : ""} data-set="smooth"><output></output></label>
+      <p class="note">Saved in this browser. In a match, <b>[</b> and <b>]</b> change the sensitivity without opening this.</p>`;
   }
 }
 $("over").addEventListener("click", (e) => {
@@ -413,16 +431,16 @@ $("over").addEventListener("click", (e) => {
 $("over").addEventListener("input", (e) => {
   const el = e.target.closest("[data-set]"); if (!el) return; const k = el.dataset.set, v = el.type === "checkbox" ? el.checked : el.type === "range" ? Number(el.value) : el.value;
   profile.settings[k] = v; save(); const out = el.parentElement.querySelector("output"); if (out) out.textContent = k === "sens" ? `${v.toFixed(1)}×` : k === "fov" ? `${v}°` : k === "volume" ? `${Math.round(v * 100)}%` : "";
-  if (k === "volume") setVolume(v); if (k === "crosshair") $("xhair").dataset.style = v;
+  if (k === "volume") setVolume(v); if (k.startsWith("crosshair")) { applyXhair(); if (k === "crosshairColor") out.innerHTML = `<i class="sw" style="background:${XHAIR_COLORS[v] || "#fff"}"></i>`; if (k === "crosshairSize") out.textContent = `${Number(v).toFixed(1)}×`; }
 });
-setVolume(profile.settings.volume); $("xhair").dataset.style = profile.settings.crosshair;
+setVolume(profile.settings.volume); applyXhair();
 /* THE END OF A ROUND (2026-10-09): one screen for both modes. The top three stand on a podium in their own skins (their meshes cloned
    into a small scene drawn by one spare renderer and copied onto the screen's canvas), your line under it, the XP bar filling from
    where it was to where it is, the table, and "next map in N" online or Play again in practice. */
 let podR = null;
-function resultHtml({ headline, sub, line, xpHtml, ranks, meSlot, foot }) {
+function resultHtml({ headline, sub, line, xpHtml, ranks, meSlot, foot, top: topHtml }) {
   const top = ranks.slice(0, 3), pod = [top[1], top[0], top[2]];
-  return `<div class="res"><b class="res-h">${headline}</b>${sub ? `<p class="res-sub">${sub}</p>` : ""}
+  return `<div class="res"><b class="res-h">${headline}</b>${sub ? `<p class="res-sub">${sub}</p>` : ""}${topHtml ? `<div class="res-top">${topHtml}</div>` : ""}
     <div class="podium"><canvas id="podium" width="640" height="220"></canvas><div class="pod-names">${pod.map((r, i) => r ? `<div class="${r.s === meSlot ? "me" : ""}"><small>${ord([2, 1, 3][i])}</small><b>${esc(r.name)}</b><span>${r.k} / ${r.d}</span></div>` : "<div></div>").join("")}</div></div>
     <p class="res-line">${line}</p>${xpHtml}
     <table class="sb res-t">${ranks.map((r, k) => `<tr class="${r.s === meSlot ? "me" : ""}"><td>${ord(k + 1)}</td><td>${esc(r.name)}${r.human === false ? " <small>bot</small>" : ""}</td><td>${r.k} / ${r.d}</td></tr>`).join("")}</table>
@@ -468,7 +486,10 @@ function draw(dt) {
   if (me.dead && me.lastBy && !me.lastBy.dead) { const k = me.lastBy; camera.position.lerp(new V3(k.p.x + 3, k.p.y + 3, k.p.z + 3), 0.1); camera.lookAt(k.p.x, k.p.y + 0.5, k.p.z); viewGun.visible = false; }
   else if (me.dead || state === "menu") { const a = t * 0.1; camera.position.set(Math.sin(a) * 40, 22, Math.cos(a) * 40); camera.lookAt(0, 2, 0); viewGun.visible = false; }
   else {
-    camera.position.set(me.p.x, me.p.y + EYE * (me.slide ? 0.6 : 1), me.p.z); camera.rotation.set(pitch, yaw, 0);
+    // feel (2026-10-09): lean into a strafe, lean more in a slide, nothing in the air; a landing dips the camera by how hard it was
+    { const strafe = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), want = me.dead ? 0 : (me.grounded ? -strafe * 0.022 : 0) + (me.slide ? -0.03 : 0); roll += (want - roll) * 0.15;
+      if (me.grounded && !wasGrounded && vyPrev < -6) { landDip = clamp(-vyPrev / 70, 0.05, 0.2); play("land", clamp(-vyPrev / 24, 0.3, 1)); } wasGrounded = me.grounded; vyPrev = me.v.y; landDip *= 0.82; }
+    camera.position.set(me.p.x, me.p.y + EYE * (me.slide ? 0.6 : 1) - landDip, me.p.z); camera.rotation.set(pitch, yaw, roll);
     // aiming down the sights: the gun slides to the middle of the view (the sniper's scope hides it); the kick settles on z
     const ads = scoping && !me.dead, g = GUNS[me.gun]; viewGun.visible = !(ads && g.scope);
     const tx = ads ? 0 : 0.2, ty = ads ? -0.095 : -0.17, tz = ads ? -0.3 : -0.42, kick = Math.max(0, viewGun.position.z - tz);
@@ -478,7 +499,7 @@ function draw(dt) {
     const dip = Math.max(rl > 0 ? Math.sin(rl * Math.PI) : 0, sw >= 0 && sw < 1 ? Math.sin(sw * Math.PI) * 0.8 : 0);
     viewGun.position.y += (ty + bob - dip * 0.12 - viewGun.position.y) * 0.25; viewGun.rotation.z += (-dip * 0.6 - viewGun.rotation.z) * 0.25; viewGun.rotation.x += (dip * 0.25 - viewGun.rotation.x) * 0.25;
   }
-  const fov = scoping && !me.dead ? profile.settings.fov / (GUNS[me.gun].zoom || 1) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 9, 0, 1) * 10; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
+  const fov = scoping && !me.dead ? profile.settings.fov / (GUNS[me.gun].zoom || 1) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 8, 0, 1) * 14; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
   $("scope").classList.toggle("on", Boolean(scoping && GUNS[me.gun].scope && !me.dead && state === "play"));   // (Boolean: toggle with an undefined second argument FLIPS the class, and the rifle has no scope field)
   { const a = performance.now() / 1000; pickupMeshes.forEach((g, i) => { const p = world.pickups[i]; g.visible = p.t <= 0; if (g.visible) { g.rotation.y = a * 1.6; g.position.y = p.y + 0.55 + Math.sin(a * 2.4 + i) * 0.08; } }); }
   // footsteps (2026-10-09): everyone else's footfalls, timed by their speed, faded by distance and placed left-right, so you hear who's coming
@@ -493,6 +514,7 @@ const hpSeg = $("hudHpSeg"); for (let k = 0; k < 10; k++) hpSeg.append(document.
 function hud(dt) {
   hitTimer = Math.max(0, hitTimer - dt); killTimer = Math.max(0, killTimer - dt); hsTimer = Math.max(0, hsTimer - dt); dmgT = Math.max(0, dmgT - dt);
   if (kcT > 0) { kcT -= dt; if (kcT <= 0) $("killcard").hidden = true; }
+  { const rb = $("reloadBar"), on = me.reloading > 0 && !me.dead && state === "play"; if (rb.hidden === on) rb.hidden = !on; if (on) $("reloadFill").style.width = `${((1 - me.reloading / GUNS[me.gun].reload) * 100).toFixed(1)}%`; }
   // the crosshair opens with speed, in the air and when hit; it closes scoped
   { const sp = Math.hypot(me.v.x, me.v.z), g = GUNS[me.gun], ads = scoping && !me.dead, gap = (ads ? 2 : 5 + Math.min(14, sp * 0.9) + (me.grounded ? 0 : 10)) + (hitTimer > 0 ? 2 : 0); $("xhair").style.setProperty("--gap", `${gap.toFixed(1)}px`); $("xhair").style.opacity = ads && g.scope ? "0" : "1"; }
   { const el = $("dmgDir"); el.classList.toggle("on", dmgT > 0); if (dmgT > 0) { let a = dmgAngle - yaw; el.firstElementChild.style.transform = `rotate(${(-a * 180) / Math.PI}deg)`; } }
@@ -527,7 +549,7 @@ function advance(dt) {
    for three seconds. `__bs.drive(true)` runs the loop from a timer for a tab the browser is not painting. */
 const perf = { spikes: [], lastAt: 0, lastMs: 0, drive: 0 };
 function frame(now, driven) {
-  const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now;
+  const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now; if (locked && profile.settings.smooth) smoothMouse();
   if (raw > 0.06 && raw < 5 && state !== "menu") { perf.lastAt = now; perf.lastMs = Math.round(raw * 1000); perf.spikes.push({ at: Math.round(now / 100) / 10, ms: perf.lastMs, lag: online ? net.lag() : 0, snapGap: online ? Math.round(net.gapNow() * 1000) : 0, heapMB: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); if (perf.spikes.length > 40) perf.spikes.shift(); }
   resize(); advance(dt); draw(dt); hud(dt);
   fpsN++; fpsT += dt; if (fpsT >= 1) { $("loadStat").textContent = `${fpsN} fps`; fpsN = 0; fpsT = 0; }
