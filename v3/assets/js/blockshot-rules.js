@@ -343,11 +343,20 @@ export function damage(target, dmg, from, head, now, events) {
   events?.push({ type: "hit", target, by: from, dmg, head });
   if (target.hp <= 0) kill(target, from, head, now, events);
 }
+/* GUN GAME (2026-10-11): every kill moves the killer one step up the ladder, with the next gun in hand at once; a knife kill sends the
+   victim one step back; the first to the top wins the round. `b.gg` is the step (set by the room; undefined elsewhere). */
+export const GG = { ladder: ["ar", "ar", "sniper", "sniper", "shotgun", "shotgun", "pistol", "pistol", "knife"] };
+export const ggGun = (b) => GG.ladder[Math.min(b.gg || 0, GG.ladder.length - 1)];
 export function kill(target, by, head, now, events) {
   target.dead = true; target.respawn = RULES.RESPAWN_S; target.deaths++; target.streak = 0; target.slide = false;
   const suicide = !by || by === target;
   if (!suicide) { by.kills++; by.streak++; by.bestStreak = Math.max(by.bestStreak, by.streak); }
   events?.push({ type: "kill", target, by: suicide ? null : by, head });
+  if (!suicide && by.gg !== undefined) {
+    if (by.gun === "knife" && target.gg > 0) { target.gg--; events?.push({ type: "gg", what: "down", s: target.i, step: target.gg }); }
+    by.gg++; events?.push({ type: "gg", what: by.gg >= GG.ladder.length ? "win" : "up", s: by.i, step: by.gg });
+    if (by.gg < GG.ladder.length) { const next = ggGun(by); if (next !== by.gun) { by.mags = {}; switchGun(by, next, events); } }
+  }
 }
 /** Fire b's gun along dir (unit). `spreadK` scales the spread (scoped, airborne). Returns the pellets as {from, to, hit}. */
 export function fire(world, beans, b, dir, now, rand, events, spreadK = 1) {

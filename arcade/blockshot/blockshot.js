@@ -9,12 +9,12 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk, PARK, PARK_MAPS, newRun, parkPlace, parkStep, parkReset, medalFor } from "/v3/assets/js/blockshot-rules.js?v=18";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk, PARK, PARK_MAPS, newRun, parkPlace, parkStep, parkReset, medalFor, GG, ggGun } from "/v3/assets/js/blockshot-rules.js?v=19";
 import { finMat, finCss, finOf, knifeOf } from "./armory-fin.js?v=1";
-import { createNet } from "./net.js?v=19";
+import { createNet } from "./net.js?v=20";
 import { material, skin as skinTex } from "./tex.js?v=1";
-import { play, setVolume, ensure as audioOn } from "./audio.js?v=10";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=14";
+import { play, setVolume, ensure as audioOn } from "./audio.js?v=11";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=15";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -81,13 +81,16 @@ const skinMat = (pattern, colKey) => new THREE.MeshStandardMaterial({ map: skinT
    holds (set as the held gun changes, in draw). The Locker's level skins are the fallback for both. */
 let myLook = null;
 const lookGunMat = (look, gun, fallback) => (look && look[gun] ? finMat(finOf(look[gun])) : fallback);
+let gunModels = {}, steelMat = null;   // filled below; declared here because the beans' rigs are built first
 function beanMesh(sk, parent = scene, look = null) {
   const g = new THREE.Group(); g.rotation.order = "YXZ";
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.55, 6, 14), look && look.bean ? finMat(finOf(look.bean)) : skinMat(sk.pattern, sk.body)); body.castShadow = true; body.position.y = 0.7; g.add(body);
   const visor = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: COLORS[sk.visor] ?? 0xffffff, roughness: 0.2, metalness: sk.visor === "gold" ? 0.6 : 0 }));
   visor.scale.set(1, 0.55, 0.6); visor.rotation.x = Math.PI / 2; visor.position.set(0, 0.98, -0.3); g.add(visor);
   for (const x of [-0.11, 0.11]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: sk.visor === "black" ? 0xffffff : 0x111111 })); eye.position.set(x, 1.0, -0.45); g.add(eye); }
-  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.7), skinMat(sk.gun, "black")); gun.position.set(0.38, 0.75, -0.35); g.add(gun); g.userData.gun = gun; g.userData.gunDefault = gun.material;
+  // the gun in the hand (2026-10-11): the real models, the one held shown, its receiver in the Armory finish for that gun
+  const rig = new THREE.Group(), models = makeGunModels(skinMat(sk.gun, "black")); for (const [k, m] of Object.entries(models)) { m.visible = k === "ar"; rig.add(m); }
+  rig.scale.setScalar(0.95); rig.position.set(0.46, 0.68, -0.3); rig.rotation.set(0.05, -0.12, 0); /* big enough to read at twenty metres, held at the hip, barrel a touch inward */ g.add(rig); g.userData.rig = models; g.userData.rigDefault = skinMat(sk.gun, "black");
   parent.add(g); return g;
 }
 function makeBean(sk, look = null) {
@@ -114,19 +117,26 @@ function redressMe() { scene.remove(me.mesh.g); me.mesh = makeBean(profile.skin,
 function dressGuns() {
   for (const [k, g] of Object.entries(gunModels)) { if (k === "knife") { for (const m of g.userData.blade || []) m.material = myLook && myLook.knife ? finMat(finOf(myLook.knife), true) : steelMat; } else for (const m of g.userData.bodies || []) m.material = lookGunMat(myLook, k, skinMat(profile.skin.gun, "black")); }
 }
+/** Show the held gun on a bean's rig, in its finish. */
+function dressRig(g, gun, look) {
+  const rig = g.userData.rig; if (!rig) return;
+  for (const [k, m] of Object.entries(rig)) { m.visible = k === gun; if (k === "knife") { for (const bl of m.userData.blade || []) bl.material = look && look.knife ? finMat(finOf(look.knife), true) : steelMat; } else for (const bd of m.userData.bodies || []) bd.material = lookGunMat(look, k, g.userData.rigDefault); }
+}
 function redressBean(b, look) { const vis = b.mesh.g.visible; scene.remove(b.mesh.g); b.mesh = makeBean(b.bot ? randomSkin() : profile.skin, look); b.look = look; b.mesh.g.visible = vis; paintTag(b); }
 
 // the gun in your hands
 /* THE GUNS IN YOUR HANDS (2026-10-09, the owner: "different gun models for the different gun selections"): four models built from
    boxes and tubes, one shown at a time, all hung from the same group so the kick, the bob and the reload dip are shared. The receiver
    of each wears the gun skin from the Locker (`viewGunBodies`). */
-const viewGun = new THREE.Group(); const viewGunBodies = [], gunModels = {}; let steelMat = null;
-{
+const viewGun = new THREE.Group();
+/** The five gun models, built from boxes and tubes: used for the hands (viewGun), for every bean's rig, and for the Armory preview.
+    `bodyMat` is the receiver's material (the skin). Each model carries userData.bodies (the receivers) and, for the knife, userData.blade. */
+function makeGunModels(bodyMat) {
   const M = (c, r = 0.6, m = 0.3) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
   const steel = M(0x55555f, 0.45, 0.6), dark = M(0x1a1a22), wood = M(0x6b4423, 0.8, 0), glass = M(0x3a6a9a, 0.2, 0.8); steelMat = steel;
   const box = (w, h, d, mat, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); o.position.set(x, y, z); return o; };
   const tube = (r, len, mat, x, y, z, r2 = r) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r2, len, 10), mat); o.rotation.x = Math.PI / 2; o.position.set(x, y, z); return o; };
-  const body = (w, h, d, x, y, z) => { const o = box(w, h, d, skinMat(profile.skin.gun, "black"), x, y, z); viewGunBodies.push(o); return o; };
+  const bodies = []; const body = (w, h, d, x, y, z) => { const o = box(w, h, d, bodyMat, x, y, z); bodies.push(o); return o; };
   // the rifle: receiver, barrel, a foregrip, the magazine, the grip, a stock, a sight on top
   const ar = new THREE.Group(); ar.add(body(0.12, 0.14, 0.62, 0, 0, 0), tube(0.035, 0.4, steel, 0, 0.01, -0.5, 0.04), box(0.07, 0.09, 0.16, dark, 0, -0.05, -0.33), box(0.07, 0.18, 0.12, dark, 0, -0.14, -0.06), box(0.08, 0.2, 0.1, wood, 0, -0.14, 0.16), box(0.09, 0.11, 0.24, dark, 0, -0.01, 0.42), box(0.03, 0.05, 0.14, dark, 0, 0.09, -0.08));
   // the sniper: a long receiver, a long barrel, the scope on its mounts, a bolt on the right, a wooden stock
@@ -136,9 +146,11 @@ const viewGun = new THREE.Group(); const viewGunBodies = [], gunModels = {}; let
   // the pistol: a slide, a stub of barrel, the grip, a trigger guard
   const kn = new THREE.Group(); { const bl = box(0.035, 0.2, 0.75, steel, 0, 0.02, -0.5); kn.add(bl, box(0.07, 0.26, 0.05, steel, 0, 0, -0.1), box(0.06, 0.15, 0.42, dark, 0, -0.02, 0.14)); const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.26, 4), steel); tip.rotation.x = -Math.PI / 2; tip.rotation.y = Math.PI / 4; tip.scale.set(1, 1, 0.35); tip.position.set(0, 0.02, -1.0); kn.add(tip); kn.userData.blade = [bl, tip]; kn.position.set(0.05, -0.05, 0.1); kn.rotation.set(0.1, 0.25, -0.35); }
   const pi = new THREE.Group(); pi.add(body(0.08, 0.09, 0.3, 0, 0.02, 0.08), tube(0.02, 0.1, steel, 0, 0.02, -0.11), box(0.07, 0.2, 0.1, dark, 0, -0.1, 0.17), box(0.03, 0.03, 0.08, dark, 0, -0.04, 0.1));
-  // which receivers belong to which gun (the body() helper pushed them in build order)
-  { let n = 0; for (const [g, c] of [[ar, 1], [sn, 1], [sg, 1], [pi, 1]]) { g.userData.bodies = viewGunBodies.slice(n, n + c); n += c; } }
-  Object.assign(gunModels, { ar, sniper: sn, shotgun: sg, pistol: pi, knife: kn }); for (const g of Object.values(gunModels)) { g.visible = false; viewGun.add(g); }
+  { let n = 0; for (const [g, c] of [[ar, 1], [sn, 1], [sg, 1], [pi, 1]]) { g.userData.bodies = bodies.slice(n, n + c); n += c; } }
+  return { ar, sniper: sn, shotgun: sg, pistol: pi, knife: kn };
+}
+{
+  gunModels = makeGunModels(skinMat(profile.skin.gun, "black")); for (const g of Object.values(gunModels)) { g.visible = false; viewGun.add(g); }
   viewGun.scale.setScalar(0.55); viewGun.position.set(0.2, -0.17, -0.42); camera.add(viewGun);
 }
 let shownGun = "";
@@ -167,7 +179,7 @@ addEventListener("keyup", (e) => { keys[e.code] = false; if (e.code === "Tab") $
 /** Change the gun in hand now (the server hears the same; the rules give it a draw time). */
 /** The primary to go back to: the one this round started with in the bomb mode, else the pick. */
 const myPrimary = () => (mode === "bomb" && me.roundGun && GUNS[me.roundGun] ? me.roundGun : nextGun);
-function swapTo(k) { if (state !== "play" || me.dead || k === me.gun || !GUNS[k]) return; if (online) { net.setGun(k); switchGun(me, k, null); swapAt = performance.now() / 1000; play("swap"); } else switchGun(me, k, events); }
+function swapTo(k) { if (mode === "gg") return; if (state !== "play" || me.dead || k === me.gun || !GUNS[k]) return; if (online) { net.setGun(k); switchGun(me, k, null); swapAt = performance.now() / 1000; play("swap"); } else switchGun(me, k, events); }
 let wheelAt = 0;
 addEventListener("wheel", (e) => { if (!locked || state !== "play") return; const now = performance.now(); if (now - wheelAt < 250) return; wheelAt = now; swapTo(me.gun === "pistol" ? "knife" : me.gun === "knife" ? myPrimary() : "pistol"); }, { passive: true });
 /** Back into the match from the menu (2026-10-09, the owner: settings had no way out). Settings apply as they change, so Apply is just this. */
@@ -223,7 +235,7 @@ let hitTimer = 0, killTimer = 0, hsTimer = 0, dmgT = 0, dmgAngle = 0, kcT = 0, l
 /** Left-right placement of a sound from a world position, against where the camera looks. */
 const panTo = (p) => { const dx = p.x - camera.position.x, dz = p.z - camera.position.z, l = Math.hypot(dx, dz) || 1; return clamp((dx * Math.cos(yaw) + dz * -Math.sin(yaw)) / l, -1, 1); };
 /** The kill card under the crosshair: who, headshot or not, and what it paid. */
-function killCard(name, head, xp) { const el = $("killcard"); $("kcName").textContent = name; $("kcTag").hidden = !head; $("kcXp").textContent = xp ? `+${xp} XP` : ""; el.hidden = false; el.classList.remove("in"); void el.offsetWidth; el.classList.add("in"); kcT = 1.7; }
+function killCard(name, head, xp, brass = 0) { const el = $("killcard"); $("kcName").textContent = name; $("kcTag").hidden = !head; $("kcXp").textContent = [xp ? `+${xp} XP` : "", brass ? `+${brass} Brass` : ""].filter(Boolean).join(" · "); el.hidden = false; el.classList.remove("in"); void el.offsetWidth; el.classList.add("in"); kcT = 1.7; }
 function dmgFrom(by) { dmgAngle = Math.atan2(by.p.x - me.p.x, by.p.z - me.p.z); dmgT = 0.7; }
 function flashDamage() { const el = $("hurt"); el.classList.remove("on"); void el.offsetWidth; el.classList.add("on"); }
 const meStats = { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 };
@@ -242,21 +254,23 @@ function onEvent(e) {
       if (online && e.b === me && !e.local) return;   // drawn when the trigger was pulled (see onlineTick)
       const muzzle = e.b === me ? camera.localToWorld(new V3(0.2, -0.15, -0.75)) : e.pellets[0].from.clone().addScaled(e.b.aim, 0.6);
       if (!GUNS[e.gun]?.melee) for (const p of e.pellets) tracer(muzzle, p.to, e.b === me);
+      if (e.b !== me && !me.dead && !GUNS[e.gun]?.melee) { const eye = new V(camera.position.x, camera.position.y, camera.position.z); let near = 9; for (const p of e.pellets) { const d = p.to.clone().sub(p.from), L = d.len() || 1; d.scale(1 / L); const t = clamp(eye.clone().sub(p.from).dot(d), 0, L), q = p.from.clone().addScaled(d, t); near = Math.min(near, q.dist(eye)); } if (near < 1.8) play("whizz", 0.7, panTo(e.pellets[0].to)); }
       if (e.b === me) { if (GUNS[e.gun]?.melee) swingAt = performance.now() / 1000; else viewGun.position.z += scoping ? 0.06 : 0.12; meStats.shots++; gunStat(me.gun).shots++; play(e.gun); } else play(e.gun, clamp(0.6 - e.b.p.dist(me.p) / 70, 0, 0.6), panTo(e.b.p));
       return;
     }
     case "hit": paintTag(e.target);
       if (e.by === me) { const dup = online && performance.now() - localHitAt < 300; hitTimer = 0.14; if (e.head) hsTimer = 0.22; meStats.hits++; gunStat(me.gun).hits++; if (e.head) meStats.headshots++; if (!dup) play(e.head ? "headshot" : "hit"); floatText(e.target.p, e.head ? `${Math.round(e.dmg)} HS` : `${Math.round(e.dmg)}`, e.head ? "#ffd84a" : "#fff"); }
-      if (e.target === me) { flashDamage(); play("hurt"); if (e.by && e.by !== me) dmgFrom(e.by); }
+      if (e.target === me) { flashDamage(); play("hurt", 0.6); if (e.by && e.by !== me) { dmgFrom(e.by); play("thud", 1, panTo(e.by.p)); } }
       return;
     case "kill": {
       const { target, by, head } = e; target.mesh.g.visible = false; paintTag(target);
       const who = (b) => (b.bot ? esc(b.name) : "<b>you</b>");
-      feed(!by ? `${who(target)} fell` : `${who(by)} ${head ? '<span class="hs">⌖</span>' : "▸"} ${who(target)}`, by === me ? "me" : target === me ? "dead" : "");
+      { const fin = by && by.look && by.look[by.gun] ? finOf(by.look[by.gun]) : null, chip = by ? `<i class="fd-gun${fin ? " skin" : ""}" style="${fin ? `--sw:url(${finCss(fin)})` : ""}">${esc(GUNS[by.gun]?.n.split(" ")[0] || "")}${head ? ' <span class="hs">⌖</span>' : ""}</i>` : "";
+        feed(!by ? `${who(target)} fell` : `${who(by)} ${chip} ${who(target)}`, by === me ? "me" : target === me ? "dead" : ""); }
       log(!by ? `${target.bot ? target.name : "You"} fell.` : `${by.bot ? by.name : "You"} killed ${target.bot ? target.name : "you"}${head ? " (headshot)" : ""}.`, by === me);
       if (by === me) {
         killTimer = 0.4; gunStat(me.gun).kills++; play(head ? "killhs" : "kill"); if (me.streak % 3 === 0) meStats.streaks++;
-        const xpCounts = online ? !net.you?.guest : !profile.server; killCard(target.name, head, xpCounts ? (head ? XP.headshot : XP.kill) : 0);
+        const xpCounts = online ? !net.you?.guest : !profile.server, rates = armory.data?.catalogue?.rates || { kill: 5, headshot: 5 }; killCard(target.name, head, xpCounts ? (head ? XP.headshot : XP.kill) : 0, online && xpCounts ? rates.kill + (head ? rates.headshot : 0) : 0);
         const call = me.streak === 3 ? "TRIPLE KILL" : me.streak === 5 ? "RAMPAGE" : me.streak === 10 ? "UNSTOPPABLE" : me.streak >= 15 && me.streak % 5 === 0 ? "GODLIKE" : "";
         if (call) { say(call, `${me.streak} in a row`); play("streak"); clearTimeout(say.t); say.t = setTimeout(() => { if ($("hudMsg").textContent === call) say(""); }, 1800); }
       }
@@ -271,6 +285,7 @@ function onEvent(e) {
     case "swap": if (mine) { play("swap"); swapAt = performance.now() / 1000; } return;
     case "bomb": onBombEvent(e); return;
     case "park": onParkEvent(e); return;
+    case "gg": { if (!e.b && e.s >= 0) e.b = beans[e.s]; if (e.b) e.b.gg = e.step; if (e.b !== me) return; if (e.what === "win") { say("LADDER COMPLETE", "you win the round"); play("levelup"); } else if (e.what === "down") { say("KNIFED", `back to gun ${e.step + 1}`); play("lose"); } else { say(`GUN ${e.step + 1} / ${GG.ladder.length}`, GUNS[ggGun(me)].n); play("swap"); } clearTimeout(say.t); say.t = setTimeout(() => say(""), 1500); return; }
     case "pickup": if (mine) { play(e.kind); floatText(me.p, e.kind === "health" ? "+50 HP" : "AMMO", e.kind === "health" ? "#ff6a6a" : "#ffd84a"); } else play(e.kind, clamp(0.4 - e.b.p.dist(me.p) / 40, 0, 0.4), panTo(e.b.p)); return;
     case "empty": if (mine) play("empty"); return;
   }
@@ -281,7 +296,10 @@ let t = 0, roundT = 0, state = "menu", countdown = 0, countBeep = 0, mapKey = MA
 /* THE BOMB MODE on the page (2026-10-09). `mode` is "ffa" or "bomb" (the Play tab's switch, or ?mode=bomb). `bomb` is the round state:
    in practice the rules' own object, stepped here; online a copy decoded from the snapshot's `bm` block. Six beans play; the other six
    of the twelve are parked dead and hidden. The dead watch a living teammate (`spec`). E is "use": plant or defuse. */
-let mode = ["bomb", "park"].includes(new URLSearchParams(location.search).get("mode")) ? new URLSearchParams(location.search).get("mode") : "ffa", bomb = null, spec = null;
+let mode = ["bomb", "park", "gg"].includes(new URLSearchParams(location.search).get("mode")) ? new URLSearchParams(location.search).get("mode") : "ffa", bomb = null, spec = null;
+const MAP_IMG = { lot: "ffa", docks: "docks", roofs: "roofs" };
+/* GUN GAME on the page (2026-10-11): the rules move the gun on every kill (`b.gg`); the page only shows the step and never swaps by hand. */
+const gunPick = (b) => (mode === "gg" ? ggGun(b) : b.bot ? pick(["ar", "ar", "sniper", "shotgun"]) : nextGun);
 /* PARKOUR on the page (2026-10-10). `courseKey` is the practice course; online the room says. `me.park` is the run (practice: the rules'
    object stepped here; online: decoded from the snapshot's `pr`). Ghosts: the course record's trail and your own best, fetched when the
    course loads and replayed from the moment your run starts, as see-through beans. */
@@ -319,7 +337,8 @@ function onParkEvent(e) {
   if (!e.b && e.s >= 0 && beans[e.s]) e.b = beans[e.s]; const mine = e.b === me; if (!mine) return;
   switch (e.what) {
     case "start": play("go"); ghosts.t0 = performance.now() / 1000; parkDone = null; return;
-    case "cp": play("pad", 0.5); say(world?.map.park?.cps[e.i]?.k ? `LEVEL ${e.i + 1} CLEAR` : `CHECKPOINT ${e.i + 1}`, fmtMs(e.t)); clearTimeout(say.t); say.t = setTimeout(() => say(""), 1200); return;
+    case "cp": { play("pad", 0.5); const gh = ghosts.record || ghosts.me, cp = world?.map.park?.cps[e.i]; let split = ""; if (gh && cp) { const k = gh.trail.findIndex((p) => Math.hypot(p[0] - cp.x, p[2] - cp.z) < cp.r && Math.abs(p[1] - cp.y) < 3); if (k >= 0) { const d = e.t - k * 100; split = ` · ${d <= 0 ? "−" : "+"}${(Math.abs(d) / 1000).toFixed(1)} s vs ${gh === ghosts.record ? esc(gh.name || "the record") : "your best"}`; $("hudSub").style.color = d <= 0 ? "#8ae07a" : "#ff7a7a"; setTimeout(() => { $("hudSub").style.color = ""; }, 1500); } }
+      say(world?.map.park?.cps[e.i]?.k ? `LEVEL ${e.i + 1} CLEAR` : `CHECKPOINT ${e.i + 1}`, fmtMs(e.t) + split); clearTimeout(say.t); say.t = setTimeout(() => say(""), 1200); return; }
     case "fall": play("hurt"); flashDamage(); feed("fell · back to the checkpoint", "dead"); return;
     case "finish": parkDone = e; play(e.pb ? "levelup" : "win"); say(`FINISH ${fmtMs(e.ms)}`, e.pb && !online ? "personal best · R to run again" : "R to run again"); return;
     case "reset": ghosts.t0 = -1; parkDone = null; say(""); yaw = world.map.park.facing; pitch = 0; return;
@@ -365,6 +384,7 @@ const net = createNet({
   onHello: (m) => { joinMatch(m.map, m.slot, m.roster); say("JOINED", `${m.roster.humans.filter(Boolean).length - 1 || "no"} other ${m.roster.humans.filter(Boolean).length === 2 ? "person" : "people"} here`); },
   onRoster: (m) => applyRoster(m),
   onBomb: (bm) => decodeBomb(bm),
+  onGG: (arr) => arr.forEach((v, i) => { if (beans[i]) beans[i].gg = v; }),
   onPark: (pr) => { pr.forEach((p, i) => { const b = beans[i]; if (!b) return; if (!p) { b.park = null; return; } const r = b.park || (b.park = newRun()); r.cp = p[0]; r.t = p[1]; r.done = Boolean(p[2]); r.running = Boolean(p[3]); }); },
   onParkMsg: (m) => { if (m.what !== "saved") return; const bits = []; if (m.record?.yours) bits.push("course record"); else if (m.pb) bits.push("personal best"); if (m.newTiers?.length) bits.push(`${m.newTiers[0]} medal · +${m.brass} Brass`); if (bits.length) { say(bits[0].toUpperCase(), bits.slice(1).join(" · ")); clearTimeout(say.t); say.t = setTimeout(() => say(""), 3200); } if (m.pb) ghostFetch("me"); },
   onRound: (m) => { if (mode === "park") { ghosts.t0 = -1; parkDone = null; } buildMap(m.map); if (mode === "park") { ghostFetch("record"); ghostFetch("me"); setTimeout(() => { yaw = world.map.park?.facing ?? yaw; pitch = 0; }, 150); } applyRoster(m.roster); for (const b of beans) { b.kills = 0; b.deaths = 0; b.streak = 0; } Object.assign(meStats, { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 }); $("feed").innerHTML = ""; $("hudMap").textContent = world.map.name; state = "play"; $("over").hidden = true; say("NEW ROUND", world.map.name); play("go"); if (document.activeElement === canvas) grabMouse(); },
@@ -375,6 +395,7 @@ const net = createNet({
     else if (e.k === "pickup") { const b = byslot(e.s); if (b) onEvent({ type: "pickup", b, kind: e.kind, i: e.i }); }
     else if (e.k === "bomb") onEvent({ type: "bomb", ...e, b: e.s >= 0 ? byslot(e.s) : null });
     else if (e.k === "park") onEvent({ type: "park", ...e, b: e.s >= 0 ? byslot(e.s) : null });
+    else if (e.k === "gg") onEvent({ type: "gg", ...e, b: e.s >= 0 ? byslot(e.s) : null });
     else { const b = byslot(e.s); if (b) onEvent({ type: e.k, b }); }
   } },
   onLocal: (list) => { for (const e of list) if (LOCAL_SOUNDS.has(e.type)) onEvent({ ...e, local: true }); },
@@ -425,6 +446,7 @@ function endOnline(m) {
   play(y.won ? "win" : "lose");
   let xpHtml = "";
   const lines = [[`${y.kills} kills`, y.kills * XP.kill], [`${y.headshots} headshots`, y.headshots * (XP.headshot - XP.kill)], [`${y.streaks} streaks of three`, y.streaks * XP.streak3], ["Finished the round", XP.round]]; if (y.won) lines.push(["Won the round", XP.win]);
+  const RT = armory.data?.catalogue?.rates || { kill: 5, headshot: 5, roundWon: 25, match: 60, win: { ffa: 150, bomb: 100 } }, brassNow = y.guest ? 0 : y.kills * RT.kill + y.headshots * RT.headshot + ((m.score && mode === "bomb") ? (m.score[myTeam()] || 0) * RT.roundWon : 0) + RT.match + (y.won ? (mode === "bomb" ? RT.win.bomb : RT.win.ffa) : 0);
   const pctFrom = Math.round((profile.xp / need(profile.level)) * 100);
   if (y.guest) xpHtml = `<p class="note">Playing as a guest: XP, skins and stats only follow signed-in players. Sign in with Twitch to keep yours.</p>`;
   else if (y.counted && profile.server) {
@@ -439,7 +461,7 @@ function endOnline(m) {
   }
   showMenu("result", resultHtml({ headline: mode === "bomb" && m.score ? `${y.won ? "Your team wins" : "Your team loses"} ${m.score[myTeam()]}–${m.score[1 - myTeam()]}` : y.won ? "You win!" : `${esc(ranks[0].name)} wins`, sub: `${mode === "bomb" ? "Bomb · 3v3 · " : ""}${esc(world.map.name)}`, meSlot: me.i, ranks,
     line: `You came <b>${ord(y.place)}</b> of ${PLAYERS} · <b>${y.kills}</b> kills, <b>${y.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${y.streak}`,
-    xpHtml, foot: "", top: mode === "bomb" ? `<span class="next" id="nextIn"></span>` : `<div class="vote"><span class="eyebrow inl">Vote the next map</span>${MAP_LIST.map((k) => `<button data-vote="${k}">${esc(MAPS[k]().name)}<i>0</i></button>`).join("")}<span class="next" id="nextIn"></span></div>` }));
+    xpHtml: xpHtml + (brassNow ? `<p class="note brassline">+${brassNow} Brass for this round${online ? " · +100 more if it was your first of the day" : ""}</p>` : ""), foot: "", top: mode === "bomb" ? `<span class="next" id="nextIn"></span>` : `<div class="vote"><span class="eyebrow inl">Vote the next map</span>${MAP_LIST.map((k) => `<button class="vote-card" data-vote="${k}" style="--img:url(${IMG_BASE}${MAP_IMG[k] || "ffa"}.webp?v=1)"><b>${esc(MAPS[k]().name)}</b><i>0</i></button>`).join("")}<span class="next" id="nextIn"></span></div>` }));
   drawPodium(ranks.slice(0, 3).map((r) => r.s)); fillBars(); nextCountdown(m.gap || 18);
 }
 async function playOnline() {
@@ -448,13 +470,13 @@ async function playOnline() {
   if (!okc) { feedNote(net.why === "timeout" ? "The match server didn't answer; playing against bots instead." : "Couldn't reach the match server; playing against bots instead."); start(); }
 }
 const STATE_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? `http://${location.hostname}:8788/bs/state` : "https://arcade.eastcoin.vip/bs/state";
-const stateUrl = () => (mode === "bomb" ? STATE_URL.replace("/bs/state", "/bomb/state") : mode === "park" ? STATE_URL.replace("/bs/state", "/park/state") : STATE_URL);
+const stateUrl = () => (mode === "bomb" ? STATE_URL.replace("/bs/state", "/bomb/state") : mode === "park" ? STATE_URL.replace("/bs/state", "/park/state") : mode === "gg" ? STATE_URL.replace("/bs/state", "/gg/state") : STATE_URL);
 /* THE SERVER CARDS (2026-10-11, the owner: "a server selector, which is cards that show which players are playing which, with preview
    images of the game modes … X playing now with users' names"). One card per room, a picture of the mode behind it, the live count
    and the names from each room's /state, refreshed every ten seconds while the Play tab is open. Clicking a card picks the mode. */
 const IMG_BASE = new URL("img/", import.meta.url).href;
 const MODE_BLURB = { ffa: "Everyone against everyone, four minutes, most kills wins. Bots fill the empty slots.", bomb: "Two teams of three. Attackers plant a bomb at a site (hold E) and keep it alive 35 seconds; defenders stop them or defuse (hold E). No respawns in a round, first to 6, sides swap after 5.", park: "A course over the drop, start to finish against the clock. Checkpoints on the way, a fall goes back to the last one, R resets. Medals pay Brass once per course; your best run becomes a ghost to race." };   // beside this script: /arcade/blockshot/img/ on the site, /tools/blockshot/img/ on the rig (the page itself sits at /blockshot)
-const SERVERS = [{ key: "ffa", n: "Free-for-all", sub: "12 players · 4 min rounds · three maps", img: "ffa", path: "/bs/state" }, { key: "bomb", n: "Bomb · 3v3", sub: "plant or defuse · first to 6", img: "bomb", path: "/bomb/state" }, { key: "park", n: "Parkour", sub: "courses against the clock · ghosts", img: "park", path: "/park/state" }];
+const SERVERS = [{ key: "ffa", n: "Free-for-all", sub: "12 players · 4 min rounds · three maps", img: "ffa", path: "/bs/state" }, { key: "gg", n: "Gun Game", sub: "every kill, the next gun · knife last", img: "gg", path: "/gg/state" }, { key: "bomb", n: "Bomb · 3v3", sub: "plant or defuse · first to 6", img: "bomb", path: "/bomb/state" }, { key: "park", n: "Parkour", sub: "courses against the clock · ghosts", img: "park", path: "/park/state" }];
 let serversT = 0;
 async function pollServers() {
   if (!$("srv-ffa")) return;
@@ -462,9 +484,16 @@ async function pollServers() {
     let j = null; try { j = await fetch(STATE_URL.replace("/bs/state", sv.path), { cache: "no-store" }).then((r) => r.json()); } catch {}
     const el = $(`srv-${sv.key}`); if (!el) return;
     if (!j || !j.ok) { el.innerHTML = `<b>offline</b>`; return; }
-    const n = j.playing || 0, names = (j.names || []).slice(0, 6), extra = `${sv.key === "ffa" ? (MAPS[j.map] ? MAPS[j.map]().name : "") : sv.key === "bomb" ? (j.round ? `round ${j.round} · ${j.score?.[0] ?? 0}–${j.score?.[1] ?? 0}` : "") : (PARK_MAPS.includes(j.course) ? MAPS[j.course]().name : "")}`;
+    const n = j.playing || 0, names = (j.names || []).slice(0, 6), extra = `${sv.key === "ffa" || sv.key === "gg" ? `${MAPS[j.map] ? MAPS[j.map]().name : ""}${sv.key === "gg" && j.top ? ` · leader on gun ${j.top + 1}` : ""}` : sv.key === "bomb" ? (j.round ? `round ${j.round} · ${j.score?.[0] ?? 0}–${j.score?.[1] ?? 0}` : "") : (PARK_MAPS.includes(j.course) ? MAPS[j.course]().name : "")}`;
     el.innerHTML = `<b>${n ? `${n} playing now` : sv.key === "park" ? "nobody on" : "nobody on · bots only"}</b>${names.length ? `<span>${names.map(esc).join(", ")}${(j.names || []).length > 6 ? ` +${j.names.length - 6}` : ""}</span>` : ""}${extra ? `<i>${esc(extra)}</i>` : ""}`;
   }));
+}
+/* DAILY CHALLENGES (2026-10-11): three a day from the site, progress from the day's reported rounds; a met one is paid on the next read. */
+async function challenges() {
+  const el = $("chal"); if (!el) return;
+  try { const j = await fetch("/api/blockshot/challenges", { credentials: "same-origin", cache: "no-store" }).then((r) => r.json()); if (!j.ok || !$("chal")) return;
+    $("chal").innerHTML = `<span class="eyebrow inl">Today</span>${j.list.map((c) => `<div class="chal-c${c.claimed ? " done" : ""}"><b>${esc(c.text)}</b><i><s style="width:${Math.round((c.have / c.target) * 100)}%"></s></i><small>${c.claimed ? `done · +${c.brass} Brass` : `${c.have} / ${c.target} · ${c.brass} Brass`}</small></div>`).join("")}${j.me ? "" : `<small class="note">sign in to earn them</small>`}`;
+    if (j.paid) { hint(`Challenge done · +${j.paid} Brass`); if (armory.data?.me) armory.data.me.brass = j.brass; } } catch {}
 }
 function serversTick() { clearInterval(serversT); pollServers(); serversT = setInterval(() => { if ($("over").hidden || tab !== "play") { clearInterval(serversT); return; } pollServers(); }, 10000); }
 async function parkBoard() { const el = $("parkBoard"); if (!el) return; try { const j = await fetch(`/api/blockshot/park/board?course=${courseKey}`, { credentials: "same-origin", cache: "no-store" }).then((r) => r.json()); if (!j.ok || !$("parkBoard")) return; const mine = j.mine?.[courseKey];
@@ -490,7 +519,8 @@ function tick(dt) {
   }
   // the player's spread: tighter scoped, wider in the air (the rules apply the air part)
   const inputFor = (b) => (state !== "play" ? { x: 0, z: 0 } : b.bot ? botInput(world, beans, b, dt) : playerInput());
-  stepWorld(world, beans, dt, t, inputFor, Math.random, events, (b) => (b.bot ? pick(["ar", "ar", "sniper", "shotgun"]) : nextGun));
+  stepWorld(world, beans, dt, t, inputFor, Math.random, events, gunPick);
+  if (mode === "gg" && state === "play" && beans.some((b) => (b.gg || 0) >= GG.ladder.length)) { for (const e of events) onEvent(e); events.length = 0; endRound(); return; }
   for (const e of events) onEvent(e); events.length = 0;
 }
 function resetPark() {
@@ -514,7 +544,8 @@ function reset() {
   bomb = null; roundT = 0; $("log").innerHTML = ""; $("feed").innerHTML = ""; Object.assign(meStats, { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 });
   for (const L of POOL.lines) { L.life = 0; L.o.visible = false; } for (const P of POOL.puffs) { P.life = 0; P.o.visible = false; } for (const F of POOL.floats) { F.life = 0; F.s.visible = false; }
   for (const b of beans) { const keep = { mesh: b.mesh, skill: b.skill }; Object.assign(b, newBean(b.i, b.name, b.bot), keep); b.p.set(0, -50, 0); b.wantsRespawn = true; }
-  for (const b of beans) respawnBean(world, beans, b, b.bot ? pick(["ar", "ar", "sniper", "shotgun"]) : nextGun, Math.random, events);
+  if (mode === "gg") for (const b of beans) b.gg = 0;
+  for (const b of beans) respawnBean(world, beans, b, gunPick(b), Math.random, events);
   for (const e of events) onEvent(e); events.length = 0;
   drawSb();
 }
@@ -527,7 +558,7 @@ const ord = (n) => n + (n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 
 const ranked = () => inPlay().slice().sort((a, b) => b.kills - a.kills || a.deaths - b.deaths);
 function endRound() {
   if (state !== "play") return; state = "done"; document.exitPointerLock?.(); say(""); $("killcard").hidden = true;
-  const ranks = ranked(), place = ranks.indexOf(me) + 1, won = mode === "bomb" && bomb ? bomb.score[myTeam()] > bomb.score[1 - myTeam()] : place === 1;
+  const ranks = ranked(), place = ranks.indexOf(me) + 1, won = mode === "bomb" && bomb ? bomb.score[myTeam()] > bomb.score[1 - myTeam()] : mode === "gg" ? (me.gg || 0) >= GG.ladder.length : place === 1;
   play(won ? "win" : "lose");
   const lines = [[`${me.kills} kills`, me.kills * XP.kill], [`${meStats.headshots} headshots`, meStats.headshots * (XP.headshot - XP.kill)], [`${meStats.streaks} streaks of three`, meStats.streaks * XP.streak3], ["Finished the round", XP.round]];
   if (won) lines.push(["Won the round", XP.win]);
@@ -564,13 +595,14 @@ function drawMenu() {
     $("panel").innerHTML = `<div class="pm">
     <div class="srv">${SERVERS.map((sv) => `<button class="srv-card${mode === sv.key ? " on" : ""}" data-mode="${sv.key}" title="${esc(MODE_BLURB[sv.key])}" style="--img:url(${IMG_BASE}${sv.img}.webp?v=1)"><span class="srv-top"><b>${sv.n}</b><small>${sv.sub}</small></span><span class="srv-live" id="srv-${sv.key}"><b>…</b></span></button>`).join("")}</div>
     <div class="pm-top"><button class="go big" data-online="1">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
+    <div class="chal" id="chal"></div>
     <div class="pm-cols">
-      ${mode === "park" ? "" : `<div class="pm-col"><p class="eyebrow">Gun</p><div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div></div>`}
+      ${mode === "park" || mode === "gg" ? "" : `<div class="pm-col"><p class="eyebrow">Gun</p><div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div></div>`}
       <div class="pm-col"><p class="eyebrow">Practice</p><div class="pm-row">${mode === "park" ? `<div class="seg">${PARK_MAPS.map((k) => { const m = MAPS[k](); return `<button class="${k === courseKey ? "on" : ""}" data-course="${k}" title="${esc(m.blurb)}">${esc(m.name)} <small>${m.park.medals.join("/")}s</small></button>`; }).join("")}</div>` : mode === "bomb" ? `<span class="note" style="margin:0">${esc(MAPS[BOMB_MAP]().name)} · you and two bots against three</span>` : `<div class="seg">${MAP_LIST.map((k) => `<button class="${k === mapKey ? "on" : ""}" data-map="${k}" title="${esc(MAPS[k]().blurb)}">${esc(MAPS[k]().name)}</button>`).join("")}</div>`}<button class="go ghost sm" data-go="1">${mode === "park" ? "Run it" : "vs bots"}</button></div></div>
     </div>
     ${mode === "park" ? `<div id="parkBoard" class="note">Best times…</div>` : ""}
     <p class="pm-keys"><b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>4</b> pistol · <b>5</b> knife · <b>Q</b> cycle · <b>Tab</b> scores · <b>Esc</b> menu${site.on && !profile.server ? ` · <a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats` : profile.server ? ` · signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button>` : ""}</p>
-    </div>`; whoIsOn(); serversTick(); if (mode === "park") parkBoard(); }
+    </div>`; whoIsOn(); serversTick(); challenges(); if (mode === "park") parkBoard(); }
   else if (tab === "locker") {
     const sw = (slot, s) => { const col = slot === "body" || slot === "visor" ? COLORS[s.k] : COLORS[profile.skin.body] || 0xffd84a, on = profile.skin[slot] === s.k, have = owns(slot, s.k);
       return `<button class="sw${on ? " on" : ""}${have ? "" : " lock"}" data-slot="${slot}" data-k="${s.k}" title="${have ? esc(s.n) : `${esc(s.n)} · level ${s.lvl}`}"><i class="p-${slot === "body" || slot === "visor" ? "plain" : s.k}" style="--c:#${col.toString(16).padStart(6, "0")}"></i><span>${have ? esc(s.n) : `🔒 ${s.lvl}`}</span></button>`; };
@@ -655,7 +687,7 @@ function drawPodium(slots) {
   [slots[1], slots[0], slots[2]].forEach((s, i) => {
     if (s === undefined || !beans[s]) return;
     const block = new THREE.Mesh(new THREE.BoxGeometry(1.5, hs[i], 1.2), new THREE.MeshLambertMaterial({ color: cols[i] })); block.position.set(xs[i], hs[i] / 2, 0); sc.add(block);
-    const g = beans[s].mesh.g.clone(); g.visible = true; g.position.set(xs[i], hs[i], 0); g.rotation.set(0, Math.PI + (i - 1) * -0.35, 0); sc.add(g);
+    const g = beans[s].mesh.g.clone(); g.visible = true; g.position.set(xs[i], hs[i], 0); g.rotation.set(0, Math.PI + 0.75 + (i - 1) * 0.2, 0); sc.add(g);   // turned a little toward their gun side, so the gun in the hand shows
   });
   podR.render(sc, cam); c.getContext("2d").drawImage(podR.domElement, 0, 0);
 }
@@ -749,7 +781,7 @@ function drawSb() { $("sb").innerHTML = ranked().map((b, k) => `<tr class="${b =
 function drawBoard() { $("board").innerHTML = `<b>${mode === "bomb" ? "Bomb · 3v3" : "Free-for-all"} · ${esc(world?.map.name || "")} · ${fmtT(roundLeft())} left</b><table><tr><td></td><td></td><td>K</td><td>D</td></tr>${ranked().map((b, k) => `<tr class="${b === me ? "me" : ""}"><td>${k + 1}</td><td>${esc(b.name)}${b.bot ? "<small>bot</small>" : ""}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join("")}</table>`; }
 function draw(dt) {
   for (const b of beans) { if (b === me || !b.mesh.g.visible) continue; paintTag(b); const g = b.mesh.g;
-    if (b.mesh.gunKey !== b.gun && g.userData.gun) { b.mesh.gunKey = b.gun; g.userData.gun.material = lookGunMat(b.look, b.gun, g.userData.gunDefault); g.userData.gun.visible = b.gun !== "knife"; }
+    if (b.mesh.gunKey !== b.gun && g.userData.rig) { b.mesh.gunKey = b.gun; dressRig(g, b.gun, b.look); }
     if (mode === "bomb") { const eye = camera.position, d = new V(b.p.x - eye.x, b.p.y + 0.6 - eye.y, b.p.z - eye.z), dist = d.len() || 1; d.scale(1 / dist); const r = cast(world, [], new V(eye.x, eye.y, eye.z), d, me, dist + 1); b.mesh.tag.visible = b.team === me.team || r.t >= dist - 0.8; }   // a wall between us hides the name (teammates always show)
     else b.mesh.tag.visible = true; g.position.set(b.p.x, b.p.y - R, b.p.z); let dy = b.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3; g.scale.y += ((b.slide ? 0.55 : 1) - g.scale.y) * 0.3; }
   if (mode === "bomb" && bomb && me.dead && state === "play") {
@@ -799,7 +831,8 @@ function hud(dt) {
   { const on = Math.ceil(clamp(me.hp / MAX_HP, 0, 1) * 10); hpSeg.childNodes.forEach((i, k) => i.classList.toggle("on", k < on)); }
   { const g = GUNS[me.gun]; $("ammoBox").classList.toggle("empty", me.ammo === 0 && !me.reloading); $("hudReload").firstElementChild.style.width = me.reloading ? `${(1 - me.reloading / g.reload) * 100}%` : "0"; }
   if (me.dead && state === "play") { if (mode === "bomb") { $("deathBar").style.width = "0%"; $("deathSub").textContent = "no respawn this round · watching your team"; } else { $("deathBar").style.width = `${clamp(me.respawn / RESPAWN_S, 0, 1) * 100}%`; $("deathSub").textContent = `respawning in ${Math.ceil(me.respawn)}`; } }
-  { const held = Boolean(GUNS[me.gun]?.secondary), weps = PRIMARY_KEYS.map((k, i) => `<span class="${k === me.gun ? "on" : ""}${k === nextGun && k !== me.gun && !held ? " next" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}${k === nextGun && k !== me.gun && !held ? " · next" : ""}</span>`).join("") + `<span class="${me.gun === "pistol" ? "on" : ""}">4 Pistol</span><span class="${me.gun === "knife" ? "on" : ""}">5 Knife</span>`; if (hud.weps !== weps) { hud.weps = weps; $("hudWeps").innerHTML = weps; } }
+  if (mode === "gg") { const w = `<span class="on">gun ${Math.min((me.gg || 0) + 1, GG.ladder.length)} / ${GG.ladder.length} · ${GUNS[me.gun]?.n || ""}</span>${GG.ladder.map((k, i) => `<span class="${i < (me.gg || 0) ? "done" : i === (me.gg || 0) ? "on" : ""}">${i + 1}</span>`).join("")}`; if (hud.weps !== w) { hud.weps = w; $("hudWeps").innerHTML = w; } }
+  else { const held = Boolean(GUNS[me.gun]?.secondary), weps = PRIMARY_KEYS.map((k, i) => `<span class="${k === me.gun ? "on" : ""}${k === nextGun && k !== me.gun && !held ? " next" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}${k === nextGun && k !== me.gun && !held ? " · next" : ""}</span>`).join("") + `<span class="${me.gun === "pistol" ? "on" : ""}">4 Pistol</span><span class="${me.gun === "knife" ? "on" : ""}">5 Knife</span>`; if (hud.weps !== weps) { hud.weps = weps; $("hudWeps").innerHTML = weps; } }
   fitViewGun(me.gun);
   { const gn = GUNS[me.gun].n; if ($("hudGun").textContent !== gn) $("hudGun").textContent = gn; }
   $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0); $("xhair").classList.toggle("hs", hsTimer > 0);
@@ -864,6 +897,6 @@ function frame(now, driven) {
 buildMap(mapKey); reset(); state = "menu"; $("hudGun").textContent = GUNS.ar.n; $("hudMag").textContent = `/ ${GUNS.ar.mag}`; drawProfile(); showMenu("play");
 loadArmory().then(() => { if (myLook) redressMe(); });
 syncFromServer().then((me2) => { if (me2) { redressMe(); drawProfile(); } if (!$("over").hidden) drawMenu(); });   // redrawn for a guest too: that is when the sign-in row appears
-window.__bs = { perf, onEvent, killCard, look(y, p) { yaw = y; pitch = p; }, hideHud(on) { for (const sel of [".hud-top", ".hud-bot", "#bombLine", "#roundCard", "#lockHint", "#xhair", ".weps", "#hint", "#killcard", "#reloadBar", ".streak", ".sub", "#over"]) document.querySelectorAll(sel).forEach((e) => (e.style.visibility = on ? "hidden" : "")); viewGun.visible = !on; }, buildArmoryPreview, drawArmoryPreview, get armory() { return armory; }, get apv() { return { apvModel, apvScene, podR }; }, get bomb() { return bomb; }, get mode() { return mode; }, drive(on) { clearInterval(perf.drive); perf.drive = on ? setInterval(() => frame(performance.now(), true), 1000 / 60) : 0; }, beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
+window.__bs = { perf, onEvent, killCard, endOnline, look(y, p) { yaw = y; pitch = p; }, hideHud(on) { for (const sel of [".hud-top", ".hud-bot", "#bombLine", "#roundCard", "#lockHint", "#xhair", ".weps", "#hint", "#killcard", "#reloadBar", ".streak", ".sub", "#over"]) document.querySelectorAll(sel).forEach((e) => (e.style.visibility = on ? "hidden" : "")); viewGun.visible = !on; }, buildArmoryPreview, drawArmoryPreview, get armory() { return armory; }, get apv() { return { apvModel, apvScene, podR }; }, get bomb() { return bomb; }, get mode() { return mode; }, drive(on) { clearInterval(perf.drive); perf.drive = on ? setInterval(() => frame(performance.now(), true), 1000 / 60) : 0; }, beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
   sim(seconds) { for (let k = 0; k < seconds * 60; k++) advance(1 / 60); draw(1 / 60); hud(1 / 60); } };
 requestAnimationFrame(frame);

@@ -28,6 +28,7 @@ export async function ensureBlockshot(db) {
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_blockshot_rounds_day ON blockshot_rounds (day, user_id)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_blockshot_stats_kills ON blockshot_stats (kills DESC)`)
   ]);
+  try { await db.prepare(`ALTER TABLE blockshot_rounds ADD COLUMN rounds_won INTEGER NOT NULL DEFAULT 0`).run(); } catch {}   // (2026-10-11) bomb rounds won, for the daily challenges; forgiving: the column may exist
   ready = true;
 }
 
@@ -39,8 +40,8 @@ export async function applyRound(db, roundId, map, results, now = Date.now()) {
     const id = String(r.id || ""), login = String(r.login || "").toLowerCase().slice(0, 40), display = String(r.name || login).slice(0, 40);
     if (!id || !login || id.startsWith("guest:")) continue;
     const row = { kills: n(r.kills, 500), deaths: n(r.deaths, 500), headshots: n(r.headshots, 500), shots: n(r.shots, 50000), hits: n(r.hits, 50000), place: n(r.place, 16), won: r.won ? 1 : 0, streak: n(r.streak, 500), seconds: n(r.seconds, 600), xp: n(r.xp, 5000) };
-    const ins = await db.prepare(`INSERT OR IGNORE INTO blockshot_rounds (round_id, user_id, day, map, kills, deaths, headshots, shots, hits, place, won, streak, seconds, xp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .bind(roundId, id, day, String(map).slice(0, 24), row.kills, row.deaths, row.headshots, row.shots, row.hits, row.place, row.won, row.streak, row.seconds, row.xp).run();
+    const ins = await db.prepare(`INSERT OR IGNORE INTO blockshot_rounds (round_id, user_id, day, map, kills, deaths, headshots, shots, hits, place, won, streak, seconds, xp, rounds_won) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .bind(roundId, id, day, String(map).slice(0, 24), row.kills, row.deaths, row.headshots, row.shots, row.hits, row.place, row.won, row.streak, row.seconds, row.xp, n(r.roundsWon, 20)).run();
     if (!ins.meta?.changes) continue;
     await db.prepare(`INSERT INTO blockshot_stats (user_id, login, display, kills, deaths, headshots, shots, hits, wins, rounds, best_streak, seconds, xp)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)
