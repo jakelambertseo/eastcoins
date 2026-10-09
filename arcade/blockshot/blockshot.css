@@ -51,6 +51,13 @@ h2{margin:0 0 6px;font:800 26px/1.1 var(--font);text-transform:uppercase;letter-
 #xhair.hitm{--c:#fff}#xhair.hitm::before,#xhair.hitm::after{content:"";position:absolute;left:-14px;top:-1px;width:28px;height:2px;background:#fff;box-shadow:0 0 3px #000}
 #xhair.hitm::before{transform:rotate(45deg)}#xhair.hitm::after{transform:rotate(-45deg)}
 #xhair.kill::before,#xhair.kill::after{background:var(--danger);width:36px;left:-18px;height:3px}
+#xhair.hs::before,#xhair.hs::after{background:var(--you);box-shadow:0 0 6px rgba(255,216,74,.8)}
+#killcard{position:absolute;left:50%;top:calc(50% + 46px);transform:translateX(-50%);display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(0,0,0,.55);border-left:3px solid var(--danger);font-size:14px;letter-spacing:1px;color:var(--ink);pointer-events:none;white-space:nowrap}
+#killcard small{color:var(--dim);text-transform:uppercase;font-size:11px;letter-spacing:2px}#killcard b{font-size:16px;text-transform:uppercase;letter-spacing:1.5px}#killcard span{padding:2px 7px;background:var(--you);color:#1a1300;font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}#killcard em{font-style:normal;color:var(--info);font-weight:800}
+#killcard.in{animation:kc .22s ease-out}@keyframes kc{from{opacity:0;transform:translateX(-50%) translateY(8px) scale(.9)}to{opacity:1;transform:translateX(-50%)}}
+.res{max-width:760px}.res-h{font-size:34px!important;letter-spacing:3px}.res-sub{margin:0 0 6px!important;color:var(--info)!important;font-size:12px!important;letter-spacing:2px;text-transform:uppercase;font-weight:800}
+.podium{margin:6px 0 10px}.podium canvas{display:block;width:100%;max-width:640px;height:auto}.pod-names{display:grid;grid-template-columns:repeat(3,1fr);max-width:640px;text-align:center}.pod-names div{display:grid;gap:2px}.pod-names small{color:var(--dim);font-size:11px;letter-spacing:2px;text-transform:uppercase}.pod-names b{text-transform:uppercase;letter-spacing:1px}.pod-names span{color:var(--dim);font-size:13px}.pod-names .me b{color:var(--you)}
+.res-line{margin:0 0 10px!important}.res-t{min-width:300px}.res-foot{display:flex;gap:12px;align-items:center;margin-top:16px}.res-foot .go{margin:0}.res-foot .next{font-size:18px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--you)}
 #scope{position:absolute;inset:0;pointer-events:none;display:none;background:radial-gradient(circle at center,transparent 23%,rgba(0,0,0,.94) 24%)}
 #scope::before,#scope::after{content:"";position:absolute;left:50%;top:50%;background:rgba(0,0,0,.8)}#scope::before{width:1px;height:50%;transform:translate(-50%,-50%)}#scope::after{height:1px;width:50%;transform:translate(-50%,-50%)}
 #scope.on{display:block}

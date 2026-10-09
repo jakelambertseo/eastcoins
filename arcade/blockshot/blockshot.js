@@ -12,7 +12,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=8";
 import { createNet } from "./net.js?v=8";
 import { material, skin as skinTex } from "./tex.js?v=1";
-import { play, setVolume, ensure as audioOn } from "./audio.js?v=3";
+import { play, setVolume, ensure as audioOn } from "./audio.js?v=4";
 import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=4";
 
 const V3 = THREE.Vector3;
@@ -148,7 +148,11 @@ function floatText(p, text, col) {
   const x = F.c.getContext("2d"); x.clearRect(0, 0, 128, 64); x.textAlign = "center"; x.font = "800 36px Rajdhani, sans-serif"; x.lineWidth = 6; x.strokeStyle = "#000"; x.strokeText(text, 64, 44); x.fillStyle = col; x.fillText(text, 64, 44); F.s.material.map.needsUpdate = true;
   F.s.position.set(p.x + rnd(-0.3, 0.3), p.y + 1.3, p.z); F.s.visible = true; F.life = 0.7;
 }
-let hitTimer = 0, killTimer = 0, dmgT = 0, dmgAngle = 0;
+let hitTimer = 0, killTimer = 0, hsTimer = 0, dmgT = 0, dmgAngle = 0, kcT = 0, lastPlace = 0;
+/** Left-right placement of a sound from a world position, against where the camera looks. */
+const panTo = (p) => { const dx = p.x - camera.position.x, dz = p.z - camera.position.z, l = Math.hypot(dx, dz) || 1; return clamp((dx * Math.cos(yaw) + dz * -Math.sin(yaw)) / l, -1, 1); };
+/** The kill card under the crosshair: who, headshot or not, and what it paid. */
+function killCard(name, head, xp) { const el = $("killcard"); $("kcName").textContent = name; $("kcTag").hidden = !head; $("kcXp").textContent = xp ? `+${xp} XP` : ""; el.hidden = false; el.classList.remove("in"); void el.offsetWidth; el.classList.add("in"); kcT = 1.7; }
 function dmgFrom(by) { dmgAngle = Math.atan2(by.p.x - me.p.x, by.p.z - me.p.z); dmgT = 0.7; }
 function flashDamage() { const el = $("hurt"); el.classList.remove("on"); void el.offsetWidth; el.classList.add("on"); }
 const meStats = { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 };
@@ -160,11 +164,11 @@ function onEvent(e) {
       if (online && e.b === me && !e.local) return;   // drawn when the trigger was pulled (see onlineTick)
       const muzzle = e.b === me ? camera.localToWorld(new V3(0.2, -0.15, -0.75)) : e.pellets[0].from.clone().addScaled(e.b.aim, 0.6);
       for (const p of e.pellets) tracer(muzzle, p.to, e.b === me);
-      if (e.b === me) { viewGun.position.z += scoping ? 0.06 : 0.12; meStats.shots++; gunStat(me.gun).shots++; play(e.gun); } else play(e.gun, clamp(0.6 - e.b.p.dist(me.p) / 70, 0, 0.6));
+      if (e.b === me) { viewGun.position.z += scoping ? 0.06 : 0.12; meStats.shots++; gunStat(me.gun).shots++; play(e.gun); } else play(e.gun, clamp(0.6 - e.b.p.dist(me.p) / 70, 0, 0.6), panTo(e.b.p));
       return;
     }
     case "hit": paintTag(e.target);
-      if (e.by === me) { hitTimer = 0.14; meStats.hits++; gunStat(me.gun).hits++; if (e.head) meStats.headshots++; play(e.head ? "headshot" : "hit"); floatText(e.target.p, e.head ? `${Math.round(e.dmg)} HS` : `${Math.round(e.dmg)}`, e.head ? "#ffd84a" : "#fff"); }
+      if (e.by === me) { hitTimer = 0.14; if (e.head) hsTimer = 0.22; meStats.hits++; gunStat(me.gun).hits++; if (e.head) meStats.headshots++; play(e.head ? "headshot" : "hit"); floatText(e.target.p, e.head ? `${Math.round(e.dmg)} HS` : `${Math.round(e.dmg)}`, e.head ? "#ffd84a" : "#fff"); }
       if (e.target === me) { flashDamage(); play("hurt"); if (e.by && e.by !== me) dmgFrom(e.by); }
       return;
     case "kill": {
@@ -172,7 +176,12 @@ function onEvent(e) {
       const who = (b) => (b.bot ? esc(b.name) : "<b>you</b>");
       feed(!by ? `${who(target)} fell` : `${who(by)} ${head ? '<span class="hs">⌖</span>' : "▸"} ${who(target)}`, by === me ? "me" : target === me ? "dead" : "");
       log(!by ? `${target.bot ? target.name : "You"} fell.` : `${by.bot ? by.name : "You"} killed ${target.bot ? target.name : "you"}${head ? " (headshot)" : ""}.`, by === me);
-      if (by === me) { killTimer = 0.4; gunStat(me.gun).kills++; play("kill"); if (me.streak % 3 === 0) meStats.streaks++; if (me.streak === 3) { say("TRIPLE KILL"); play("streak"); } else if (me.streak === 5) { say("RAMPAGE"); play("streak"); } else if (me.streak >= 8 && me.streak % 4 === 0) { say("UNSTOPPABLE"); play("streak"); } }
+      if (by === me) {
+        killTimer = 0.4; gunStat(me.gun).kills++; play(head ? "killhs" : "kill"); if (me.streak % 3 === 0) meStats.streaks++;
+        const xpCounts = online ? !net.you?.guest : !profile.server; killCard(target.name, head, xpCounts ? (head ? XP.headshot : XP.kill) : 0);
+        const call = me.streak === 3 ? "TRIPLE KILL" : me.streak === 5 ? "RAMPAGE" : me.streak === 10 ? "UNSTOPPABLE" : me.streak >= 15 && me.streak % 5 === 0 ? "GODLIKE" : "";
+        if (call) { say(call, `${me.streak} in a row`); play("streak"); clearTimeout(say.t); say.t = setTimeout(() => { if ($("hudMsg").textContent === call) say(""); }, 1800); }
+      }
       if (target === me) { me.lastBy = by; me.respawn = RESPAWN_S; $("deathBy").textContent = by ? by.name : "the fall"; $("death").hidden = false; play("die"); }   // (the mouse stays grabbed: every grab shows the browser's pointer notice, so it's once per Play, not once per death)
       drawSb(); return;
     }
@@ -236,26 +245,28 @@ function onlineTick(dt) {
   net.tick(inp, t);
 }
 function endOnline(m) {
-  state = "done"; document.exitPointerLock?.();
+  state = "done"; document.exitPointerLock?.(); say(""); $("killcard").hidden = true;
   const ranks = m.ranks, y = m.you;
   if (!y) { showMenu("result", `<b>${esc(ranks[0]?.name || "")} wins</b><p>You were watching. The next round starts in a few seconds.</p>`); return; }
   play(y.won ? "win" : "lose");
   let xpHtml = "";
-  const xpLines = `<div class="xpl"><span>${y.kills} kills</span><b>+${y.kills * XP.kill}</b><span>${y.headshots} headshots</span><b>+${y.headshots * (XP.headshot - XP.kill)}</b><span>${y.streaks} streaks of three</span><b>+${y.streaks * XP.streak3}</b><span>Finished the round</span><b>+${XP.round}</b>${y.won ? `<span>Won the round</span><b>+${XP.win}</b>` : ""}<span>Total</span><b>+${y.xp} XP</b></div>`;
-  const lvlBlock = (gained, unlocked) => { const pct = Math.round((profile.xp / need(profile.level)) * 100); return `<div class="lvl" id="lvlBlock"><b>Level ${profile.level}</b> <small>${esc(titleFor(profile.level))}</small><div class="bar"><i style="width:${pct}%"></i></div><small>${profile.xp} / ${need(profile.level)} to level ${profile.level + 1}${profile.server ? " · your account" : ""}</small></div>${gained ? `<div class="up">LEVEL UP${gained > 1 ? ` ×${gained}` : ""} · now level ${profile.level}${unlocked.length ? ` · unlocked: ${unlocked.map((u) => esc(u.n)).join(", ")}` : ""}</div>` : ""}`; };
-  if (y.guest) xpHtml = `<p class="note">Playing as a guest: XP, skins and stats only follow signed-in players. Log in with Twitch on EastCoin to keep yours.</p>`;
+  const lines = [[`${y.kills} kills`, y.kills * XP.kill], [`${y.headshots} headshots`, y.headshots * (XP.headshot - XP.kill)], [`${y.streaks} streaks of three`, y.streaks * XP.streak3], ["Finished the round", XP.round]]; if (y.won) lines.push(["Won the round", XP.win]);
+  const pctFrom = Math.round((profile.xp / need(profile.level)) * 100);
+  if (y.guest) xpHtml = `<p class="note">Playing as a guest: XP, skins and stats only follow signed-in players. Sign in with Twitch to keep yours.</p>`;
   else if (y.counted && profile.server) {
-    // the site paid it: ask for the new standing once the report has landed
+    // the site paid it: ask for the new standing once the report has landed, then fill the bar to it
     recordRound({ map: m.map, gun: nextGun, kills: y.kills, deaths: y.deaths, headshots: y.headshots, shots: meStats.shots, hits: meStats.hits, won: y.won, streak: y.streak, seconds: ROUND_S, byGun: meStats.byGun });
-    const before = profile.level; xpHtml = `<div class="xp">${xpLines}${lvlBlock(0, [])}</div>`;
-    setTimeout(async () => { const me2 = await syncFromServer(); if (!me2) return; const gained = profile.level - before; const el = $("lvlBlock"); if (el) el.outerHTML = lvlBlock(gained, gained > 0 ? unlockedBetween(before, profile.level) : []); if (gained > 0) play("levelup"); drawProfile(); }, 1500);
+    const before = profile.level; xpHtml = xpBlock(lines, y.xp, pctFrom, 0, [], " · your account");
+    setTimeout(async () => { const me2 = await syncFromServer(); if (!me2) return; const gained = profile.level - before; const el = $("xpBlock"); if (el) { el.outerHTML = xpBlock(lines, y.xp, pctFrom, gained, gained > 0 ? unlockedBetween(before, profile.level) : [], " · your account"); fillBars(); } if (gained > 0) play("levelup"); drawProfile(); }, 1500);
   } else {
     const res = award(y.xp); recordRound({ map: m.map, gun: nextGun, kills: y.kills, deaths: y.deaths, headshots: y.headshots, shots: meStats.shots, hits: meStats.hits, won: y.won, streak: y.streak, seconds: ROUND_S, byGun: meStats.byGun });
-    xpHtml = `<div class="xp">${xpLines}${lvlBlock(res.gained, res.unlocked)}</div>${y.counted ? "" : `<p class="note">${profile.server ? "This round wasn't reported to your account (the server has no key); XP stays as it was." : "XP kept in this browser."}</p>`}`;
+    xpHtml = xpBlock(lines, y.xp, pctFrom, res.gained, res.unlocked, "") + (y.counted ? "" : `<p class="note">${profile.server ? "This round wasn't reported to your account (the server has no key); XP stays as it was." : "XP kept in this browser."}</p>`);
     if (res.gained) setTimeout(() => play("levelup"), 700); drawProfile();
   }
-  showMenu("result", `<b>${y.won ? "You win!" : `${esc(ranks[0].name)} wins`}</b><p>You came <b>${ord(y.place)}</b> of ${PLAYERS} on ${esc(world.map.name)} · <b>${y.kills}</b> kills, <b>${y.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${y.streak}.</p>${xpHtml}
-    <table class="sb" style="min-width:300px">${ranks.map((r, k) => `<tr class="${r.s === me.i ? "me" : ""}"><td>${ord(k + 1)}</td><td>${esc(r.name)}${r.human ? "" : " <small>bot</small>"}</td><td>${r.k} / ${r.d}</td></tr>`).join("")}</table><p class="note">The next round starts in a few seconds.</p>`);
+  showMenu("result", resultHtml({ headline: y.won ? "You win!" : `${esc(ranks[0].name)} wins`, sub: esc(world.map.name), meSlot: me.i, ranks,
+    line: `You came <b>${ord(y.place)}</b> of ${PLAYERS} · <b>${y.kills}</b> kills, <b>${y.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${y.streak}`,
+    xpHtml, foot: `<span class="next" id="nextIn"></span>` }));
+  drawPodium(ranks.slice(0, 3).map((r) => r.s)); fillBars(); nextCountdown(10);
 }
 async function playOnline() {
   $("panel").innerHTML = `<b>Connecting…</b><p>Finding the match.</p>`;
@@ -285,22 +296,20 @@ function start() { clearTimeout(overTimer); buildMap(mapKey); reset(); state = "
 const ord = (n) => n + (n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th");
 const ranked = () => beans.slice().sort((a, b) => b.kills - a.kills || a.deaths - b.deaths);
 function endRound() {
-  if (state !== "play") return; state = "done"; document.exitPointerLock?.();
+  if (state !== "play") return; state = "done"; document.exitPointerLock?.(); say(""); $("killcard").hidden = true;
   const ranks = ranked(), place = ranks.indexOf(me) + 1, won = place === 1;
   play(won ? "win" : "lose");
   const lines = [[`${me.kills} kills`, me.kills * XP.kill], [`${meStats.headshots} headshots`, meStats.headshots * (XP.headshot - XP.kill)], [`${meStats.streaks} streaks of three`, meStats.streaks * XP.streak3], ["Finished the round", XP.round]];
   if (won) lines.push(["Won the round", XP.win]);
-  const total = lines.reduce((n, l) => n + l[1], 0), res = award(total);
+  const total = lines.reduce((n, l) => n + l[1], 0), pctFrom = Math.round((profile.xp / need(profile.level)) * 100), res = award(total);
   recordRound({ map: mapKey, gun: nextGun, kills: me.kills, deaths: me.deaths, headshots: meStats.headshots, shots: meStats.shots, hits: meStats.hits, won, streak: me.bestStreak, seconds: roundT, byGun: meStats.byGun });
-  const pct = Math.round((profile.xp / need(profile.level)) * 100), practiceNote = profile.server ? `<p class="note">Practice: nothing here counts toward your account. Play online for XP and the board.</p>` : "";
-  showMenu("result", `<b>${won ? "You win!" : `${esc(ranks[0].name)} wins`}</b>
-    <p>You came <b>${ord(place)}</b> of ${PLAYERS} on ${esc(world.map.name)} · <b>${me.kills}</b> kills, <b>${me.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${me.bestStreak}.</p>
-    ${profile.server ? practiceNote : `<div class="xp"><div class="xpl">${lines.map(([n, v]) => `<span>${esc(n)}</span><b>+${v}</b>`).join("")}<span>Total</span><b>+${total} XP</b></div>
-      <div class="lvl"><b>Level ${profile.level}</b> <small>${esc(titleFor(profile.level))}</small><div class="bar"><i style="width:${pct}%"></i></div><small>${profile.xp} / ${need(profile.level)} to level ${profile.level + 1}</small></div>
-      ${res.gained ? `<div class="up">LEVEL UP${res.gained > 1 ? ` ×${res.gained}` : ""} · now level ${profile.level}${res.unlocked.length ? ` · unlocked: ${res.unlocked.map((u) => esc(u.n)).join(", ")}` : ""}</div>` : ""}</div>`}
-    <table class="sb" style="min-width:300px">${ranks.map((b, k) => `<tr class="${b.bot ? "" : "me"}"><td>${ord(k + 1)}</td><td>${esc(b.name)}</td><td>${b.kills} / ${b.deaths}</td></tr>`).join("")}</table>`);
+  const practiceNote = profile.server ? `<p class="note">Practice: nothing here counts toward your account. Play online for XP and the board.</p>` : "";
+  showMenu("result", resultHtml({ headline: won ? "You win!" : `${esc(ranks[0].name)} wins`, sub: `Practice · ${esc(world.map.name)}`, meSlot: me.i, ranks: ranks.map((b) => ({ s: b.i, name: b.name, k: b.kills, d: b.deaths, human: !b.bot })),
+    line: `You came <b>${ord(place)}</b> of ${PLAYERS} · <b>${me.kills}</b> kills, <b>${me.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${me.bestStreak}`,
+    xpHtml: profile.server ? practiceNote : xpBlock(lines, total, pctFrom, res.gained, res.unlocked, ""),
+    foot: `<button class="go" data-go="1">Play again</button><button class="go ghost sm" data-tab="play">Menu</button>` }));
   if (res.gained) setTimeout(() => play("levelup"), 700);
-  $("over").hidden = true; overTimer = setTimeout(() => { $("over").hidden = false; }, 900);
+  $("over").hidden = true; overTimer = setTimeout(() => { $("over").hidden = false; drawPodium(ranks.slice(0, 3).map((b) => b.i)); fillBars(); }, 900);
   drawProfile();
 }
 
@@ -380,6 +389,41 @@ $("over").addEventListener("input", (e) => {
   if (k === "volume") setVolume(v); if (k === "crosshair") $("xhair").dataset.style = v;
 });
 setVolume(profile.settings.volume); $("xhair").dataset.style = profile.settings.crosshair;
+/* THE END OF A ROUND (2026-10-09): one screen for both modes. The top three stand on a podium in their own skins (their meshes cloned
+   into a small scene drawn by one spare renderer and copied onto the screen's canvas), your line under it, the XP bar filling from
+   where it was to where it is, the table, and "next map in N" online or Play again in practice. */
+let podR = null;
+function resultHtml({ headline, sub, line, xpHtml, ranks, meSlot, foot }) {
+  const top = ranks.slice(0, 3), pod = [top[1], top[0], top[2]];
+  return `<div class="res"><b class="res-h">${headline}</b>${sub ? `<p class="res-sub">${sub}</p>` : ""}
+    <div class="podium"><canvas id="podium" width="640" height="220"></canvas><div class="pod-names">${pod.map((r, i) => r ? `<div class="${r.s === meSlot ? "me" : ""}"><small>${ord([2, 1, 3][i])}</small><b>${esc(r.name)}</b><span>${r.k} / ${r.d}</span></div>` : "<div></div>").join("")}</div></div>
+    <p class="res-line">${line}</p>${xpHtml}
+    <table class="sb res-t">${ranks.map((r, k) => `<tr class="${r.s === meSlot ? "me" : ""}"><td>${ord(k + 1)}</td><td>${esc(r.name)}${r.human === false ? " <small>bot</small>" : ""}</td><td>${r.k} / ${r.d}</td></tr>`).join("")}</table>
+    <div class="res-foot">${foot}</div></div>`;
+}
+function drawPodium(slots) {
+  const c = $("podium"); if (!c) return;
+  if (!podR) { podR = new THREE.WebGLRenderer({ antialias: true, alpha: true }); podR.setSize(c.width, c.height, false); }
+  const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(28, c.width / c.height, 0.1, 30); cam.position.set(0, 1.9, 7.2); cam.lookAt(0, 0.9, 0);
+  sc.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.5)); const l = new THREE.DirectionalLight(0xffffff, 1.2); l.position.set(2, 5, 4); sc.add(l);
+  const xs = [-1.9, 0, 1.9], hs = [0.55, 0.95, 0.35], cols = [0xc0c0c0, 0xffd84a, 0xb87333];
+  [slots[1], slots[0], slots[2]].forEach((s, i) => {
+    if (s === undefined || !beans[s]) return;
+    const block = new THREE.Mesh(new THREE.BoxGeometry(1.5, hs[i], 1.2), new THREE.MeshLambertMaterial({ color: cols[i] })); block.position.set(xs[i], hs[i] / 2, 0); sc.add(block);
+    const g = beans[s].mesh.g.clone(); g.visible = true; g.position.set(xs[i], hs[i], 0); g.rotation.set(0, Math.PI + (i - 1) * -0.35, 0); sc.add(g);
+  });
+  podR.render(sc, cam); c.getContext("2d").drawImage(podR.domElement, 0, 0);
+}
+/** The XP block: the bar starts where it was and fills to where it is (the CSS transition does the filling). */
+function xpBlock(lines, total, pctFrom, gained, unlocked, note) {
+  const pct = Math.round((profile.xp / need(profile.level)) * 100);
+  return `<div class="xp" id="xpBlock"><div class="xpl">${lines.map(([n, v]) => `<span>${esc(n)}</span><b>+${v}</b>`).join("")}<span>Total</span><b>+${total} XP</b></div>
+    <div class="lvl" id="lvlBlock"><b>Level ${profile.level}</b> <small>${esc(titleFor(profile.level))}</small><div class="bar"><i style="width:${gained ? 0 : pctFrom}%" data-to="${pct}%"></i></div><small>${profile.xp} / ${need(profile.level)} to level ${profile.level + 1}${note}</small>
+    ${gained ? `<div class="up">LEVEL UP${gained > 1 ? ` ×${gained}` : ""} · now level ${profile.level}${unlocked.length ? ` · unlocked: ${unlocked.map((u) => esc(u.n)).join(", ")}` : ""}</div>` : ""}</div></div>`;
+}
+const fillBars = () => setTimeout(() => { for (const i of document.querySelectorAll(".lvl .bar i[data-to]")) i.style.width = i.dataset.to; }, 60);
+let nextTimer = 0;
+function nextCountdown(secs) { clearInterval(nextTimer); let n = secs; const tick = () => { const el = $("nextIn"); if (!el) { clearInterval(nextTimer); return; } el.textContent = n > 0 ? `Next map in ${n}` : "Starting…"; n--; }; tick(); nextTimer = setInterval(tick, 1000); }
 let pvR = null;
 function drawPreview() {
   const c = $("pv"); if (!c) return; if (!pvR) pvR = new THREE.WebGLRenderer({ canvas: c, antialias: true, alpha: true });
@@ -409,6 +453,8 @@ function draw(dt) {
   }
   const fov = scoping && !me.dead ? profile.settings.fov / (GUNS[me.gun].zoom || 1) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 9, 0, 1) * 10; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
   $("scope").classList.toggle("on", Boolean(scoping && GUNS[me.gun].scope && !me.dead && state === "play"));   // (Boolean: toggle with an undefined second argument FLIPS the class, and the rifle has no scope field)
+  // footsteps (2026-10-09): everyone else's footfalls, timed by their speed, faded by distance and placed left-right, so you hear who's coming
+  if (!me.dead) for (const b of beans) { if (b === me || b.dead) continue; const sp = Math.hypot(b.v.x, b.v.z); if (!b.grounded || b.slide || sp < 2.5) { b.stepT = 0.3; continue; } b.stepT = (b.stepT ?? 0) - dt * sp / 2.6; if (b.stepT <= 0) { b.stepT = 1; const d = b.p.dist(me.p); if (d < 26) play("step", clamp(1 - d / 26, 0, 1) * 0.9, panTo(b.p)); } }
   for (const L of POOL.lines) if (L.life > 0) { L.life -= dt; L.o.material.opacity = Math.max(0, L.life / L.max); if (L.life <= 0) L.o.visible = false; }
   for (const P of POOL.puffs) if (P.life > 0) { P.life -= dt; const a = Math.max(0, P.life / P.max); P.o.material.opacity = a; P.o.scale.setScalar(1 + (1 - a) * 2.5); if (P.life <= 0) P.o.visible = false; }
   for (const F of POOL.floats) if (F.life > 0) { F.life -= dt; F.s.position.y += dt * 1.2; F.s.material.opacity = Math.min(1, F.life * 2); if (F.life <= 0) F.s.visible = false; }
@@ -417,7 +463,8 @@ function draw(dt) {
 }
 const hpSeg = $("hudHpSeg"); for (let k = 0; k < 10; k++) hpSeg.append(document.createElement("i"));
 function hud(dt) {
-  hitTimer = Math.max(0, hitTimer - dt); killTimer = Math.max(0, killTimer - dt); dmgT = Math.max(0, dmgT - dt);
+  hitTimer = Math.max(0, hitTimer - dt); killTimer = Math.max(0, killTimer - dt); hsTimer = Math.max(0, hsTimer - dt); dmgT = Math.max(0, dmgT - dt);
+  if (kcT > 0) { kcT -= dt; if (kcT <= 0) $("killcard").hidden = true; }
   // the crosshair opens with speed, in the air and when hit; it closes scoped
   { const sp = Math.hypot(me.v.x, me.v.z), g = GUNS[me.gun], ads = scoping && !me.dead, gap = (ads ? 2 : 5 + Math.min(14, sp * 0.9) + (me.grounded ? 0 : 10)) + (hitTimer > 0 ? 2 : 0); $("xhair").style.setProperty("--gap", `${gap.toFixed(1)}px`); $("xhair").style.opacity = ads && g.scope ? "0" : "1"; }
   { const el = $("dmgDir"); el.classList.toggle("on", dmgT > 0); if (dmgT > 0) { let a = dmgAngle - yaw; el.firstElementChild.style.transform = `rotate(${(-a * 180) / Math.PI}deg)`; } }
@@ -427,11 +474,12 @@ function hud(dt) {
   if (me.dead && state === "play") { $("deathBar").style.width = `${clamp(me.respawn / RESPAWN_S, 0, 1) * 100}%`; $("deathSub").textContent = `respawning in ${Math.ceil(me.respawn)}`; }
   { const weps = GUN_KEYS.map((k, i) => `<span class="${k === me.gun ? "on" : ""}${k === nextGun && k !== me.gun ? " next" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}${k === nextGun && k !== me.gun ? " · next" : ""}</span>`).join(""); if (hud.weps !== weps) { hud.weps = weps; $("hudWeps").innerHTML = weps; } }
   { const gn = GUNS[me.gun].n; if ($("hudGun").textContent !== gn) $("hudGun").textContent = gn; }
-  $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0);
+  $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0); $("xhair").classList.toggle("hs", hsTimer > 0);
   $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft());
   { const spike = perf.lastAt && performance.now() - perf.lastAt < 3000 ? ` · spike ${perf.lastMs}ms` : "", snap = online && net.worstGap > 0.15 ? ` · snap ${Math.round(net.worstGap * 1000)}ms` : "";
     $("hudPing").textContent = online ? `${net.ping} ms${net.lag() > 12 ? ` · lag ${net.lag()}` : ""}${snap}${spike}` : spike.replace(" · ", ""); }
   const place = ranked().indexOf(me) + 1; $("hudPlace").textContent = state === "play" ? `${ord(place)} of ${PLAYERS}` : "";
+  if (state === "play") { if (place === 1 && lastPlace > 1 && me.kills > 0) { say("TOP OF THE BOARD"); play("top"); } lastPlace = place; } else lastPlace = 0;
   $("hudK").textContent = me.kills; $("hudKD").textContent = `K · ${me.deaths} D${me.streak >= 2 ? ` · ×${me.streak}` : ""}`; $("hudName").textContent = me.name;
   $("hudHpN").textContent = Math.round(Math.max(0, me.hp));
   const g = GUNS[me.gun]; $("hudAmmo").textContent = me.reloading ? "··" : me.ammo; $("hudMag").textContent = `/ ${g.mag}`;
@@ -458,6 +506,6 @@ function frame(now, driven) {
 }
 buildMap(mapKey); reset(); state = "menu"; $("hudGun").textContent = GUNS.ar.n; $("hudMag").textContent = `/ ${GUNS.ar.mag}`; drawProfile(); showMenu("play");
 syncFromServer().then((me2) => { if (me2) { redressMe(); drawProfile(); } if (!$("over").hidden) drawMenu(); });   // redrawn for a guest too: that is when the sign-in row appears
-window.__bs = { perf, drive(on) { clearInterval(perf.drive); perf.drive = on ? setInterval(() => frame(performance.now(), true), 1000 / 60) : 0; }, beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
+window.__bs = { perf, onEvent, killCard, drive(on) { clearInterval(perf.drive); perf.drive = on ? setInterval(() => frame(performance.now(), true), 1000 / 60) : 0; }, beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
   sim(seconds) { for (let k = 0; k < seconds * 60; k++) advance(1 / 60); draw(1 / 60); hud(1 / 60); } };
 requestAnimationFrame(frame);

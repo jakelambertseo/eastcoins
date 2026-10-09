@@ -11,7 +11,7 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");   /* framed on eastcoin.vip: the class is set before the first paint, or the full page with its sidebar shows for a second */</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap">
-<link rel="stylesheet" href="blockshot.css?v=5">
+<link rel="stylesheet" href="blockshot.css?v=6">
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/" } }</script>
 </head>
 <body>
@@ -32,6 +32,7 @@
             <div class="feed" id="feed"></div>
           </div>
           <div class="streak" id="hudMsg"></div><div class="sub" id="hudSub"></div>
+          <div id="killcard" hidden><small>You got</small><b id="kcName"></b><span id="kcTag" hidden>Headshot</span><em id="kcXp"></em></div>
           <div id="lockHint" hidden>Click to aim with the mouse</div>
           <div class="hud-bot">
             <div class="hp" id="hpBox"><div class="num"><span id="hudHpN">100</span><small>HP</small></div><div class="seg" id="hudHpSeg"></div></div>
@@ -62,6 +63,6 @@
     </div>
   </section>
 </main>
-<script type="module" src="blockshot.js?v=12"></script>
+<script type="module" src="blockshot.js?v=13"></script>
 </body>
 </html>

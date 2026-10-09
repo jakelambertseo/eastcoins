@@ -10,27 +10,32 @@ const ensure = () => {
 export const setVolume = (v) => { vol = Math.max(0, Math.min(1, v)); if (master) master.gain.value = vol; };
 export { ensure };
 
-function tone({ f = 440, to = 0, dur = 0.1, type = "sine", gain = 0.1, delay = 0 }) {
+/** Where a sound sits left-right (-1..1): a panner between the gain and the master, only when asked for. */
+const out = (a, g, pan) => { if (pan && a.createStereoPanner) { const p = a.createStereoPanner(); p.pan.value = Math.max(-1, Math.min(1, pan)); g.connect(p).connect(master); } else g.connect(master); };
+function tone({ f = 440, to = 0, dur = 0.1, type = "sine", gain = 0.1, delay = 0, pan = 0 }) {
   const a = ensure(); if (!a) return; const t0 = a.currentTime + delay;
   const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0); if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + dur);
-  g.gain.setValueAtTime(gain, t0); g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur); o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur + 0.02);
+  g.gain.setValueAtTime(gain, t0); g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur); o.connect(g); out(a, g, pan); o.start(t0); o.stop(t0 + dur + 0.02);
 }
 const buffers = new Map();   // one buffer per (length, decay), made on first use: a shot used to build a fresh one every time
-function noise({ dur = 0.1, gain = 0.2, lp = 2000, hp = 0, decay = 2, delay = 0 }) {
+function noise({ dur = 0.1, gain = 0.2, lp = 2000, hp = 0, decay = 2, delay = 0, pan = 0 }) {
   const a = ensure(); if (!a) return; const t0 = a.currentTime + delay, key = `${dur}:${decay}`;
   let buf = buffers.get(key);
   if (!buf) { const n = Math.floor(a.sampleRate * dur); buf = a.createBuffer(1, n, a.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay); buffers.set(key, buf); }
   const s = a.createBufferSource(); s.buffer = buf; const g = a.createGain(); g.gain.value = gain;
   let node = s; if (lp) { const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = lp; node.connect(f); node = f; } if (hp) { const f = a.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; node.connect(f); node = f; }
-  node.connect(g).connect(master); s.start(t0);
+  node.connect(g); out(a, g, pan); s.start(t0);
 }
 const SOUNDS = {
-  ar: (k) => { noise({ dur: 0.09, gain: 0.5 * k, lp: 2600, decay: 3 }); tone({ f: 180, to: 60, dur: 0.07, type: "square", gain: 0.12 * k }); },
-  sniper: (k) => { noise({ dur: 0.35, gain: 0.7 * k, lp: 1800, decay: 2.5 }); tone({ f: 900, to: 90, dur: 0.25, type: "sawtooth", gain: 0.14 * k }); noise({ dur: 0.5, gain: 0.12 * k, lp: 600, decay: 1.5, delay: 0.05 }); },
-  shotgun: (k) => { noise({ dur: 0.28, gain: 0.8 * k, lp: 1400, decay: 2 }); tone({ f: 120, to: 40, dur: 0.22, type: "square", gain: 0.2 * k }); },
+  ar: (k, pan) => { noise({ dur: 0.09, gain: 0.5 * k, lp: 2600, decay: 3, pan }); tone({ f: 180, to: 60, dur: 0.07, type: "square", gain: 0.12 * k, pan }); },
+  sniper: (k, pan) => { noise({ dur: 0.35, gain: 0.7 * k, lp: 1800, decay: 2.5, pan }); tone({ f: 900, to: 90, dur: 0.25, type: "sawtooth", gain: 0.14 * k, pan }); noise({ dur: 0.5, gain: 0.12 * k, lp: 600, decay: 1.5, delay: 0.05, pan }); },
+  shotgun: (k, pan) => { noise({ dur: 0.28, gain: 0.8 * k, lp: 1400, decay: 2, pan }); tone({ f: 120, to: 40, dur: 0.22, type: "square", gain: 0.2 * k, pan }); },
+  step: (k, pan) => noise({ dur: 0.07, gain: 0.2 * k, lp: 700, hp: 120, decay: 2.5, pan }),   // someone else's footfall, placed left-right
   hit: () => tone({ f: 1400, dur: 0.05, type: "square", gain: 0.08 }),
   headshot: () => { tone({ f: 1800, dur: 0.07, type: "square", gain: 0.1 }); tone({ f: 2400, dur: 0.1, type: "square", gain: 0.08, delay: 0.05 }); },
-  kill: () => { tone({ f: 660, dur: 0.12, type: "triangle", gain: 0.12 }); tone({ f: 990, dur: 0.18, type: "triangle", gain: 0.12, delay: 0.09 }); },
+  kill: () => { noise({ dur: 0.12, gain: 0.3, lp: 500, decay: 3 }); tone({ f: 660, dur: 0.12, type: "triangle", gain: 0.14 }); tone({ f: 990, dur: 0.2, type: "triangle", gain: 0.14, delay: 0.09 }); },
+  killhs: () => { noise({ dur: 0.12, gain: 0.3, lp: 500, decay: 3 }); tone({ f: 880, dur: 0.1, type: "triangle", gain: 0.14 }); tone({ f: 1320, dur: 0.14, type: "triangle", gain: 0.14, delay: 0.07 }); tone({ f: 1760, dur: 0.22, type: "triangle", gain: 0.12, delay: 0.14 }); },
+  top: () => { [784, 988, 1175, 1568].forEach((f, i) => tone({ f, dur: 0.16, type: "square", gain: 0.07, delay: i * 0.07 })); },
   hurt: () => { tone({ f: 160, to: 70, dur: 0.14, type: "sawtooth", gain: 0.1 }); noise({ dur: 0.08, gain: 0.15, lp: 900 }); },
   die: () => { tone({ f: 300, to: 60, dur: 0.5, type: "sawtooth", gain: 0.12 }); noise({ dur: 0.4, gain: 0.2, lp: 500 }); },
   swap: () => { noise({ dur: 0.04, gain: 0.22, lp: 3500, decay: 3 }); tone({ f: 420, to: 640, dur: 0.08, type: "square", gain: 0.07, delay: 0.1 }); },
@@ -49,4 +54,4 @@ const SOUNDS = {
   click: () => tone({ f: 1000, dur: 0.03, type: "square", gain: 0.04 })
 };
 /** play("ar", 0.4): the name, and how loud (0..1, distance for other people's shots). */
-export function play(name, k = 1) { const s = SOUNDS[name]; if (s && k > 0.02) s(k); }
+export function play(name, k = 1, pan = 0) { const s = SOUNDS[name]; if (s && k > 0.02) s(k, pan); }
