@@ -409,7 +409,7 @@ export function stepBean(world, beans, b, inp, dt, now, rand, events, opts = {})
   }
   if (b.grounded && !wasGrounded) b.landT = 0;
   if (b.grounded && b.v.y <= 0.5) for (const pd of world.pads) if (Math.abs(b.p.x - pd.x) < 1.2 && Math.abs(b.p.z - pd.z) < 1.2 && b.p.y < 1.2) { b.v.y = pd.up; if (pd.fwd) { b.v.x += pd.fwd.x; b.v.z += pd.fwd.z; } b.grounded = false; b.slide = false; events?.push({ type: "pad", b }); break; }
-  if (b.p.y < RULES.FALL_Y) { kill(b, null, false, now, events); events?.push({ type: "fell", b }); }
+  if (b.p.y < RULES.FALL_Y && !world.map.park) { kill(b, null, false, now, events); events?.push({ type: "fell", b }); }   // (a course has its own floor: a fall there is a checkpoint, never a death)
   if (!b.dead && world.pickups?.length) takePickups(world, b, events);
 }
 /** Everyone, one tick, from a function that gives each bean its input. Respawns the dead whose time is up (the server decides the gun). */

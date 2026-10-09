@@ -449,6 +449,23 @@ async function playOnline() {
 }
 const STATE_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? `http://${location.hostname}:8788/bs/state` : "https://arcade.eastcoin.vip/bs/state";
 const stateUrl = () => (mode === "bomb" ? STATE_URL.replace("/bs/state", "/bomb/state") : mode === "park" ? STATE_URL.replace("/bs/state", "/park/state") : STATE_URL);
+/* THE SERVER CARDS (2026-10-11, the owner: "a server selector, which is cards that show which players are playing which, with preview
+   images of the game modes … X playing now with users' names"). One card per room, a picture of the mode behind it, the live count
+   and the names from each room's /state, refreshed every ten seconds while the Play tab is open. Clicking a card picks the mode. */
+const IMG_BASE = new URL("img/", import.meta.url).href;   // beside this script: /arcade/blockshot/img/ on the site, /tools/blockshot/img/ on the rig (the page itself sits at /blockshot)
+const SERVERS = [{ key: "ffa", n: "Free-for-all", sub: "12 players · 4 min rounds · three maps", img: "ffa", path: "/bs/state" }, { key: "bomb", n: "Bomb · 3v3", sub: "plant or defuse · first to 6", img: "bomb", path: "/bomb/state" }, { key: "park", n: "Parkour", sub: "courses against the clock · ghosts", img: "park", path: "/park/state" }];
+let serversT = 0;
+async function pollServers() {
+  if (!$("srv-ffa")) return;
+  await Promise.all(SERVERS.map(async (sv) => {
+    let j = null; try { j = await fetch(STATE_URL.replace("/bs/state", sv.path), { cache: "no-store" }).then((r) => r.json()); } catch {}
+    const el = $(`srv-${sv.key}`); if (!el) return;
+    if (!j || !j.ok) { el.innerHTML = `<b>offline</b>`; return; }
+    const n = j.playing || 0, names = (j.names || []).slice(0, 6), extra = `${sv.key === "ffa" ? (MAPS[j.map] ? MAPS[j.map]().name : "") : sv.key === "bomb" ? (j.round ? `round ${j.round} · ${j.score?.[0] ?? 0}–${j.score?.[1] ?? 0}` : "") : (PARK_MAPS.includes(j.course) ? MAPS[j.course]().name : "")}`;
+    el.innerHTML = `<b>${n ? `${n} playing now` : sv.key === "park" ? "nobody on" : "nobody on · bots only"}</b>${names.length ? `<span>${names.map(esc).join(", ")}${(j.names || []).length > 6 ? ` +${j.names.length - 6}` : ""}</span>` : ""}${extra ? `<i>${esc(extra)}</i>` : ""}`;
+  }));
+}
+function serversTick() { clearInterval(serversT); pollServers(); serversT = setInterval(() => { if ($("over").hidden || tab !== "play") { clearInterval(serversT); return; } pollServers(); }, 10000); }
 async function parkBoard() { const el = $("parkBoard"); if (!el) return; try { const j = await fetch(`/api/blockshot/park/board?course=${courseKey}`, { credentials: "same-origin", cache: "no-store" }).then((r) => r.json()); if (!j.ok || !$("parkBoard")) return; const mine = j.mine?.[courseKey];
   $("parkBoard").innerHTML = `<b>${esc(MAPS[courseKey]().name)}</b> · best times: ${j.rows.length ? j.rows.slice(0, 5).map((r) => `${esc(r.name)} <b>${fmtMs(r.ms)}</b>${r.medal ? ` <i class="md ${r.medal}"></i>` : ""}`).join(" · ") : "nobody yet"}${mine ? ` · you <b>${fmtMs(mine.ms)}</b> in ${mine.runs} run${mine.runs === 1 ? "" : "s"}${mine.medals.length ? ` · ${mine.medals.join(", ")}` : ""}` : ""}`; } catch {} }
 async function whoIsOn() { try { const j = await fetch(stateUrl(), { cache: "no-store" }).then((r) => r.json()); const el = $("whoOn"); if (!el || !j.ok) return; const mapName = MAPS[j.map] ? MAPS[j.map]().name : j.map, left = `${Math.floor(j.left / 60)}:${String(j.left % 60).padStart(2, "0")} left`; el.innerHTML = j.playing ? `<b>${j.playing} playing</b> · ${esc(mapName)} · ${left}<br><small>${esc(j.names.join(", "))}</small>` : `<b>Bots only right now</b> · ${esc(mapName)} · ${left}`; } catch { const el = $("whoOn"); if (el) el.textContent = "The match server isn't answering. Practice still works."; } }
@@ -544,7 +561,7 @@ function drawMenu() {
   if (tab === "play") {   // the Play tab, cut down (2026-10-09, the owner: "a ton of text and overwhelming"): the button, the match, three gun chips, practice, one line of keys
     const ROLE = { ar: "All-rounder", sniper: "One shot, one kill", shotgun: "Close range" };
     $("panel").innerHTML = `<div class="pm">
-    <div class="seg modes"><button class="${mode === "ffa" ? "on" : ""}" data-mode="ffa">Free-for-all</button><button class="${mode === "bomb" ? "on" : ""}" data-mode="bomb">Bomb · 3v3</button><button class="${mode === "park" ? "on" : ""}" data-mode="park">Parkour</button></div>
+    <div class="srv">${SERVERS.map((sv) => `<button class="srv-card${mode === sv.key ? " on" : ""}" data-mode="${sv.key}" style="--img:url(${IMG_BASE}${sv.img}.webp?v=1)"><span class="srv-top"><b>${sv.n}</b><small>${sv.sub}</small></span><span class="srv-live" id="srv-${sv.key}"><b>…</b></span></button>`).join("")}</div>
     <p class="pm-mode">${mode === "bomb" ? "Two teams of three. Attackers carry a bomb: plant it at a site (hold <b>E</b>) and keep it alive 35 seconds. Defenders stop them, or defuse (hold <b>E</b>). No respawns in a round, first to 6 rounds, sides swap after 5." : mode === "park" ? "A course over the drop, start to finish against the clock. Checkpoints on the way; a fall puts you back on the last one with the clock running. <b>R</b> resets. Medals pay Brass once per course; your best run becomes a ghost to race." : "Everyone against everyone, four minutes, most kills wins. Bots fill the empty slots."}</p>
     <div class="pm-top"><button class="go big" data-online="1">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
     ${mode === "park" ? "" : `<p class="eyebrow">Gun</p>`}
@@ -554,7 +571,7 @@ function drawMenu() {
     ${mode === "park" ? `<div id="parkBoard" class="note">Best times…</div>` : ""}
     <p class="pm-keys"><b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>Tab</b> scores · <b>Esc</b> menu</p>
     ${site.on && !profile.server ? `<p class="note acct"><a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats.</p>` : profile.server ? `<p class="note acct">Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button></p>` : ""}
-    </div>`; whoIsOn(); if (mode === "park") parkBoard(); }
+    </div>`; whoIsOn(); serversTick(); if (mode === "park") parkBoard(); }
   else if (tab === "locker") {
     const sw = (slot, s) => { const col = slot === "body" || slot === "visor" ? COLORS[s.k] : COLORS[profile.skin.body] || 0xffd84a, on = profile.skin[slot] === s.k, have = owns(slot, s.k);
       return `<button class="sw${on ? " on" : ""}${have ? "" : " lock"}" data-slot="${slot}" data-k="${s.k}" title="${have ? esc(s.n) : `${esc(s.n)} · level ${s.lvl}`}"><i class="p-${slot === "body" || slot === "visor" ? "plain" : s.k}" style="--c:#${col.toString(16).padStart(6, "0")}"></i><span>${have ? esc(s.n) : `🔒 ${s.lvl}`}</span></button>`; };
@@ -848,6 +865,6 @@ function frame(now, driven) {
 buildMap(mapKey); reset(); state = "menu"; $("hudGun").textContent = GUNS.ar.n; $("hudMag").textContent = `/ ${GUNS.ar.mag}`; drawProfile(); showMenu("play");
 loadArmory().then(() => { if (myLook) redressMe(); });
 syncFromServer().then((me2) => { if (me2) { redressMe(); drawProfile(); } if (!$("over").hidden) drawMenu(); });   // redrawn for a guest too: that is when the sign-in row appears
-window.__bs = { perf, onEvent, killCard, buildArmoryPreview, drawArmoryPreview, get armory() { return armory; }, get apv() { return { apvModel, apvScene, podR }; }, get bomb() { return bomb; }, get mode() { return mode; }, drive(on) { clearInterval(perf.drive); perf.drive = on ? setInterval(() => frame(performance.now(), true), 1000 / 60) : 0; }, beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
+window.__bs = { perf, onEvent, killCard, look(y, p) { yaw = y; pitch = p; }, hideHud(on) { for (const sel of [".hud-top", ".hud-bot", "#bombLine", "#roundCard", "#lockHint", "#xhair", ".weps", "#hint", "#killcard", "#reloadBar", ".streak", ".sub", "#over"]) document.querySelectorAll(sel).forEach((e) => (e.style.visibility = on ? "hidden" : "")); viewGun.visible = !on; }, buildArmoryPreview, drawArmoryPreview, get armory() { return armory; }, get apv() { return { apvModel, apvScene, podR }; }, get bomb() { return bomb; }, get mode() { return mode; }, drive(on) { clearInterval(perf.drive); perf.drive = on ? setInterval(() => frame(performance.now(), true), 1000 / 60) : 0; }, beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
   sim(seconds) { for (let k = 0; k < seconds * 60; k++) advance(1 / 60); draw(1 / 60); hud(1 / 60); } };
 requestAnimationFrame(frame);
