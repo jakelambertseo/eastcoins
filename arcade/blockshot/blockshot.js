@@ -9,11 +9,11 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=7";
-import { createNet } from "./net.js?v=6";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=8";
+import { createNet } from "./net.js?v=7";
 import { material, skin as skinTex } from "./tex.js?v=1";
-import { play, setVolume, ensure as audioOn } from "./audio.js?v=2";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=3";
+import { play, setVolume, ensure as audioOn } from "./audio.js?v=3";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=4";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -95,14 +95,17 @@ const viewGun = new THREE.Group(); let viewGunBody;
 
 /* ------------------------------------------------------------------ input */
 const keys = {};
-let yaw = 0, pitch = 0, locked = false, mouseFire = false, scoping = false, dragLook = false, lastX = 0, lastY = 0, fireLatch = false, nextGun = "ar";
+let yaw = 0, pitch = 0, locked = false, mouseFire = false, scoping = false, dragLook = false, lastX = 0, lastY = 0, fireLatch = false, nextGun = "ar", swapAt = -9;
 const sens = () => 0.0022 * profile.settings.sens / (scoping ? GUNS[me.gun].zoom || 1 : 1), inv = () => (profile.settings.invertY ? -1 : 1);
 addEventListener("keydown", (e) => {
   if (!locked && document.activeElement !== canvas) return; keys[e.code] = true;
   if (e.code === "Tab") { $("board").hidden = false; drawBoard(); e.preventDefault(); }
   if (e.code === "Escape" && state === "play" && $("over").hidden) { showMenu("play"); if (online) { /* still in the match; Play again rejoins */ } }
-  if (e.code === "Digit1") nextGun = "ar"; if (e.code === "Digit2") nextGun = "sniper"; if (e.code === "Digit3") nextGun = "shotgun";
-  if (/^Digit[123]$/.test(e.code) && online) net.setGun(nextGun);
+  if (/^Digit[123]$/.test(e.code)) {   // instant, like Krunker (2026-10-09): the gun in hand changes now with a short draw, and it is the gun you respawn with
+    nextGun = { Digit1: "ar", Digit2: "sniper", Digit3: "shotgun" }[e.code];
+    if (state === "play" && !me.dead && nextGun !== me.gun) { if (online) { net.setGun(nextGun); switchGun(me, nextGun, null); swapAt = performance.now() / 1000; } else switchGun(me, nextGun, events); }
+    else if (online) net.setGun(nextGun);
+  }
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.code)) e.preventDefault();
 });
 addEventListener("keyup", (e) => { keys[e.code] = false; if (e.code === "Tab") $("board").hidden = true; });
@@ -178,6 +181,7 @@ function onEvent(e) {
     case "slide": if (mine) play("slide"); return;
     case "pad": play("pad", mine ? 1 : 0.2); return;
     case "reload": if (mine) play("reload", GUNS[e.b.gun].reload / 1.5); return;
+    case "swap": if (mine) { play("swap"); swapAt = performance.now() / 1000; } return;
     case "empty": if (mine) play("empty"); return;
   }
 }
@@ -396,7 +400,8 @@ function draw(dt) {
     const tx = ads ? 0 : 0.2, ty = ads ? -0.095 : -0.17, tz = ads ? -0.3 : -0.42, kick = Math.max(0, viewGun.position.z - tz);
     viewGun.position.x += (tx - viewGun.position.x) * 0.25; viewGun.position.z = tz + kick * 0.75;
     const bob = Math.hypot(me.v.x, me.v.z) > 1 && me.grounded && !me.slide && !ads ? Math.sin(t * 12) * 0.012 : 0;
-    const rl = me.reloading ? 1 - me.reloading / g.reload : 0, dip = rl > 0 ? Math.sin(rl * Math.PI) : 0;   // reloading: down and rolled over, back up as it finishes
+    const rl = me.reloading ? 1 - me.reloading / g.reload : 0, sw = (performance.now() / 1000 - swapAt) / SWAP_S;   // reloading: down and rolled over, back up as it finishes; a swap is the same dip, quicker
+    const dip = Math.max(rl > 0 ? Math.sin(rl * Math.PI) : 0, sw >= 0 && sw < 1 ? Math.sin(sw * Math.PI) * 0.8 : 0);
     viewGun.position.y += (ty + bob - dip * 0.12 - viewGun.position.y) * 0.25; viewGun.rotation.z += (-dip * 0.6 - viewGun.rotation.z) * 0.25; viewGun.rotation.x += (dip * 0.25 - viewGun.rotation.x) * 0.25;
   }
   const fov = scoping && !me.dead ? profile.settings.fov / (GUNS[me.gun].zoom || 1) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 9, 0, 1) * 10; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
@@ -421,7 +426,8 @@ function hud(dt) {
   { const gn = GUNS[me.gun].n; if ($("hudGun").textContent !== gn) $("hudGun").textContent = gn; }
   $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0);
   $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft());
-  $("hudPing").textContent = online ? `${net.ping} ms${net.lag() > 6 ? ` · lag ${net.lag()}` : ""}` : "";
+  { const spike = perf.lastAt && performance.now() - perf.lastAt < 3000 ? ` · spike ${perf.lastMs}ms` : "", snap = online && net.worstGap > 0.15 ? ` · snap ${Math.round(net.worstGap * 1000)}ms` : "";
+    $("hudPing").textContent = online ? `${net.ping} ms${net.lag() > 12 ? ` · lag ${net.lag()}` : ""}${snap}${spike}` : spike.replace(" · ", ""); }
   const place = ranked().indexOf(me) + 1; $("hudPlace").textContent = state === "play" ? `${ord(place)} of ${PLAYERS}` : "";
   $("hudK").textContent = me.kills; $("hudKD").textContent = `K · ${me.deaths} D${me.streak >= 2 ? ` · ×${me.streak}` : ""}`; $("hudName").textContent = me.name;
   $("hudHpN").textContent = Math.round(Math.max(0, me.hp));
@@ -437,14 +443,18 @@ function advance(dt) {
   acc += dt; while (acc >= STEP) { tick(STEP); acc -= STEP; }
   if (state === "play" && roundT >= ROUND_S) endRound();
 }
-function frame(now) {
-  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+/* Frames over 60 ms, with what the network was doing at the time: `__bs.perf.spikes` in the console; the HUD's ping cell shows the last one
+   for three seconds. `__bs.drive(true)` runs the loop from a timer for a tab the browser is not painting. */
+const perf = { spikes: [], lastAt: 0, lastMs: 0, drive: 0 };
+function frame(now, driven) {
+  const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now;
+  if (raw > 0.06 && state !== "menu") { perf.lastAt = now; perf.lastMs = Math.round(raw * 1000); perf.spikes.push({ at: Math.round(now / 100) / 10, ms: perf.lastMs, lag: online ? net.lag() : 0, snapGap: online ? Math.round(net.gapNow() * 1000) : 0, heapMB: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); if (perf.spikes.length > 40) perf.spikes.shift(); }
   resize(); advance(dt); draw(dt); hud(dt);
   fpsN++; fpsT += dt; if (fpsT >= 1) { $("loadStat").textContent = `${fpsN} fps`; fpsN = 0; fpsT = 0; }
-  requestAnimationFrame(frame);
+  if (!driven) requestAnimationFrame(frame);
 }
 buildMap(mapKey); reset(); state = "menu"; $("hudGun").textContent = GUNS.ar.n; $("hudMag").textContent = `/ ${GUNS.ar.mag}`; drawProfile(); showMenu("play");
 syncFromServer().then((me2) => { if (me2) { redressMe(); drawProfile(); } if (!$("over").hidden) drawMenu(); });   // redrawn for a guest too: that is when the sign-in row appears
-window.__bs = { beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
+window.__bs = { perf, drive(on) { clearInterval(perf.drive); perf.drive = on ? setInterval(() => frame(performance.now(), true), 1000 / 60) : 0; }, beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
   sim(seconds) { for (let k = 0; k < seconds * 60; k++) advance(1 / 60); draw(1 / 60); hud(1 / 60); } };
 requestAnimationFrame(frame);

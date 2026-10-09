@@ -161,7 +161,7 @@ export function spawnFor(world, beans, b, rand = Math.random) {
 }
 export function respawnBean(world, beans, b, gun, rand = Math.random, events) {
   const s = spawnFor(world, beans, b, rand);
-  b.dead = false; b.hp = RULES.MAX_HP; b.hurtT = -99; b.gun = GUNS[gun] ? gun : "ar"; b.ammo = GUNS[b.gun].mag; b.reloading = 0; b.cd = 0.3; b.slide = false; b.streak = 0;
+  b.dead = false; b.hp = RULES.MAX_HP; b.hurtT = -99; b.gun = GUNS[gun] ? gun : "ar"; b.ammo = GUNS[b.gun].mag; b.mags = {}; b.reloading = 0; b.cd = 0.3; b.slide = false; b.streak = 0;
   b.p.set(s[0], s[1] + 0.2, s[2]); b.v.set(0, 0, 0); b.facing = Math.atan2(-s[0], -s[2]);
   events?.push({ type: "spawn", b });
 }
@@ -200,6 +200,14 @@ export function fire(world, beans, b, dir, now, rand, events, spreadK = 1) {
   return pellets;
 }
 export function reload(b, events) { const g = GUNS[b.gun]; if (b.reloading || b.ammo === g.mag) return false; b.reloading = g.reload; events?.push({ type: "reload", b }); return true; }
+/** Switching guns is instant, like Krunker (2026-10-09, the owner): the gun in hand changes now, with a short draw (SWAP_S) before it can
+    fire. Each gun keeps its OWN magazine on the bean (`mags`), so swapping away and back is not a free reload; a swap cancels a reload. */
+export const SWAP_S = 0.35;
+export function switchGun(b, k, events) {
+  if (!GUNS[k] || k === b.gun || b.dead) return false;
+  b.mags ||= {}; b.mags[b.gun] = b.reloading ? b.ammo : b.ammo; b.gun = k; b.ammo = b.mags[k] ?? GUNS[k].mag; b.reloading = 0; b.cd = Math.max(b.cd, SWAP_S);
+  events?.push({ type: "swap", b }); return true;
+}
 
 /* ------------------------------------------------------------------ one tick of one bean */
 const hit = { n: new V(), point: new V(), pen: 0 };
