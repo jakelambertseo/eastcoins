@@ -479,7 +479,7 @@ const MODE_BLURB = { ffa: "Everyone against everyone, four minutes, most kills w
 const SERVERS = [{ key: "ffa", n: "Free-for-all", sub: "12 players · 4 min rounds · three maps", img: "ffa", path: "/bs/state" }, { key: "gg", n: "Gun Game", sub: "every kill, the next gun · knife last", img: "gg", path: "/gg/state" }, { key: "bomb", n: "Bomb · 3v3", sub: "plant or defuse · first to 6", img: "bomb", path: "/bomb/state" }, { key: "park", n: "Parkour", sub: "courses against the clock · ghosts", img: "park", path: "/park/state" }];
 let serversT = 0;
 async function pollServers() {
-  if (!$("srv-ffa")) return;
+  if (!document.querySelector(".srv-live")) return;
   await Promise.all(SERVERS.map(async (sv) => {
     let j = null; try { j = await fetch(STATE_URL.replace("/bs/state", sv.path), { cache: "no-store" }).then((r) => r.json()); } catch {}
     const el = $(`srv-${sv.key}`); if (!el) return;
@@ -590,19 +590,41 @@ const gunCard = (k, i) => { const g = GUNS[k], dps = (g.dmg * g.pellets) / g.cd,
   return `<button class="gun${k === nextGun ? " on" : ""}" data-gun="${k}"><b>${i + 1} · ${esc(g.n)}</b>${esc(g.text)}<div class="bars"><div>Damage<i style="--v:${bar(g.dmg * g.pellets, 250)}"></i></div><div>Fire rate<i style="--v:${bar(1 / g.cd, 8)}"></i></div><div>Range<i style="--v:${bar(g.range, 160)}"></i></div><div>Magazine<i style="--v:${bar(g.mag, 28)}"></i></div><div>DPS<i style="--v:${bar(dps, 560)}"></i></div></div></button>`; };
 function showMenu(which, html) { tab = which; if (locked) document.exitPointerLock?.(); $("resumeBtn").hidden = state !== "play"; for (const b of document.querySelectorAll("[data-tab]")) b.classList.toggle("on", b.dataset.tab === which); if (html !== undefined) $("panel").innerHTML = html; else drawMenu(); $("over").hidden = false; }
 function drawMenu() {
-  if (tab === "play") {   // the Play tab, cut down (2026-10-09, the owner: "a ton of text and overwhelming"): the button, the match, three gun chips, practice, one line of keys
-    const ROLE = { ar: "All-rounder", sniper: "One shot, one kill", shotgun: "Close range" };
+  /* THE PLAY TAB (2026-10-11, the owner: "move practice options, and parkour, to their own tab and remove them from start page"): the
+     three online rooms as cards, the button, today's challenges, the gun chips, one line of keys. Practice and Parkour are tabs of their own. */
+  const keysLine = (park) => `<p class="pm-keys">${park ? `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> back to the checkpoint · <b>Esc</b> menu` : `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>4</b> pistol · <b>5</b> knife · <b>Q</b> cycle · <b>Tab</b> scores · <b>Esc</b> menu`}${site.on && !profile.server ? ` · <a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats` : profile.server ? ` · signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button>` : ""}</p>`;
+  const ROLE = { ar: "All-rounder", sniper: "One shot, one kill", shotgun: "Close range" };
+  const gunChips = () => (mode === "gg" ? `<p class="note" style="margin:0">Gun Game hands you the gun: every kill is the next one on the ladder.</p>` : `<div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div>`);
+  const srvCard = (sv) => `<button class="srv-card${mode === sv.key ? " on" : ""}" data-mode="${sv.key}" title="${esc(MODE_BLURB[sv.key])}" style="--img:url(${IMG_BASE}${sv.img}.webp?v=1)"><span class="srv-top"><b>${sv.n}</b><small>${sv.sub}</small></span><span class="srv-live" id="srv-${sv.key}"><b>…</b></span></button>`;
+  if (tab === "play") {
+    if (mode === "park") mode = "ffa";   // the Play tab is the shooters; Parkour has its own tab
     $("panel").innerHTML = `<div class="pm">
-    <div class="srv">${SERVERS.map((sv) => `<button class="srv-card${mode === sv.key ? " on" : ""}" data-mode="${sv.key}" title="${esc(MODE_BLURB[sv.key])}" style="--img:url(${IMG_BASE}${sv.img}.webp?v=1)"><span class="srv-top"><b>${sv.n}</b><small>${sv.sub}</small></span><span class="srv-live" id="srv-${sv.key}"><b>…</b></span></button>`).join("")}</div>
+    <div class="srv">${SERVERS.filter((sv) => sv.key !== "park").map(srvCard).join("")}</div>
     <div class="pm-top"><button class="go big" data-online="1">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
     <div class="chal" id="chal"></div>
+    <div class="pm-cols"><div class="pm-col"><p class="eyebrow">Gun</p>${gunChips()}</div></div>
+    ${keysLine(false)}
+    </div>`; whoIsOn(); serversTick(); challenges(); }
+  else if (tab === "practice") {   // you and eleven bots; nothing counts
+    if (mode === "park") mode = "ffa";
+    const MODE_N = { ffa: "Free-for-all", gg: "Gun Game", bomb: "Bomb · 3v3" };
+    $("panel").innerHTML = `<div class="pm"><b>Practice</b><p>You against bots on your own machine. Nothing here counts toward your account; it is the place to learn a map or a gun.</p>
     <div class="pm-cols">
-      ${mode === "park" || mode === "gg" ? "" : `<div class="pm-col"><p class="eyebrow">Gun</p><div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div></div>`}
-      <div class="pm-col"><p class="eyebrow">Practice</p><div class="pm-row">${mode === "park" ? `<div class="seg">${PARK_MAPS.map((k) => { const m = MAPS[k](); return `<button class="${k === courseKey ? "on" : ""}" data-course="${k}" title="${esc(m.blurb)}">${esc(m.name)} <small>${m.park.medals.join("/")}s</small></button>`; }).join("")}</div>` : mode === "bomb" ? `<span class="note" style="margin:0">${esc(MAPS[BOMB_MAP]().name)} · you and two bots against three</span>` : `<div class="seg">${MAP_LIST.map((k) => `<button class="${k === mapKey ? "on" : ""}" data-map="${k}" title="${esc(MAPS[k]().blurb)}">${esc(MAPS[k]().name)}</button>`).join("")}</div>`}<button class="go ghost sm" data-go="1">${mode === "park" ? "Run it" : "vs bots"}</button></div></div>
+      <div class="pm-col"><p class="eyebrow">Mode</p><div class="seg">${Object.entries(MODE_N).map(([k, n]) => `<button class="${mode === k ? "on" : ""}" data-mode="${k}" title="${esc(MODE_BLURB[k])}">${n}</button>`).join("")}</div></div>
+      <div class="pm-col"><p class="eyebrow">Map</p>${mode === "bomb" ? `<span class="note" style="margin:0">${esc(MAPS[BOMB_MAP]().name)} · you and two bots against three</span>` : `<div class="seg">${MAP_LIST.map((k) => `<button class="${k === mapKey ? "on" : ""}" data-map="${k}" title="${esc(MAPS[k]().blurb)}">${esc(MAPS[k]().name)}</button>`).join("")}</div>`}</div>
+      <div class="pm-col"><p class="eyebrow">Gun</p>${gunChips()}</div>
     </div>
-    ${mode === "park" ? `<div id="parkBoard" class="note">Best times…</div>` : ""}
-    <p class="pm-keys"><b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>4</b> pistol · <b>5</b> knife · <b>Q</b> cycle · <b>Tab</b> scores · <b>Esc</b> menu${site.on && !profile.server ? ` · <a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats` : profile.server ? ` · signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button>` : ""}</p>
-    </div>`; whoIsOn(); serversTick(); challenges(); if (mode === "park") parkBoard(); }
+    <div class="pm-top" style="margin-top:18px"><button class="go big" data-go="1">Play vs bots</button></div>
+    ${keysLine(false)}</div>`; }
+  else if (tab === "parkour") {   // courses against the clock, online with everyone or alone
+    const sv = SERVERS.find((x) => x.key === "park");
+    $("panel").innerHTML = `<div class="pm">
+    <div class="srv one">${srvCard(sv)}</div>
+    <div class="pm-top"><button class="go big" data-online="1" data-pmode="park">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
+    <p class="note">The online room runs one course at a time and changes every eight minutes; your best times, medals and ghost are kept when you are signed in.</p>
+    <div class="pm-cols"><div class="pm-col"><p class="eyebrow">Run a course alone</p><div class="pm-row"><div class="seg">${PARK_MAPS.map((k) => { const m = MAPS[k](); return `<button class="${k === courseKey ? "on" : ""}" data-course="${k}" title="${esc(m.blurb)}">${esc(m.name)} <small>${m.park.medals.join("/")}s</small></button>`; }).join("")}</div><button class="go ghost sm" data-go="1" data-pmode="park">Run it</button></div></div></div>
+    <div id="parkBoard" class="note">Best times…</div>
+    ${keysLine(true)}</div>`; mode = "park"; whoIsOn(); serversTick(); parkBoard(); }
   else if (tab === "locker") {
     const sw = (slot, s) => { const col = slot === "body" || slot === "visor" ? COLORS[s.k] : COLORS[profile.skin.body] || 0xffd84a, on = profile.skin[slot] === s.k, have = owns(slot, s.k);
       return `<button class="sw${on ? " on" : ""}${have ? "" : " lock"}" data-slot="${slot}" data-k="${s.k}" title="${have ? esc(s.n) : `${esc(s.n)} · level ${s.lvl}`}"><i class="p-${slot === "body" || slot === "visor" ? "plain" : s.k}" style="--c:#${col.toString(16).padStart(6, "0")}"></i><span>${have ? esc(s.n) : `🔒 ${s.lvl}`}</span></button>`; };
@@ -652,6 +674,7 @@ $("over").addEventListener("click", (e) => {
   if (b.dataset.range) { boardRange = b.dataset.range; return drawMenu(); }
   if (b.dataset.map) { mapKey = b.dataset.map; return drawMenu(); }
   if (b.dataset.course) { courseKey = b.dataset.course; return drawMenu(); }
+  if (b.dataset.pmode) mode = b.dataset.pmode;   // the Parkour tab's buttons set the mode themselves
   if (b.dataset.mode) { mode = b.dataset.mode; return drawMenu(); }
   if (b.dataset.gun) { nextGun = b.dataset.gun; return drawMenu(); }
   if (b.dataset.go) { if (online) { net.close(); online = false; } return start(); }
