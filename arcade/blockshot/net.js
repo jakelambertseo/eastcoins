@@ -49,7 +49,7 @@ export function createNet(hooks) {
       case "hello": N.on = true; N.slot = m.slot; N.you = m.you; N.roster = m.roster; N.round = m.round; N.map = m.map; clockOff = m.now - now(); hooks.onHello?.(m); return;
       case "roster": N.roster = m; hooks.onRoster?.(m); return;
       case "round": N.map = m.map; N.round = { no: m.no, t: 0, state: "play" }; N.roster = m.roster; snaps = []; pending = []; hooks.onRound?.(m); return;
-      case "s": { const s = { ...m, at: now() }; snaps.push(s); { const g = lastSnapAt ? s.at - lastSnapAt : 0; lastSnapAt = s.at; if (g > N.worstGap) N.worstGap = g; } if (snaps.length > 6) snaps.shift(); clockOff = clockOff * 0.9 + (m.now - now()) * 0.1; ack = m.ack; N.round = { ...(N.round || {}), t: m.rt, state: m.st }; applySelf(s); return; }
+      case "s": { if (m.e) hooks.onEvents?.(m.e); const s = { ...m, at: now() }; snaps.push(s); { const g = lastSnapAt ? s.at - lastSnapAt : 0; lastSnapAt = s.at; if (g > N.worstGap) N.worstGap = g; } if (snaps.length > 6) snaps.shift(); clockOff = clockOff * 0.9 + (m.now - now()) * 0.1; ack = m.ack; N.round = { ...(N.round || {}), t: m.rt, state: m.st }; applySelf(s); return; }
       case "ev": hooks.onEvents?.(m.e); return;
       case "end": hooks.onEnd?.(m); return;
       case "pong": N.ping = Math.round((now() - m.t0) * 1000); return;
@@ -101,8 +101,8 @@ export function createNet(hooks) {
       if (k === N.slot) return; const p = a.b[k], q = c ? c.b[k] : null, l = latest.b[k]; if (!p || !l) return;
       const was = bean.dead; let x, y, z;
       if (q && !l[8]) { x = p[0] + (q[0] - p[0]) * u; y = p[1] + (q[1] - p[1]) * u; z = p[2] + (q[2] - p[2]) * u; let df = q[6] - p[6]; df = Math.atan2(Math.sin(df), Math.cos(df)); bean.facing = p[6] + df * u; }
-      else {   // the newest snapshot is already behind the moment we draw (snapshots arrive in bunches): carry on along its velocity for up to a quarter second rather than stand still
-        const ahead = l[8] ? 0 : Math.min(0.25, Math.max(0, rt2 - latest.now));
+      else {   // the newest snapshot is already behind the moment we draw (snapshots arrive in bunches): carry on along its velocity for up to 0.4 s rather than stand still
+        const ahead = l[8] ? 0 : Math.min(0.4, Math.max(0, rt2 - latest.now));
         x = l[0] + l[3] * ahead; y = l[1] + (l[12] ? 0 : l[4] * ahead); z = l[2] + l[5] * ahead; bean.facing = l[6];
       }
       // a jump bigger than movement explains since the last tick (late snapshots landing at once after we had carried on) is taken as an

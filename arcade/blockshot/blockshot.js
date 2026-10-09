@@ -10,7 +10,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=8";
-import { createNet } from "./net.js?v=7";
+import { createNet } from "./net.js?v=8";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=3";
 import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=4";
@@ -448,7 +448,7 @@ function advance(dt) {
 const perf = { spikes: [], lastAt: 0, lastMs: 0, drive: 0 };
 function frame(now, driven) {
   const raw = (now - last) / 1000, dt = Math.min(0.05, raw); last = now;
-  if (raw > 0.06 && state !== "menu") { perf.lastAt = now; perf.lastMs = Math.round(raw * 1000); perf.spikes.push({ at: Math.round(now / 100) / 10, ms: perf.lastMs, lag: online ? net.lag() : 0, snapGap: online ? Math.round(net.gapNow() * 1000) : 0, heapMB: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); if (perf.spikes.length > 40) perf.spikes.shift(); }
+  if (raw > 0.06 && raw < 5 && state !== "menu") { perf.lastAt = now; perf.lastMs = Math.round(raw * 1000); perf.spikes.push({ at: Math.round(now / 100) / 10, ms: perf.lastMs, lag: online ? net.lag() : 0, snapGap: online ? Math.round(net.gapNow() * 1000) : 0, heapMB: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); if (perf.spikes.length > 40) perf.spikes.shift(); }
   resize(); advance(dt); draw(dt); hud(dt);
   fpsN++; fpsT += dt; if (fpsT >= 1) { $("loadStat").textContent = `${fpsN} fps`; fpsN = 0; fpsT = 0; }
   if (!driven) requestAnimationFrame(frame);
