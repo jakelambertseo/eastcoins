@@ -9,7 +9,7 @@
 
    Shots are never predicted: the page draws its own tracer and plays the bang at once, and the server's events decide the rest.
    createNet(hooks) -> { connect(opts), close(), on, slot, tick(dt), events(): [...] , roster, round, ping } */
-import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=6";
+import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=7";
 
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
 const INTERP = 0.1, SEND_EVERY = 2;

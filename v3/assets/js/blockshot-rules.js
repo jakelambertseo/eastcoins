@@ -224,6 +224,7 @@ export function stepBean(world, beans, b, inp, dt, now, rand, events, opts = {})
   if (jumped) { b.v.y = P.JUMP; b.coyote = 0; b.grounded = false; events?.push({ type: "jump", b }); }
   if (inp.aim) b.aim.copy(inp.aim);
   if ((G.auto ? inp.fire : inp.fireTap) && b.cd <= 0 && !b.reloading) { if (b.ammo > 0) fire(world, beans, b, b.aim, now, rand, events, (opts.spreadK ?? (inp.scope ? G.adsSpread ?? 1 : 1)) * (b.grounded ? 1 : 1.6)); else { reload(b, events); events?.push({ type: "empty", b }); } }
+  if (b.ammo === 0 && !b.reloading && b.cd <= 0) reload(b, events);   // an empty gun reloads on its own (2026-10-09, the owner)
   if (want !== null && !b.bot) b.facing = want + Math.PI; else if (b.bot && want !== null && !b.target) b.facing = want + Math.PI;
   b.v.y += P.G * dt; b.p.addScaled(b.v, dt);
   const wasGrounded = b.grounded; b.grounded = false;

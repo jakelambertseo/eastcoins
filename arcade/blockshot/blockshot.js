@@ -9,11 +9,11 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=6";
-import { createNet } from "./net.js?v=5";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=7";
+import { createNet } from "./net.js?v=6";
 import { material, skin as skinTex } from "./tex.js?v=1";
-import { play, setVolume, ensure as audioOn } from "./audio.js?v=1";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween } from "./profile.js?v=2";
+import { play, setVolume, ensure as audioOn } from "./audio.js?v=2";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=3";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -127,14 +127,24 @@ function playerInput() {
 }
 
 /* ------------------------------------------------------------------ what the events become: tracers, sounds, numbers, the feed */
-const fx = [], floats = [];
-const tracerMat = new THREE.LineBasicMaterial({ color: 0xffe27a, transparent: true });
+/* POOLS (2026-10-09, the owner: "major lag spikes every 10-15 seconds"): a tracer, a puff and a floating number used to be new objects
+   every time (a geometry, a sphere, a canvas and a texture), dozens a second with eleven bots firing, and the garbage collector paid
+   for it in one pause every so often. Now a fixed set of each is made once and reused; a burst past the pool is simply not drawn. */
+const tracerMat = new THREE.LineBasicMaterial({ color: 0xffe27a, transparent: true }), puffGeo = new THREE.SphereGeometry(0.12, 6, 5);
+const POOL = { lines: [], puffs: [], floats: [] };
+const take = (list, make, max) => { let it = list.find((x) => x.life <= 0); if (!it && list.length < max) { it = make(); list.push(it); } return it || null; };
 function tracer(from, to, mine) {
-  const g = new THREE.BufferGeometry().setFromPoints([new V3(from.x, from.y, from.z), new V3(to.x, to.y, to.z)]); const line = new THREE.Line(g, tracerMat.clone()); line.material.color.set(mine ? 0xffe27a : 0xff9a6a); scene.add(line); fx.push({ o: line, life: 0.08, max: 0.08 });
-  const puff = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffe0b0, transparent: true })); puff.position.set(to.x, to.y, to.z); scene.add(puff); fx.push({ o: puff, life: 0.2, max: 0.2, grow: 2.5 });
+  const L = take(POOL.lines, () => { const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3)); const o = new THREE.Line(g, tracerMat.clone()); o.frustumCulled = false; scene.add(o); return { o, life: 0, max: 0.08 }; }, 48);
+  if (L) { const a = L.o.geometry.attributes.position; a.setXYZ(0, from.x, from.y, from.z); a.setXYZ(1, to.x, to.y, to.z); a.needsUpdate = true; L.o.material.color.set(mine ? 0xffe27a : 0xff9a6a); L.o.visible = true; L.life = L.max; }
+  const P = take(POOL.puffs, () => { const o = new THREE.Mesh(puffGeo, new THREE.MeshBasicMaterial({ color: 0xffe0b0, transparent: true })); scene.add(o); return { o, life: 0, max: 0.2 }; }, 48);
+  if (P) { P.o.position.set(to.x, to.y, to.z); P.o.scale.setScalar(1); P.o.visible = true; P.life = P.max; }
 }
-function floatText(p, text, col) { if (floats.length > 30) return; const c = document.createElement("canvas"); c.width = 128; c.height = 64; const x = c.getContext("2d"); x.textAlign = "center"; x.font = "800 36px Lora, serif"; x.lineWidth = 6; x.strokeStyle = "#000"; x.strokeText(text, 64, 44); x.fillStyle = col; x.fillText(text, 64, 44);
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); s.scale.set(1.1, 0.55, 1); s.position.set(p.x + rnd(-0.3, 0.3), p.y + 1.3, p.z); scene.add(s); floats.push({ s, life: 0.7 }); }
+function floatText(p, text, col) {
+  const F = take(POOL.floats, () => { const c = document.createElement("canvas"); c.width = 128; c.height = 64; const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); s.scale.set(1.1, 0.55, 1); scene.add(s); return { s, c, life: 0 }; }, 24);
+  if (!F) return;
+  const x = F.c.getContext("2d"); x.clearRect(0, 0, 128, 64); x.textAlign = "center"; x.font = "800 36px Rajdhani, sans-serif"; x.lineWidth = 6; x.strokeStyle = "#000"; x.strokeText(text, 64, 44); x.fillStyle = col; x.fillText(text, 64, 44); F.s.material.map.needsUpdate = true;
+  F.s.position.set(p.x + rnd(-0.3, 0.3), p.y + 1.3, p.z); F.s.visible = true; F.life = 0.7;
+}
 let hitTimer = 0, killTimer = 0, dmgT = 0, dmgAngle = 0;
 function dmgFrom(by) { dmgAngle = Math.atan2(by.p.x - me.p.x, by.p.z - me.p.z); dmgT = 0.7; }
 function flashDamage() { const el = $("hurt"); el.classList.remove("on"); void el.offsetWidth; el.classList.add("on"); }
@@ -167,7 +177,7 @@ function onEvent(e) {
     case "jump": if (mine) play("jump"); return;
     case "slide": if (mine) play("slide"); return;
     case "pad": play("pad", mine ? 1 : 0.2); return;
-    case "reload": if (mine) play("reload"); return;
+    case "reload": if (mine) play("reload", GUNS[e.b.gun].reload / 1.5); return;
     case "empty": if (mine) play("empty"); return;
   }
 }
@@ -260,7 +270,7 @@ function tick(dt) {
 }
 function reset() {
   roundT = 0; $("log").innerHTML = ""; $("feed").innerHTML = ""; Object.assign(meStats, { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 });
-  for (const f of fx) scene.remove(f.o); fx.length = 0;
+  for (const L of POOL.lines) { L.life = 0; L.o.visible = false; } for (const P of POOL.puffs) { P.life = 0; P.o.visible = false; } for (const F of POOL.floats) { F.life = 0; F.s.visible = false; }
   for (const b of beans) { const keep = { mesh: b.mesh, skill: b.skill }; Object.assign(b, newBean(b.i, b.name, b.bot), keep); b.p.set(0, -50, 0); b.wantsRespawn = true; }
   for (const b of beans) respawnBean(world, beans, b, b.bot ? pick(["ar", "ar", "sniper", "shotgun"]) : nextGun, Math.random, events);
   for (const e of events) onEvent(e); events.length = 0;
@@ -308,6 +318,7 @@ function showMenu(which, html) { tab = which; if (locked) document.exitPointerLo
 function drawMenu() {
   if (tab === "play") { $("panel").innerHTML = `<b>Free-for-all</b><p>Five minutes, most kills wins. <b>Shift</b> slides, <b>Space</b> hops out of a slide and keeps the speed; chain them. Jump pads fly you onto the roofs.</p>
     <p class="eyebrow">Gun</p><div class="guns">${GUN_KEYS.map((k, i) => gunCard(k, i)).join("")}</div>
+    ${site.on && !profile.server ? `<div class="row acct"><a class="go ghost" href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a><span class="note">Keeps your level, skins and stats. A guest plays without them.</span></div>` : profile.server ? `<p class="note acct">Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button></p>` : ""}
     <p class="eyebrow">The match</p><p id="whoOn" class="note">Looking…</p>
     <div class="row"><button class="go" data-online="1">Play online</button><span class="note">One match, always on: you drop into the round in progress and bots fill the empty slots.</span></div>
     <p class="eyebrow">Practice vs bots</p><div class="maps">${MAP_LIST.map((k) => { const m = MAPS[k](); return `<button class="mapc${k === mapKey ? " on" : ""}" data-map="${k}"><b>${esc(m.name)}</b>${esc(m.blurb)}</button>`; }).join("")}</div>
@@ -353,6 +364,7 @@ $("over").addEventListener("click", (e) => {
   if (b.dataset.gun) { nextGun = b.dataset.gun; return drawMenu(); }
   if (b.dataset.go) { if (online) { net.close(); online = false; } return start(); }
   if (b.dataset.online) return playOnline();
+  if (b.dataset.logout) { b.disabled = true; return fetch("/api/picks/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => {}).then(() => location.reload()); }
   if (b.dataset.slot && wear(b.dataset.slot, b.dataset.k)) { redressMe(); drawMenu(); }
 });
 $("over").addEventListener("input", (e) => {
@@ -383,12 +395,15 @@ function draw(dt) {
     const ads = scoping && !me.dead, g = GUNS[me.gun]; viewGun.visible = !(ads && g.scope);
     const tx = ads ? 0 : 0.2, ty = ads ? -0.095 : -0.17, tz = ads ? -0.3 : -0.42, kick = Math.max(0, viewGun.position.z - tz);
     viewGun.position.x += (tx - viewGun.position.x) * 0.25; viewGun.position.z = tz + kick * 0.75;
-    const bob = Math.hypot(me.v.x, me.v.z) > 1 && me.grounded && !me.slide && !ads ? Math.sin(t * 12) * 0.012 : 0; viewGun.position.y += (ty + bob - viewGun.position.y) * 0.25;
+    const bob = Math.hypot(me.v.x, me.v.z) > 1 && me.grounded && !me.slide && !ads ? Math.sin(t * 12) * 0.012 : 0;
+    const rl = me.reloading ? 1 - me.reloading / g.reload : 0, dip = rl > 0 ? Math.sin(rl * Math.PI) : 0;   // reloading: down and rolled over, back up as it finishes
+    viewGun.position.y += (ty + bob - dip * 0.12 - viewGun.position.y) * 0.25; viewGun.rotation.z += (-dip * 0.6 - viewGun.rotation.z) * 0.25; viewGun.rotation.x += (dip * 0.25 - viewGun.rotation.x) * 0.25;
   }
   const fov = scoping && !me.dead ? profile.settings.fov / (GUNS[me.gun].zoom || 1) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 9, 0, 1) * 10; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
   $("scope").classList.toggle("on", Boolean(scoping && GUNS[me.gun].scope && !me.dead && state === "play"));   // (Boolean: toggle with an undefined second argument FLIPS the class, and the rifle has no scope field)
-  for (let k = fx.length - 1; k >= 0; k--) { const f = fx[k]; f.life -= dt; const a = Math.max(0, f.life / f.max); f.o.material.opacity = a; if (f.grow) f.o.scale.setScalar(1 + (1 - a) * f.grow); if (f.life <= 0) { scene.remove(f.o); f.o.geometry.dispose(); fx.splice(k, 1); } }
-  for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.life -= dt; f.s.position.y += dt * 1.2; f.s.material.opacity = Math.min(1, f.life * 2); if (f.life <= 0) { scene.remove(f.s); f.s.material.map.dispose(); floats.splice(i, 1); } }
+  for (const L of POOL.lines) if (L.life > 0) { L.life -= dt; L.o.material.opacity = Math.max(0, L.life / L.max); if (L.life <= 0) L.o.visible = false; }
+  for (const P of POOL.puffs) if (P.life > 0) { P.life -= dt; const a = Math.max(0, P.life / P.max); P.o.material.opacity = a; P.o.scale.setScalar(1 + (1 - a) * 2.5); if (P.life <= 0) P.o.visible = false; }
+  for (const F of POOL.floats) if (F.life > 0) { F.life -= dt; F.s.position.y += dt * 1.2; F.s.material.opacity = Math.min(1, F.life * 2); if (F.life <= 0) F.s.visible = false; }
   sun.position.set(camera.position.x + 20, 50, camera.position.z + 14); sun.target.position.set(camera.position.x, 0, camera.position.z);
   renderer.render(scene, camera);
 }
@@ -402,7 +417,8 @@ function hud(dt) {
   { const on = Math.ceil(clamp(me.hp / MAX_HP, 0, 1) * 10); hpSeg.childNodes.forEach((i, k) => i.classList.toggle("on", k < on)); }
   { const g = GUNS[me.gun]; $("ammoBox").classList.toggle("empty", me.ammo === 0 && !me.reloading); $("hudReload").firstElementChild.style.width = me.reloading ? `${(1 - me.reloading / g.reload) * 100}%` : "0"; }
   if (me.dead && state === "play") { $("deathBar").style.width = `${clamp(me.respawn / RESPAWN_S, 0, 1) * 100}%`; $("deathSub").textContent = `respawning in ${Math.ceil(me.respawn)}`; }
-  $("hudWeps").innerHTML = GUN_KEYS.map((k, i) => `<span class="${k === nextGun ? "on" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}</span>`).join("");
+  { const weps = GUN_KEYS.map((k, i) => `<span class="${k === me.gun ? "on" : ""}${k === nextGun && k !== me.gun ? " next" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}${k === nextGun && k !== me.gun ? " · next" : ""}</span>`).join(""); if (hud.weps !== weps) { hud.weps = weps; $("hudWeps").innerHTML = weps; } }
+  { const gn = GUNS[me.gun].n; if ($("hudGun").textContent !== gn) $("hudGun").textContent = gn; }
   $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0);
   $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft());
   $("hudPing").textContent = online ? `${net.ping} ms${net.lag() > 6 ? ` · lag ${net.lag()}` : ""}` : "";

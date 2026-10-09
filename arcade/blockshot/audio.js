@@ -15,9 +15,11 @@ function tone({ f = 440, to = 0, dur = 0.1, type = "sine", gain = 0.1, delay = 0
   const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0); if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + dur);
   g.gain.setValueAtTime(gain, t0); g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur); o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur + 0.02);
 }
+const buffers = new Map();   // one buffer per (length, decay), made on first use: a shot used to build a fresh one every time
 function noise({ dur = 0.1, gain = 0.2, lp = 2000, hp = 0, decay = 2, delay = 0 }) {
-  const a = ensure(); if (!a) return; const t0 = a.currentTime + delay, n = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
-  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay);
+  const a = ensure(); if (!a) return; const t0 = a.currentTime + delay, key = `${dur}:${decay}`;
+  let buf = buffers.get(key);
+  if (!buf) { const n = Math.floor(a.sampleRate * dur); buf = a.createBuffer(1, n, a.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay); buffers.set(key, buf); }
   const s = a.createBufferSource(); s.buffer = buf; const g = a.createGain(); g.gain.value = gain;
   let node = s; if (lp) { const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = lp; node.connect(f); node = f; } if (hp) { const f = a.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; node.connect(f); node = f; }
   node.connect(g).connect(master); s.start(t0);
@@ -31,7 +33,7 @@ const SOUNDS = {
   kill: () => { tone({ f: 660, dur: 0.12, type: "triangle", gain: 0.12 }); tone({ f: 990, dur: 0.18, type: "triangle", gain: 0.12, delay: 0.09 }); },
   hurt: () => { tone({ f: 160, to: 70, dur: 0.14, type: "sawtooth", gain: 0.1 }); noise({ dur: 0.08, gain: 0.15, lp: 900 }); },
   die: () => { tone({ f: 300, to: 60, dur: 0.5, type: "sawtooth", gain: 0.12 }); noise({ dur: 0.4, gain: 0.2, lp: 500 }); },
-  reload: () => { tone({ f: 500, to: 700, dur: 0.06, type: "square", gain: 0.05 }); tone({ f: 350, dur: 0.05, type: "square", gain: 0.05, delay: 0.35 }); tone({ f: 800, dur: 0.05, type: "square", gain: 0.05, delay: 0.7 }); },
+  reload: (k = 1) => { noise({ dur: 0.05, gain: 0.25 * k, lp: 3000, decay: 3 }); tone({ f: 500, to: 700, dur: 0.07, type: "square", gain: 0.09 * k }); noise({ dur: 0.06, gain: 0.3 * k, lp: 2500, decay: 3, delay: 0.5 * k }); tone({ f: 350, dur: 0.06, type: "square", gain: 0.08 * k, delay: 0.5 * k }); tone({ f: 800, to: 1100, dur: 0.08, type: "square", gain: 0.09 * k, delay: 1.0 * k }); noise({ dur: 0.05, gain: 0.3 * k, lp: 4000, decay: 3, delay: 1.0 * k }); },
   empty: () => tone({ f: 600, dur: 0.04, type: "square", gain: 0.05 }),
   jump: () => noise({ dur: 0.08, gain: 0.08, lp: 1200, hp: 300 }),
   slide: () => noise({ dur: 0.25, gain: 0.07, lp: 800, hp: 150, decay: 1 }),

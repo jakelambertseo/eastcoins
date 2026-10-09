@@ -34,7 +34,8 @@ h2{margin:0 0 6px;font:800 26px/1.1 var(--font);text-transform:uppercase;letter-
 .ammo .gun{font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}
 .ammo .rl{height:4px;background:rgba(255,255,255,.12);margin-top:6px;overflow:hidden}.ammo .rl i{display:block;height:100%;width:0;background:var(--you)}.ammo.empty .num{color:var(--danger)}
 .weps{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:6px;pointer-events:none}
-.weps span{padding:3px 9px;background:var(--panel);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}.weps span.on{color:var(--you);border-bottom:2px solid var(--you)}
+.weps span{padding:3px 9px;background:var(--panel);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}.weps span.on{color:var(--you);border-bottom:2px solid var(--you)}.acct{margin:6px 0 10px}.acct a.go{display:inline-block;text-decoration:none}.lnk{background:none;border:0;color:var(--info);cursor:pointer;font:inherit;padding:0;text-decoration:underline}
+.weps span.next{color:var(--info);border-bottom:2px dashed var(--info)}
 #xhair{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none;--gap:5px;--len:8px;--w:2px;--c:rgba(255,255,255,.95)}
 #xhair i{position:absolute;background:var(--c);box-shadow:0 0 2px #000;transition:transform .08s}
 #xhair i:nth-child(1){left:calc(var(--w) / -2);top:calc(-1 * (var(--gap) + var(--len)));width:var(--w);height:var(--len)}
