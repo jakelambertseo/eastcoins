@@ -9,11 +9,11 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=8";
-import { createNet } from "./net.js?v=8";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=9";
+import { createNet } from "./net.js?v=9";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=4";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=4";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=5";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -92,6 +92,15 @@ const viewGun = new THREE.Group(); let viewGunBody;
   const mag = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.16, 0.12), new THREE.MeshStandardMaterial({ color: 0x1a1a22 })); mag.position.set(0, -0.12, -0.08);
   viewGun.add(viewGunBody, barrel, grip, mag); viewGun.scale.setScalar(0.55); viewGun.position.set(0.2, -0.17, -0.42); camera.add(viewGun);
 }
+/** The same four parts, proportioned per gun: a long barrel on the sniper, a fat one on the shotgun, a stub with no magazine on the pistol. */
+const GUN_SHAPE = { ar: [1, 1, 1, 1], sniper: [1.3, 1.9, 1, 0.6], shotgun: [1.1, 1.4, 1, 0], pistol: [0.45, 0.5, 1.15, 0] };   // body length, barrel length, grip, magazine
+let shownGun = "";
+function fitViewGun(k) {
+  if (k === shownGun) return; shownGun = k; const [bl, br, gr, mg] = GUN_SHAPE[k] || GUN_SHAPE.ar, [body, barrel, grip, mag] = viewGun.children;
+  body.scale.z = bl; body.position.z = (1 - bl) * 0.31; const front = body.position.z - 0.31 * bl;   // the body keeps its back where it was; the barrel hangs off its front
+  barrel.scale.y = br; barrel.scale.x = barrel.scale.z = k === "shotgun" ? 1.5 : 1; barrel.position.z = front - 0.2 * br;
+  grip.scale.setScalar(gr); mag.visible = mg > 0; mag.scale.y = mg || 1;
+}
 
 /* ------------------------------------------------------------------ input */
 const keys = {};
@@ -103,12 +112,16 @@ addEventListener("keydown", (e) => {
   if (e.code === "Escape" && state === "play" && $("over").hidden) { showMenu("play"); if (online) { /* still in the match; Play again rejoins */ } }
   if (/^Digit[123]$/.test(e.code)) {   // instant, like Krunker (2026-10-09): the gun in hand changes now with a short draw, and it is the gun you respawn with
     nextGun = { Digit1: "ar", Digit2: "sniper", Digit3: "shotgun" }[e.code];
-    if (state === "play" && !me.dead && nextGun !== me.gun) { if (online) { net.setGun(nextGun); switchGun(me, nextGun, null); swapAt = performance.now() / 1000; } else switchGun(me, nextGun, events); }
-    else if (online) net.setGun(nextGun);
+    if (state === "play" && !me.dead && nextGun !== me.gun) swapTo(nextGun); else if (online) net.setGun(nextGun);
   }
+  if (e.code === "KeyQ" || e.code === "Digit4") swapTo(me.gun === "pistol" ? nextGun : "pistol");   // the sidearm, and back
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.code)) e.preventDefault();
 });
 addEventListener("keyup", (e) => { keys[e.code] = false; if (e.code === "Tab") $("board").hidden = true; });
+/** Change the gun in hand now (the server hears the same; the rules give it a draw time). */
+function swapTo(k) { if (state !== "play" || me.dead || k === me.gun || !GUNS[k]) return; if (online) { net.setGun(k); switchGun(me, k, null); swapAt = performance.now() / 1000; } else switchGun(me, k, events); }
+let wheelAt = 0;
+addEventListener("wheel", (e) => { if (!locked || state !== "play") return; const now = performance.now(); if (now - wheelAt < 250) return; wheelAt = now; swapTo(me.gun === "pistol" ? nextGun : "pistol"); }, { passive: true });
 function grabMouse() { try { const r = canvas.requestPointerLock?.(); r?.catch?.(() => {}); } catch {} }
 canvas.addEventListener("click", () => { if (state === "play" || state === "count") grabMouse(); canvas.focus(); audioOn(); });
 document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === canvas; $("lockHint").hidden = locked || state !== "play"; });
@@ -334,7 +347,8 @@ function drawMenu() {
     $("panel").innerHTML = `<div class="pm">
     <div class="pm-top"><button class="go big" data-online="1">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
     <p class="eyebrow">Gun</p>
-    <div class="gpick">${GUN_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div>
+    <div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div>
+    <p class="pm-pistol">Everyone also carries the <b>Pistol</b> · <b>Q</b> or the wheel swaps to it</p>
     <div class="pm-row"><span class="eyebrow inl">Practice</span><div class="seg">${MAP_LIST.map((k) => `<button class="${k === mapKey ? "on" : ""}" data-map="${k}" title="${esc(MAPS[k]().blurb)}">${esc(MAPS[k]().name)}</button>`).join("")}</div><button class="go ghost sm" data-go="1">vs bots</button></div>
     <p class="pm-keys"><b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>Tab</b> scores · <b>Esc</b> menu</p>
     ${site.on && !profile.server ? `<p class="note acct"><a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats.</p>` : profile.server ? `<p class="note acct">Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button></p>` : ""}
@@ -472,7 +486,8 @@ function hud(dt) {
   { const on = Math.ceil(clamp(me.hp / MAX_HP, 0, 1) * 10); hpSeg.childNodes.forEach((i, k) => i.classList.toggle("on", k < on)); }
   { const g = GUNS[me.gun]; $("ammoBox").classList.toggle("empty", me.ammo === 0 && !me.reloading); $("hudReload").firstElementChild.style.width = me.reloading ? `${(1 - me.reloading / g.reload) * 100}%` : "0"; }
   if (me.dead && state === "play") { $("deathBar").style.width = `${clamp(me.respawn / RESPAWN_S, 0, 1) * 100}%`; $("deathSub").textContent = `respawning in ${Math.ceil(me.respawn)}`; }
-  { const weps = GUN_KEYS.map((k, i) => `<span class="${k === me.gun ? "on" : ""}${k === nextGun && k !== me.gun ? " next" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}${k === nextGun && k !== me.gun ? " · next" : ""}</span>`).join(""); if (hud.weps !== weps) { hud.weps = weps; $("hudWeps").innerHTML = weps; } }
+  { const weps = PRIMARY_KEYS.map((k, i) => `<span class="${k === me.gun ? "on" : ""}${k === nextGun && k !== me.gun && me.gun !== "pistol" ? " next" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}${k === nextGun && k !== me.gun && me.gun !== "pistol" ? " · next" : ""}</span>`).join("") + `<span class="${me.gun === "pistol" ? "on" : ""}">Q Pistol</span>`; if (hud.weps !== weps) { hud.weps = weps; $("hudWeps").innerHTML = weps; } }
+  fitViewGun(me.gun);
   { const gn = GUNS[me.gun].n; if ($("hudGun").textContent !== gn) $("hudGun").textContent = gn; }
   $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0); $("xhair").classList.toggle("hs", hsTimer > 0);
   $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft());

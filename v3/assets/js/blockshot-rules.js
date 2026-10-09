@@ -24,9 +24,12 @@ export const RULES = { PLAYERS: 12, ROUND_S: 300, MAX_HP: 100, REGEN_AFTER: 5, R
 export const GUNS = {
   ar: { n: "Assault rifle", dmg: 23, head: 1.5, cd: 0.13, mag: 28, reload: 1.5, spread: 0.008, pellets: 1, range: 80, auto: true, zoom: 1.6, adsSpread: 0.45, adsMove: 0.8, text: "23 a hit, 460 a minute, 28 rounds. Right click for the ironsights. The all-rounder." },
   sniper: { n: "Sniper", dmg: 109, head: 1.5, cd: 1.0, mag: 3, reload: 1.9, spread: 0.012, pellets: 1, range: 160, auto: false, scope: true, zoom: 2.7, adsSpread: 0.0, adsMove: 0.7, text: "One shot, one kill, once a second. Right click to scope; from the hip it wanders. 3 rounds." },
-  shotgun: { n: "Shotgun", dmg: 50, head: 1.25, cd: 0.45, mag: 2, reload: 1.1, spread: 0.06, pellets: 5, range: 20, auto: false, zoom: 1.25, adsSpread: 0.75, adsMove: 0.9, text: "Five pellets of 50 up close, nothing at range. Right click tightens the spread a little. 2 shells." }
+  shotgun: { n: "Shotgun", dmg: 50, head: 1.25, cd: 0.45, mag: 2, reload: 1.1, spread: 0.06, pellets: 5, range: 20, auto: false, zoom: 1.25, adsSpread: 0.75, adsMove: 0.9, text: "Five pellets of 50 up close, nothing at range. Right click tightens the spread a little. 2 shells." },
+  // the sidearm everyone carries (2026-10-09, the owner: "build the secondary pistol"): Q or the wheel swaps to it, a quick draw, its own magazine, never the gun you spawn with
+  pistol: { n: "Pistol", dmg: 24, head: 1.5, cd: 0.2, mag: 12, reload: 1.0, spread: 0.014, pellets: 1, range: 60, auto: false, zoom: 1.3, adsSpread: 0.5, adsMove: 0.95, secondary: true, draw: 0.22, text: "The sidearm everyone carries. 24 a hit, 12 rounds, quick to draw. Q swaps to it." }
 };
 export const GUN_KEYS = Object.keys(GUNS);
+export const PRIMARY_KEYS = GUN_KEYS.filter((k) => !GUNS[k].secondary);   // what you pick and spawn with
 export const HEADSHOT = 1.5;
 // the bots (2026-10-09, the owner: "make the bots worse so i can test better"): skill in [lo, hi] (aim and reaction), `react` scales how long they take to shoot
 export const BOTS = { skill: [0.1, 0.4], react: 2.2, headChance: 0.15 };
@@ -138,7 +141,30 @@ function docks() {
   M.name = "The Docks"; M.blurb = "Three long lanes, two warehouses with ramps at both ends, a high catwalk, piers along the water."; M.sky = 0xf0c8a0; M.fog = [60, 150];
   return M;
 }
-export const MAPS = { lot, docks };
+/* The Rooftops (2026-10-09): five roofs over a street grid. A tower in the middle (roof at 8, a penthouse on it), four corner
+   buildings at different heights (5 to 8), bridges from each corner roof to the tower, a ramp up from the street to every roof, and
+   pads in the street corners and the mid-street that throw you onto a roof. The street is a slide lane grid between the buildings;
+   nothing in it but four low blocks for cover. Long lines roof to roof for the sniper, close work in the street for the shotgun. */
+function roofs() {
+  const M = mapBuilder(42), { box, ramp, pad, walls } = M;
+  box([0, -0.5, 0], [43, 0.5, 43], "concrete", C.DARK); walls(42, 8);
+  box([0, 4, 0], [8, 4, 8], "brick", C.BRICK); box([0, 9, 0], [2.5, 1, 2.5], "metal", C.WHITE); box([0, 10.5, 0], [0.9, 0.5, 0.9], "crate", C.CRATE);
+  const corners = [[1, 1, 6, "concrete", C.SAND], [-1, 1, 7, "brick", C.BLUE], [1, -1, 5, "concrete", C.STONE], [-1, -1, 8, "brick", C.RUST]];
+  for (const [sx, sz, h, tex, col] of corners) {
+    box([sx * 26, h / 2, sz * 26], [9, h / 2, 9], tex, col);                                             // the building
+    ramp(sx * 26, sz * (17 - 2 * h), 0, sx * 26, sz * 17, h, 5, "concrete", C.STONE);                   // up from the street, onto the roof's inner edge
+    ramp(sx * 18, sz * 18, h, sx * 9, sz * 9, 8, 3, "metal", C.DARK);                                   // the bridge to the tower
+    box([sx * 30, h + 0.5, sz * 30], [1.2, 0.5, 1.2], "crate", C.CRATE);                                // a crate to stand behind
+    pad(sx * 38, sz * 38, 21, { x: -sx * 7, z: -sz * 7 });                                              // the street corner throws you onto the roof
+  }
+  for (const [x, z, hx, hz] of [[0, 30, 5, 2.5], [0, -30, 5, 2.5], [30, 0, 2.5, 5], [-30, 0, 2.5, 5]]) box([x, 1.5, z], [hx, 1.5, hz], "concrete", C.WHITE);
+  for (const [x, z] of [[0, 14], [0, -14], [14, 0], [-14, 0]]) pad(x, z, 22, { x: -Math.sign(x) * 8, z: -Math.sign(z) * 8 });   // mid-street, onto the tower
+  M.spawns = [[26, 7, 26], [-26, 8, 26], [26, 6, -26], [-26, 9, -26], [0, 1, 38], [0, 1, -38], [38, 1, 0], [-38, 1, 0], [14, 1, -36], [-14, 1, 36], [36, 1, 14], [-36, 1, -14]];
+  M.waypoints = [...M.spawns.map((s) => [s[0], s[2]]), [0, 0], [0, 5], [5, 0], [18, 18], [-18, 18], [18, -18], [-18, -18], [26, 10], [-26, 10], [26, -10], [-26, -10], [10, 26], [-10, 26], [10, -26], [-10, -26], [0, 22], [0, -22], [22, 0], [-22, 0], [38, 38], [-38, -38]];
+  M.name = "The Rooftops"; M.blurb = "Five roofs over a street grid: bridges to the tower in the middle, ramps and pads up from the street, long lines for the sniper."; M.sky = 0xb0a0d8; M.fog = [70, 170];
+  return M;
+}
+export const MAPS = { lot, docks, roofs };
 export const MAP_LIST = Object.keys(MAPS);
 
 /** A map, built: the boxes as physics, the pads, the spawns. */
@@ -162,7 +188,7 @@ export function spawnFor(world, beans, b, rand = Math.random) {
 export function respawnBean(world, beans, b, gun, rand = Math.random, events) {
   const s = spawnFor(world, beans, b, rand);
   b.dead = false; b.hp = RULES.MAX_HP; b.hurtT = -99; b.gun = GUNS[gun] ? gun : "ar"; b.ammo = GUNS[b.gun].mag; b.mags = {}; b.reloading = 0; b.cd = 0.3; b.slide = false; b.streak = 0;
-  b.p.set(s[0], s[1] + 0.2, s[2]); b.v.set(0, 0, 0); b.facing = Math.atan2(-s[0], -s[2]);
+  b.p.set(s[0], s[1] + 0.2, s[2]); b.v.set(0, 0, 0); b.facing = Math.atan2(-s[0], -s[2]) + Math.PI;   // facing the middle of the map (the page looks along -sin/-cos of the facing; without the +π everyone spawned looking at the wall behind them, 2026-10-09)
   events?.push({ type: "spawn", b });
 }
 
@@ -205,7 +231,7 @@ export function reload(b, events) { const g = GUNS[b.gun]; if (b.reloading || b.
 export const SWAP_S = 0.35;
 export function switchGun(b, k, events) {
   if (!GUNS[k] || k === b.gun || b.dead) return false;
-  b.mags ||= {}; b.mags[b.gun] = b.reloading ? b.ammo : b.ammo; b.gun = k; b.ammo = b.mags[k] ?? GUNS[k].mag; b.reloading = 0; b.cd = Math.max(b.cd, SWAP_S);
+  b.mags ||= {}; b.mags[b.gun] = b.ammo; b.gun = k; b.ammo = b.mags[k] ?? GUNS[k].mag; b.reloading = 0; b.cd = Math.max(b.cd, GUNS[k].draw ?? SWAP_S);
   events?.push({ type: "swap", b }); return true;
 }
 

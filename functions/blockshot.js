@@ -6,7 +6,7 @@
    The session is the site's cookie, so /api/blockshot/me and the match server see the same account as before. /?view=blockshot still
    frames it in the shell for comparison. Open to everyone, like the Game Room. */
 const h = (v) => String(v ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
-const TITLE = "Blockshot — EastCoin", DESC = "A Krunker-style free-for-all on big maps built for slide-hopping. Three guns, levels, skins.";
+const TITLE = "Blockshot — EastCoin", DESC = "A Krunker-style free-for-all on big maps built for slide-hopping. Three guns and a sidearm, three maps, levels, skins.";
 const BASE = "/arcade/blockshot/";
 
 export async function onRequestGet(context) {
