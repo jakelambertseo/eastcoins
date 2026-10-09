@@ -183,11 +183,15 @@ export function newBean(i, name, bot) {
   return { i, name, bot, p: new V(), v: new V(), facing: 0, aim: new V(0, 0, -1), hp: RULES.MAX_HP, dead: false, respawn: 0, gun: "ar", ammo: 30, reloading: 0, cd: 0.5, hurtT: -99, kills: 0, deaths: 0, streak: 0, bestStreak: 0, shots: 0, hits: 0,
     grounded: false, coyote: 0, slide: false, slideT: 0, slideCd: 0, landT: 9, lastBy: null, lastByT: -99, skill: 0.6, target: null, think: 0, look: 0, strafe: 1, strafeT: 0, stuck: 0, wp: null, react: 1, lostT: 0 };
 }
-/** The spawn farthest from everyone alive (a little noise so two people don't share one). */
+/** A spawn away from the fighting but not a predictable one (2026-10-09, the owner: "i always respawn in the same place"): every spawn
+    is scored by its distance to the nearest living player, the one this bean used last is left out, and the pick is random among the
+    three safest — never one that is much closer to someone than the safest is. The old rule took the single farthest with a little noise,
+    and the emptiest corner kept winning, which is what makes spawn camping work. */
 export function spawnFor(world, beans, b, rand = Math.random) {
-  let best = world.spawns[0], bd = -1;
-  for (const s of world.spawns) { let d = 1e9; for (const o of beans) if (o !== b && !o.dead) d = Math.min(d, Math.hypot(o.p.x - s[0], o.p.z - s[2])); d += rand() * 3; if (d > bd) { bd = d; best = s; } }
-  return best;
+  const scored = world.spawns.map((s, i) => { let d = 1e9; for (const o of beans) if (o !== b && !o.dead) d = Math.min(d, Math.hypot(o.p.x - s[0], o.p.z - s[2])); return { s, i, d }; })
+    .filter((x) => world.spawns.length < 2 || x.i !== b.lastSpawn).sort((x, y) => y.d - x.d);
+  const pool = scored.slice(0, 3).filter((x, k) => k === 0 || x.d >= scored[0].d * 0.6);
+  const pick = pool[Math.floor(rand() * pool.length)]; b.lastSpawn = pick.i; return pick.s;
 }
 export function respawnBean(world, beans, b, gun, rand = Math.random, events) {
   const s = spawnFor(world, beans, b, rand);

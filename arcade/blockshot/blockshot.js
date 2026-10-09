@@ -9,11 +9,11 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=11";
-import { createNet } from "./net.js?v=11";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=12";
+import { createNet } from "./net.js?v=12";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=6";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=7";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=8";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
