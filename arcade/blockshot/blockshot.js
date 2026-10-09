@@ -9,11 +9,11 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=9";
-import { createNet } from "./net.js?v=9";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=10";
+import { createNet } from "./net.js?v=10";
 import { material, skin as skinTex } from "./tex.js?v=1";
-import { play, setVolume, ensure as audioOn } from "./audio.js?v=4";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=5";
+import { play, setVolume, ensure as audioOn } from "./audio.js?v=5";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=6";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -40,7 +40,7 @@ Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, n
 let world = null, mapMeshes = [];
 const _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler();
 function buildMap(key) {
-  for (const m of mapMeshes) { scene.remove(m); m.geometry.dispose(); } mapMeshes = [];
+  for (const m of mapMeshes) { scene.remove(m); m.geometry?.dispose(); } mapMeshes = []; pickupMeshes = [];
   world = new World(key); const map = world.map;
   scene.background = new THREE.Color(map.sky); scene.fog = new THREE.Fog(map.sky, map.fog[0], map.fog[1]);
   const byMat = new Map();
@@ -51,7 +51,16 @@ function buildMap(key) {
     const k = `${m.tex}:${m.col}`; if (!byMat.has(k)) byMat.set(k, { mat: material(m.tex, m.col), list: [] }); byMat.get(k).list.push(g);
   }
   for (const { mat, list } of byMat.values()) { const mesh = new THREE.Mesh(mergeGeometries(list, false), mat); mesh.castShadow = mesh.receiveShadow = true; scene.add(mesh); mapMeshes.push(mesh); for (const g of list) g.dispose(); }
+  // the pickups: a red pack with a white cross, a yellow box with a dark band; they turn in place and vanish while taken
+  pickupMeshes = world.pickups.map((p) => {
+    const g = new THREE.Group();
+    if (p.kind === "health") { g.add(new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.5, 0.9), pickMats.red)); for (const [sx, sz] of [[0.6, 0.18], [0.18, 0.6]]) { const m = new THREE.Mesh(new THREE.BoxGeometry(sx, 0.08, sz), pickMats.white); m.position.y = 0.29; g.add(m); } }
+    else { g.add(new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.55, 0.6), pickMats.yellow)); const band = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.16, 0.64), pickMats.dark); g.add(band); }
+    g.position.set(p.x, p.y + 0.55, p.z); scene.add(g); mapMeshes.push(g); return g;
+  });
 }
+let pickupMeshes = [];
+const pickMats = { red: new THREE.MeshStandardMaterial({ color: 0xe03a3a, emissive: 0x401010 }), white: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x404040 }), yellow: new THREE.MeshStandardMaterial({ color: 0xf0c020, emissive: 0x403000 }), dark: new THREE.MeshStandardMaterial({ color: 0x202028 }) };
 
 /* ------------------------------------------------------------------ beans and skins */
 const skinMat = (pattern, colKey) => new THREE.MeshStandardMaterial({ map: skinTex(pattern, COLORS[colKey] ?? 0xffd84a), roughness: pattern === "gold" || pattern === "carbon" ? 0.3 : 0.5, metalness: pattern === "gold" ? 0.6 : pattern === "carbon" ? 0.3 : 0 });
@@ -204,6 +213,7 @@ function onEvent(e) {
     case "pad": play("pad", mine ? 1 : 0.2); return;
     case "reload": if (mine) play("reload", GUNS[e.b.gun].reload / 1.5); return;
     case "swap": if (mine) { play("swap"); swapAt = performance.now() / 1000; } return;
+    case "pickup": if (mine) { play(e.kind); floatText(me.p, e.kind === "health" ? "+50 HP" : "AMMO", e.kind === "health" ? "#ff6a6a" : "#ffd84a"); } else play(e.kind, clamp(0.4 - e.b.p.dist(me.p) / 40, 0, 0.4), panTo(e.b.p)); return;
     case "empty": if (mine) play("empty"); return;
   }
 }
@@ -227,9 +237,11 @@ const net = createNet({
     if (e.k === "shot") { const b = byslot(e.s); if (b) onEvent({ type: "shot", b, gun: e.g, pellets: e.p.map((q) => ({ from: new V(q[0], q[1], q[2]), to: new V(q[3], q[4], q[5]) })) }); }
     else if (e.k === "hit") { const target = byslot(e.s), by = byslot(e.by); if (target) onEvent({ type: "hit", target, by, dmg: e.d, head: Boolean(e.h) }); }
     else if (e.k === "kill") { const target = byslot(e.s), by = byslot(e.by); if (target) onEvent({ type: "kill", target, by, head: Boolean(e.h) }); }
+    else if (e.k === "pickup") { const b = byslot(e.s); if (b) onEvent({ type: "pickup", b, kind: e.kind, i: e.i }); }
     else { const b = byslot(e.s); if (b) onEvent({ type: e.k, b }); }
   } },
   onEnd: (m) => endOnline(m),
+  onVotes: (n) => { for (const b of document.querySelectorAll("[data-vote]")) { const c = b.querySelector("i"); if (c) c.textContent = n[b.dataset.vote] || 0; } },
   onDrop: (why) => { if (!online) return; online = false; state = "menu"; document.exitPointerLock?.(); showMenu("play"); say(""); feedNote(why === "closed" ? "Connection lost. Press Play to rejoin." : why); },
   onVisible: (b, vis) => { if (b !== me) b.mesh.g.visible = vis; paintTag(b); },
   onError: (text) => feedNote(text)
@@ -278,7 +290,7 @@ function endOnline(m) {
   }
   showMenu("result", resultHtml({ headline: y.won ? "You win!" : `${esc(ranks[0].name)} wins`, sub: esc(world.map.name), meSlot: me.i, ranks,
     line: `You came <b>${ord(y.place)}</b> of ${PLAYERS} · <b>${y.kills}</b> kills, <b>${y.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${y.streak}`,
-    xpHtml, foot: `<span class="next" id="nextIn"></span>` }));
+    xpHtml, foot: `<div class="vote"><span class="eyebrow inl">Next map</span>${MAP_LIST.map((k) => `<button data-vote="${k}">${esc(MAPS[k]().name)}<i>0</i></button>`).join("")}<span class="next" id="nextIn"></span></div>` }));
   drawPodium(ranks.slice(0, 3).map((r) => r.s)); fillBars(); nextCountdown(10);
 }
 async function playOnline() {
@@ -394,6 +406,7 @@ $("over").addEventListener("click", (e) => {
   if (b.dataset.gun) { nextGun = b.dataset.gun; return drawMenu(); }
   if (b.dataset.go) { if (online) { net.close(); online = false; } return start(); }
   if (b.dataset.online) return playOnline();
+  if (b.dataset.vote) { net.vote(b.dataset.vote); for (const o of document.querySelectorAll("[data-vote]")) o.classList.toggle("on", o === b); return; }
   if (b.dataset.logout) { b.disabled = true; return fetch("/api/picks/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => {}).then(() => location.reload()); }
   if (b.dataset.slot && wear(b.dataset.slot, b.dataset.k)) { redressMe(); drawMenu(); }
 });
@@ -467,6 +480,7 @@ function draw(dt) {
   }
   const fov = scoping && !me.dead ? profile.settings.fov / (GUNS[me.gun].zoom || 1) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 9, 0, 1) * 10; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
   $("scope").classList.toggle("on", Boolean(scoping && GUNS[me.gun].scope && !me.dead && state === "play"));   // (Boolean: toggle with an undefined second argument FLIPS the class, and the rifle has no scope field)
+  { const a = performance.now() / 1000; pickupMeshes.forEach((g, i) => { const p = world.pickups[i]; g.visible = p.t <= 0; if (g.visible) { g.rotation.y = a * 1.6; g.position.y = p.y + 0.55 + Math.sin(a * 2.4 + i) * 0.08; } }); }
   // footsteps (2026-10-09): everyone else's footfalls, timed by their speed, faded by distance and placed left-right, so you hear who's coming
   if (!me.dead) for (const b of beans) { if (b === me || b.dead) continue; const sp = Math.hypot(b.v.x, b.v.z); if (!b.grounded || b.slide || sp < 2.5) { b.stepT = 0.3; continue; } b.stepT = (b.stepT ?? 0) - dt * sp / 2.6; if (b.stepT <= 0) { b.stepT = 1; const d = b.p.dist(me.p); if (d < 26) play("step", clamp(1 - d / 26, 0, 1) * 0.9, panTo(b.p)); } }
   for (const L of POOL.lines) if (L.life > 0) { L.life -= dt; L.o.material.opacity = Math.max(0, L.life / L.max); if (L.life <= 0) L.o.visible = false; }

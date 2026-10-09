@@ -122,6 +122,7 @@ function lot() {
   for (const [x, z] of [[0, 27], [0, -27], [27, 0], [-27, 0]]) pad(x, z, 15, { x: -Math.sign(x) * 9, z: -Math.sign(z) * 9 });
   M.spawns = [[0, 1, 36], [0, 1, -36], [36, 1, 0], [-36, 1, 0], [30, 7, 30], [-30, 7, -30], [30, 7, -30], [-30, 7, 30], [20, 1, 20], [-20, 1, -20], [20, 1, -20], [-20, 1, 20]];
   M.waypoints = [...M.spawns.map((s) => [s[0], s[2]]), [0, 0], [0, 14], [0, -14], [14, 0], [-14, 0], [0, 36], [0, -36], [36, 0], [-36, 0], [24, 36], [-24, 36], [24, -36], [-24, -36], [36, 24], [36, -24], [-36, 24], [-36, -24], [8, 8], [-8, -8], [8, -8], [-8, 8]];
+  M.pickups = [{ kind: "health", x: 6, z: 0 }, { kind: "health", x: -6, z: 0 }, { kind: "ammo", x: 26, z: 30 }, { kind: "ammo", x: -26, z: 30 }, { kind: "ammo", x: 26, z: -30 }, { kind: "ammo", x: -26, z: -30 }];
   M.name = "The Lot"; M.blurb = "An open plaza with a raised centre, four roofs, long ramps and bridges. Slide lanes everywhere."; M.sky = 0x8fc4ef; M.fog = [70, 160];
   return M;
 }
@@ -138,6 +139,7 @@ function docks() {
   pad(0, 20, 17, { x: 0, z: -6 }); pad(0, -20, 17, { x: 0, z: 6 }); for (const s of [-1, 1]) pad(s * 30, 0, 14, { x: -s * 5, z: 0 });
   M.spawns = [[0, 1, 30], [0, 1, -30], [40, 3, 20], [-40, 3, -20], [40, 3, -20], [-40, 3, 20], [16, 6, 0], [-16, 6, 0], [-30, 1, 30], [30, 1, -30], [0, 9, 0], [8, 1, 0]];
   M.waypoints = [...M.spawns.map((s) => [s[0], s[2]]), [0, 0], [0, 15], [0, -15], [8, 20], [-8, -20], [30, 10], [-30, -10], [30, -10], [-30, 10], [40, 0], [-40, 0], [16, 22], [-16, -22], [16, -22], [-16, 22], [-8, 30], [8, -30]];
+  M.pickups = [{ kind: "health", x: 0, z: 0 }, { kind: "health", x: 24, z: 24 }, { kind: "ammo", x: 16, z: 6 }, { kind: "ammo", x: -16, z: -6 }, { kind: "ammo", x: 40, z: 0 }, { kind: "ammo", x: -40, z: 0 }];
   M.name = "The Docks"; M.blurb = "Three long lanes, two warehouses with ramps at both ends, a high catwalk, piers along the water."; M.sky = 0xf0c8a0; M.fog = [60, 150];
   return M;
 }
@@ -161,6 +163,7 @@ function roofs() {
   for (const [x, z] of [[0, 14], [0, -14], [14, 0], [-14, 0]]) pad(x, z, 22, { x: -Math.sign(x) * 8, z: -Math.sign(z) * 8 });   // mid-street, onto the tower
   M.spawns = [[26, 7, 26], [-26, 8, 26], [26, 6, -26], [-26, 9, -26], [0, 1, 38], [0, 1, -38], [38, 1, 0], [-38, 1, 0], [14, 1, -36], [-14, 1, 36], [36, 1, 14], [-36, 1, -14]];
   M.waypoints = [...M.spawns.map((s) => [s[0], s[2]]), [0, 0], [0, 5], [5, 0], [18, 18], [-18, 18], [18, -18], [-18, -18], [26, 10], [-26, 10], [26, -10], [-26, -10], [10, 26], [-10, 26], [10, -26], [-10, -26], [0, 22], [0, -22], [22, 0], [-22, 0], [38, 38], [-38, -38]];
+  M.pickups = [{ kind: "health", x: 0, z: 5 }, { kind: "health", x: 0, z: -22 }, { kind: "ammo", x: 22, z: 22 }, { kind: "ammo", x: -22, z: 22 }, { kind: "ammo", x: 22, z: -22 }, { kind: "ammo", x: -22, z: -22 }];
   M.name = "The Rooftops"; M.blurb = "Five roofs over a street grid: bridges to the tower in the middle, ramps and pads up from the street, long lines for the sniper."; M.sky = 0xb0a0d8; M.fog = [70, 170];
   return M;
 }
@@ -169,7 +172,8 @@ export const MAP_LIST = Object.keys(MAPS);
 
 /** A map, built: the boxes as physics, the pads, the spawns. */
 export class World {
-  constructor(key) { this.key = key; this.map = MAPS[key](); this.boxes = this.map.boxes.map((m) => new Box(m)); this.pads = this.map.pads; this.spawns = this.map.spawns; this.waypoints = this.map.waypoints; }
+  constructor(key) { this.key = key; this.map = MAPS[key](); this.boxes = this.map.boxes.map((m) => new Box(m)); this.pads = this.map.pads; this.spawns = this.map.spawns; this.waypoints = this.map.waypoints;
+    this.pickups = (this.map.pickups || []).map((p) => ({ ...p, y: this.groundAt(p.x, p.z), t: 0 })); }
   /** The height of the ground under (x, z), seen from `from`. */
   groundAt(x, z, from = 50) { const o = new V(x, from, z), d = new V(0, -1, 0); let best = Infinity; for (const b of this.boxes) best = Math.min(best, rayBox(o, d, b)); return from - best; }
 }
@@ -271,9 +275,25 @@ export function stepBean(world, beans, b, inp, dt, now, rand, events, opts = {})
   if (b.grounded && !wasGrounded) b.landT = 0;
   if (b.grounded && b.v.y <= 0.5) for (const pd of world.pads) if (Math.abs(b.p.x - pd.x) < 1.2 && Math.abs(b.p.z - pd.z) < 1.2 && b.p.y < 1.2) { b.v.y = pd.up; if (pd.fwd) { b.v.x += pd.fwd.x; b.v.z += pd.fwd.z; } b.grounded = false; b.slide = false; events?.push({ type: "pad", b }); break; }
   if (b.p.y < RULES.FALL_Y) { kill(b, null, false, now, events); events?.push({ type: "fell", b }); }
+  if (!b.dead && world.pickups?.length) takePickups(world, b, events);
 }
 /** Everyone, one tick, from a function that gives each bean its input. Respawns the dead whose time is up (the server decides the gun). */
+/* PICKUPS (2026-10-09, the owner: "build the pickups"): a health pack (+50, never past full) and an ammo box (every magazine refilled)
+   at fixed spots on each map, sitting on whatever is under them. Walking through one takes it when it would do something, and it is back
+   PICKUP.respawn seconds later. The server owns the timers (its snapshot carries them); the page predicts its own take so it vanishes at
+   once; bots take them too, so a fight has reasons to move. */
+export const PICKUP = { respawn: 25, health: 50, r: 1.1 };
+export function tickPickups(world, dt) { for (const p of world.pickups) if (p.t > 0) p.t = Math.max(0, p.t - dt); }
+export function takePickups(world, b, events) {
+  for (let i = 0; i < world.pickups.length; i++) {
+    const p = world.pickups[i]; if (p.t > 0 || Math.abs(b.p.x - p.x) >= PICKUP.r || Math.abs(b.p.z - p.z) >= PICKUP.r || b.p.y < p.y - 0.6 || b.p.y > p.y + 1.6) continue;
+    if (p.kind === "health") { if (b.hp >= RULES.MAX_HP) continue; b.hp = Math.min(RULES.MAX_HP, b.hp + PICKUP.health); }
+    else { let need = b.ammo < GUNS[b.gun].mag; for (const k of GUN_KEYS) if ((b.mags?.[k] ?? GUNS[k].mag) < GUNS[k].mag) need = true; if (!need) continue; b.mags = {}; b.ammo = GUNS[b.gun].mag; b.reloading = 0; }
+    p.t = PICKUP.respawn; events?.push({ type: "pickup", b, kind: p.kind, i });
+  }
+}
 export function stepWorld(world, beans, dt, now, inputFor, rand, events, gunFor = () => "ar") {
+  tickPickups(world, dt);
   for (const b of beans) { if (b.dead && b.respawn <= 0) continue; stepBean(world, beans, b, b.dead ? {} : inputFor(b), dt, now, rand, events); }
   for (const b of beans) if (b.dead && b.respawn <= 0 && b.wantsRespawn !== false) respawnBean(world, beans, b, gunFor(b), rand, events);
   for (let i = 0; i < beans.length; i++) for (let j = i + 1; j < beans.length; j++) { const a = beans[i], c = beans[j]; if (a.dead || c.dead) continue; _d.copy(c.p).sub(a.p); const d = _d.len(); if (d < PHYS.R * 2 && d > 1e-4) { _d.scale(1 / d); const push = (PHYS.R * 2 - d) / 2; a.p.addScaled(_d, -push); c.p.addScaled(_d, push); } }

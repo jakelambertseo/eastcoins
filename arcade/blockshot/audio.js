@@ -38,6 +38,8 @@ const SOUNDS = {
   top: () => { [784, 988, 1175, 1568].forEach((f, i) => tone({ f, dur: 0.16, type: "square", gain: 0.07, delay: i * 0.07 })); },
   hurt: () => { tone({ f: 160, to: 70, dur: 0.14, type: "sawtooth", gain: 0.1 }); noise({ dur: 0.08, gain: 0.15, lp: 900 }); },
   die: () => { tone({ f: 300, to: 60, dur: 0.5, type: "sawtooth", gain: 0.12 }); noise({ dur: 0.4, gain: 0.2, lp: 500 }); },
+  health: () => { tone({ f: 660, dur: 0.12, type: "sine", gain: 0.1 }); tone({ f: 880, dur: 0.18, type: "sine", gain: 0.1, delay: 0.1 }); tone({ f: 1320, dur: 0.22, type: "sine", gain: 0.08, delay: 0.2 }); },
+  ammo: () => { noise({ dur: 0.05, gain: 0.3, lp: 2500, decay: 3 }); tone({ f: 300, to: 420, dur: 0.07, type: "square", gain: 0.08, delay: 0.05 }); noise({ dur: 0.05, gain: 0.3, lp: 3000, decay: 3, delay: 0.14 }); },
   swap: () => { noise({ dur: 0.04, gain: 0.22, lp: 3500, decay: 3 }); tone({ f: 420, to: 640, dur: 0.08, type: "square", gain: 0.07, delay: 0.1 }); },
   reload: (k = 1) => { noise({ dur: 0.05, gain: 0.25 * k, lp: 3000, decay: 3 }); tone({ f: 500, to: 700, dur: 0.07, type: "square", gain: 0.09 * k }); noise({ dur: 0.06, gain: 0.3 * k, lp: 2500, decay: 3, delay: 0.5 * k }); tone({ f: 350, dur: 0.06, type: "square", gain: 0.08 * k, delay: 0.5 * k }); tone({ f: 800, to: 1100, dur: 0.08, type: "square", gain: 0.09 * k, delay: 1.0 * k }); noise({ dur: 0.05, gain: 0.3 * k, lp: 4000, decay: 3, delay: 1.0 * k }); },
   empty: () => tone({ f: 600, dur: 0.04, type: "square", gain: 0.05 }),
