@@ -167,23 +167,40 @@ function roofs() {
   M.name = "The Rooftops"; M.blurb = "Five roofs over a street grid: bridges to the tower in the middle, ramps and pads up from the street, long lines for the sniper."; M.sky = 0xb0a0d8; M.fog = [70, 170];
   return M;
 }
-/* The Compound (2026-10-09): the bomb map. Attackers start at the south end, defenders at the north behind the two sites. A is a raised
-   platform on the west with crates, B a yard on the east inside low walls. A central block splits mid into two lanes; each side has an
-   outer lane along the wall. No pickups, no pads: a plant-the-bomb map is about lines and timing, not speed. */
+/* The Compound (2026-10-10, rebuilt as a small town — the owner: "actual corridors, walls and lanes and areas that you have to walk
+   through"). Attackers start in a yard at the south, behind a wall with three gaps: the west lane, mid and the east lane. The lanes
+   are corridors between solid buildings, crossed by a south street and a north street. Past the north street are the two sites: A is
+   a walled courtyard on the west, B on the east, each with a door from the north street, a side door from a short corridor beside the
+   centre building, and a back door onto the defenders' strip along the north edge. Bots walk it on the waypoint graph (nav). */
 function compound() {
-  const M = mapBuilder(40), { box, ramp, walls } = M;
+  const M = mapBuilder(40), { box, walls } = M;
+  const wall = (x0, z0, x1, z1, h = 5, t = 0.6, tex = "brick", col = C.STONE) => box([(x0 + x1) / 2, h / 2, (z0 + z1) / 2], [Math.max(t / 2, Math.abs(x1 - x0) / 2), h / 2, Math.max(t / 2, Math.abs(z1 - z0) / 2)], tex, col);
+  const crate = (x, z) => box([x, 0.6, z], [1.2, 0.6, 1.2], "crate", C.CRATE);
   box([0, -0.5, 0], [41, 0.5, 41], "concrete", C.STONE); walls(40, 7);
-  box([0, 2.5, 0], [7, 2.5, 4], "brick", C.BRICK); ramp(0, -12, 0, 0, -4, 5, 5, "concrete", C.SAND);                      // mid block, with a ramp onto it from the attackers' side
-  for (const s of [-1, 1]) { box([s * 22, 2.5, -6], [2, 2.5, 8], "concrete", C.WHITE); box([s * 30, 1.2, 10], [3, 1.2, 0.6], "crate", C.CRATE); }   // lane walls and a crate line
-  box([-20, 0.75, 20], [8, 0.75, 7], "concrete", C.SAND); ramp(-20, 7, 0, -20, 13, 1.5, 6, "concrete", C.SAND); ramp(-36, 20, 0, -28, 20, 1.5, 6, "concrete", C.SAND); box([-26, 2.2, 24], [1.2, 0.7, 1.2], "crate", C.CRATE); box([-14, 2.2, 16], [1.2, 0.7, 1.2], "crate", C.CRATE);   // site A, raised
-  for (const [x, z, hx, hz] of [[12, 27, 0.6, 7], [28, 27, 0.6, 7], [20, 13, 8, 0.6]]) box([x, 1.3, z], [hx, 1.3, hz], "metal", C.RUST);   // site B, walled
-  box([20, 0.6, 20], [1.2, 0.6, 1.2], "crate", C.CRATE);
-  box([0, 1.5, 30], [10, 1.5, 0.6], "concrete", C.WHITE); box([0, 1.2, 14], [3, 1.2, 0.6], "concrete", C.WHITE);           // the defenders' wall, cover in front of mid
-  for (const s of [-1, 1]) box([s * 9, 1.2, -22], [0.6, 1.2, 4], "concrete", C.WHITE);                                      // cover leaving the attackers' end
-  M.bomb = { sites: [{ k: "A", x: -20, z: 20, y: 1.5 }, { k: "B", x: 20, z: 20, y: 0 }], atk: [[-8, 1, -34], [0, 1, -36], [8, 1, -34]], def: [[-14, 1, 34], [0, 1, 36], [14, 1, 34]] };
+  // the yard wall, with the three gaps
+  wall(-40, -28, -29, -28, 5); wall(-23, -28, -3, -28, 5); wall(3, -28, 23, -28, 5); wall(29, -28, 40, -28, 5);
+  // buildings: the south pair, the big middle pair, the outer strips (so the lanes are corridors)
+  box([-13, 3, -20], [10, 3, 5], "brick", C.BRICK); box([13, 3, -20], [10, 3, 5], "brick", C.BLUE);
+  box([-13, 3, 2], [10, 3, 11], "concrete", C.SAND); box([13, 3, 2], [10, 3, 11], "concrete", C.WHITE);
+  box([-34.5, 3, -7.5], [5.5, 3, 20.5], "brick", C.RUST); box([34.5, 3, -7.5], [5.5, 3, 20.5], "brick", C.RUST);
+  // the centre building between the sites, with the two short corridors beside it
+  box([0, 3, 27], [9, 3, 6], "metal", C.DARK);
+  // site A (west) and B (east): courtyards with a front door, a side door and a back door
+  for (const s of [-1, 1]) {
+    const x0 = s * 12, x1 = s * 36, door = s * 24;                                            // the inner and outer x, the door column
+    wall(Math.min(x0, x1), 19, Math.min(door - 2, door + 2), 19); wall(Math.max(door - 2, door + 2), 19, Math.max(x0, x1), 19);   // front wall, door at the lane
+    wall(x0, 19, x0, 22); wall(x0, 26, x0, 33);                                                   // side wall, door onto the corridor
+    wall(Math.min(x0, x1), 33, Math.min(door - 2, door + 2), 33); wall(Math.max(door - 2, door + 2), 33, Math.max(x0, x1), 33);   // back wall, door onto the defenders' strip
+    wall(x1, 19, x1, 33);                                                                         // the outer wall
+    crate(s * 30, 29); crate(s * 18, 21.5); box([s * 24, 0.8, 29.5], [3, 0.8, 0.5], "concrete", C.WHITE);   // (cover sits off the site's centre and off the lines between its doors, so the graph reaches the plant spot)
+  }
+  // street cover
+  crate(-13, -14.2); crate(13, -14.2); crate(-28.2, 6); crate(28.2, 6);   // against the street's edge and the lane's wall, so the lane itself stays a clear line for the graph
+  M.bomb = { sites: [{ k: "A", x: -24, z: 26, y: 0 }, { k: "B", x: 24, z: 26, y: 0 }], atk: [[-8, 1, -35], [0, 1, -36], [8, 1, -35]], def: [[-24, 1, 37], [0, 1, 37], [24, 1, 37]] };
   M.spawns = [...M.bomb.atk, ...M.bomb.def]; M.pickups = [];
-  M.waypoints = [[-20, 20], [20, 20], [0, 0], [-30, 0], [30, 0], [0, -20], [-20, -10], [20, -10], [-12, 26], [12, 26], [0, 22], [-30, 28], [30, 28]];
-  M.name = "The Compound"; M.blurb = "Two sites behind a central block: A raised on the west, B walled on the east. Attackers come from the south."; M.sky = 0xd8c8a8; M.fog = [70, 170];
+  M.waypoints = [[-20, -34], [0, -34], [20, -34], [-26, -28], [0, -28], [26, -28], [-26, -12], [-13, -12], [0, -12], [13, -12], [26, -12], [-26, 2], [0, 2], [26, 2], [-26, 16], [-13, 16], [0, 16], [13, 16], [26, 16],
+    [-10.5, 16], [10.5, 16], [-10.5, 24], [10.5, 24], [-24, 21], [24, 21], [-14, 24], [14, 24], [-24, 26], [24, 26], [-30, 25], [30, 25], [-24, 31], [24, 31], [-24, 36], [0, 36], [24, 36], [-10.5, 35], [10.5, 35]];
+  M.name = "The Compound"; M.blurb = "A small town: three lanes through the buildings, two streets across, and two walled sites with three doors each. Attackers come from the south yard."; M.sky = 0xd8c8a8; M.fog = [70, 170];
   return M;
 }
 export const MAPS = { lot, docks, roofs, compound };
@@ -193,7 +210,7 @@ export const MAP_LIST = ["lot", "docks", "roofs"];   // the free-for-all rotatio
 /** A map, built: the boxes as physics, the pads, the spawns. */
 export class World {
   constructor(key) { this.key = key; this.map = MAPS[key](); this.boxes = this.map.boxes.map((m) => new Box(m)); this.pads = this.map.pads; this.spawns = this.map.spawns; this.waypoints = this.map.waypoints;
-    this.pickups = (this.map.pickups || []).map((p) => ({ ...p, y: this.groundAt(p.x, p.z), t: 0 })); }
+    this.pickups = (this.map.pickups || []).map((p) => ({ ...p, y: this.groundAt(p.x, p.z), t: 0 })); this.nav = buildNav(this); }
   /** The height of the ground under (x, z), seen from `from`. */
   groundAt(x, z, from = 50) { const o = new V(x, from, z), d = new V(0, -1, 0); let best = Infinity; for (const b of this.boxes) best = Math.min(best, rayBox(o, d, b)); return from - best; }
 }
@@ -323,13 +340,51 @@ export function stepWorld(world, beans, dt, now, inputFor, rand, events, gunFor 
   for (let i = 0; i < beans.length; i++) for (let j = i + 1; j < beans.length; j++) { const a = beans[i], c = beans[j]; if (a.dead || c.dead) continue; _d.copy(c.p).sub(a.p); const d = _d.len(); if (d < PHYS.R * 2 && d > 1e-4) { _d.scale(1 / d); const push = (PHYS.R * 2 - d) / 2; a.p.addScaled(_d, -push); c.p.addScaled(_d, push); } }
 }
 
+/* ------------------------------------------------------------------ nav: the waypoint graph bots walk (2026-10-10)
+   Bots used to walk straight at wherever they wanted to be and jump when stuck, which a map of corridors turns into face-planting.
+   Now the waypoints are a graph: two are joined when the straight line between them crosses no wall (a box that stands above knee
+   height, grown by the bean's radius; a box whose top is at the height of either end is a floor, not a wall, so a ramp onto a platform
+   still counts). `navNext(world, p, goal)` gives the next point to walk toward: the goal itself when the way is clear, otherwise the
+   first corner of the shortest path through the graph. Dijkstra over forty nodes is nothing. */
+function segHitsRect(ax, az, bx, bz, r) {   // Liang-Barsky: does the segment cross the rectangle
+  let t0 = 0, t1 = 1; const dx = bx - ax, dz = bz - az;
+  for (const [p, q] of [[-dx, ax - r.x0], [dx, r.x1 - ax], [-dz, az - r.z0], [dz, r.z1 - az]]) { if (p === 0) { if (q < 0) return false; continue; } const t = q / p; if (p < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; } }
+  return true;
+}
+function buildNav(world) {
+  const nodes = (world.waypoints || []).map(([x, z]) => ({ x, z, y: world.groundAt(x, z) }));
+  const rects = world.boxes.filter((b) => b.flat && b.top > 0.9).map((b) => ({ x0: b.c.x - b.h.x - 0.55, x1: b.c.x + b.h.x + 0.55, z0: b.c.z - b.h.z - 0.55, z1: b.c.z + b.h.z + 0.55, top: b.top, bottom: b.c.y - b.h.y }));
+  const clear = (ax, az, ay, bx, bz, by) => { const floor = Math.max(ay, by) + 0.7; for (const r of rects) { if (r.top <= floor || r.bottom > Math.min(ay, by) + 2) continue; if (segHitsRect(ax, az, bx, bz, r)) return false; } return true; };
+  const adj = nodes.map(() => []);
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) { const a = nodes[i], b = nodes[j], d = Math.hypot(a.x - b.x, a.z - b.z); if (d < 45 && clear(a.x, a.z, a.y, b.x, b.z, b.y)) { adj[i].push([j, d]); adj[j].push([i, d]); } }
+  return { nodes, adj, clear };
+}
+export function navNext(world, p, goal) {
+  const nav = world.nav; if (!nav || !nav.nodes.length) return goal;
+  const gy = goal.y ?? world.groundAt(goal.x, goal.z);
+  if (nav.clear(p.x, p.z, p.y, goal.x, goal.z, gy)) return goal;
+  // the end node: the nearest one that sees the goal. Then the distances to it from every node (Dijkstra from the end, the graph is
+  // undirected), and the START node is the visible one that makes the whole trip shortest — never simply the nearest, which from
+  // between two waypoints is the one behind you, and sent bots back and forth forever (2026-10-10)
+  let e = -1, ed = 1e9, eAny = -1, eAnyD = 1e9;
+  for (let i = 0; i < nav.nodes.length; i++) { const n = nav.nodes[i], d = Math.hypot(n.x - goal.x, n.z - goal.z); if (d < eAnyD) { eAnyD = d; eAny = i; } if (d < ed && nav.clear(n.x, n.z, n.y, goal.x, goal.z, gy)) { ed = d; e = i; } }
+  if (e < 0) e = eAny;
+  const dist = new Array(nav.nodes.length).fill(1e9), prev = new Array(nav.nodes.length).fill(-1), done = new Array(nav.nodes.length).fill(false); dist[e] = 0;
+  for (;;) { let u = -1, ud = 1e9; for (let i = 0; i < dist.length; i++) if (!done[i] && dist[i] < ud) { ud = dist[i]; u = i; } if (u < 0) break; done[u] = true; for (const [v, w] of nav.adj[u]) if (dist[u] + w < dist[v]) { dist[v] = dist[u] + w; prev[v] = u; } }
+  let s = -1, sd = 1e9, sAny = -1, sAnyD = 1e9;
+  for (let i = 0; i < nav.nodes.length; i++) { const n = nav.nodes[i], d = Math.hypot(n.x - p.x, n.z - p.z); if (d < sAnyD) { sAnyD = d; sAny = i; } if (dist[i] < 1e9 && d + dist[i] < sd && nav.clear(p.x, p.z, p.y, n.x, n.z, n.y)) { sd = d + dist[i]; s = i; } }
+  if (s < 0) return nav.nodes[sAny];
+  const n = Math.hypot(nav.nodes[s].x - p.x, nav.nodes[s].z - p.z) < 1.3 && prev[s] >= 0 ? prev[s] : s;   // already on the start node: the next hop
+  return nav.nodes[n];
+}
+
 /* ------------------------------------------------------------------ the bomb mode (2026-10-09, the owner: "a very primitive 3v3 version of Counterstrike plant the bomb")
    Two teams of three. One team attacks: one of them carries the bomb and must plant it at a site (hold E inside the site for PLANT_S) and
    keep it alive for FUSE_S; the defenders stop that by killing the attackers before a plant, by defusing (hold E at the bomb for
    DEFUSE_S), or by running out the clock. Nobody respawns inside a round. First to WIN rounds; sides swap after SWAP_AT. No money, no
    buying: everyone picks a primary as in free-for-all. One carrier; the bomb drops where they die and any attacker walks over it.
    `b.team` is the group (0 or 1) and `bomb.atk` says which group attacks now. This file runs the round for the server and for practice. */
-export const BOMB = { TEAM: 3, ROUND_S: 90, FREEZE_S: 3, POST_S: 4, PLANT_S: 4, FUSE_S: 35, DEFUSE_S: 6, WIN: 6, SWAP_AT: 5, SITE_R: 4.5, PICK_R: 1.4, DEFUSE_R: 2.4, BLAST_R: 14 };
+export const BOMB = { TEAM: 3, ROUND_S: 90, FREEZE_S: 6, POST_S: 4, PLANT_S: 4, FUSE_S: 35, DEFUSE_S: 6, WIN: 6, SWAP_AT: 5, SITE_R: 4.5, PICK_R: 1.4, DEFUSE_R: 2.4, BLAST_R: 14 };
 export function newBomb() { return { phase: "freeze", t: BOMB.FREEZE_S, round: 1, score: [0, 0], atk: 0, carrier: -1, drop: null, planted: null, act: null, lastWin: null, over: false, done: false, siteFor: 0 }; }
 export const isAtk = (b, bomb) => b.team === bomb.atk;
 /** Seats both teams and starts a round: freeze, then live. `gunFor(b)` names each bean's primary. */
@@ -422,7 +477,9 @@ export function botInput(world, beans, b, dt, rand = Math.random, goal = null) {
   } else {
     if (goal) { b.wp = [goal.x, goal.z]; if (Math.hypot(goal.x - b.p.x, goal.z - b.p.z) < (goal.r || 1.5)) { b.stuck = 0; return { x: 0, z: 0, jump: false, fire: false, fireTap: false, slide: false, reload: b.ammo === 0 && !b.reloading, use: Boolean(goal.use) }; } }
     else if (!b.wp || Math.hypot(b.wp[0] - b.p.x, b.wp[1] - b.p.z) < 1.5 || b.think <= 0) { b.wp = pick(world.waypoints); b.think = rr(4, 8); }
-    const dx = b.wp[0] - b.p.x, dz = b.wp[1] - b.p.z, d = Math.hypot(dx, dz) || 1; mx = dx / d; mz = dz / d; b.facing = Math.atan2(mx, mz) + Math.PI;
+    // the next corner on the way there (recomputed a few times a second), not the straight line
+    b.navT = (b.navT ?? 0) - dt; if (b.navT <= 0 || !b.navTo || b.navKey !== `${b.wp[0]},${b.wp[1]}`) { b.navTo = navNext(world, b.p, { x: b.wp[0], z: b.wp[1] }); b.navT = 0.35; b.navKey = `${b.wp[0]},${b.wp[1]}`; }
+    const dx = b.navTo.x - b.p.x, dz = b.navTo.z - b.p.z, d = Math.hypot(dx, dz) || 1; mx = dx / d; mz = dz / d; b.facing = Math.atan2(mx, mz) + Math.PI;
   }
   b.react = Math.max(0, b.react - dt);
   const reloadNow = b.ammo === 0 && !b.reloading;

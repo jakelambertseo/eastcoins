@@ -9,11 +9,11 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk } from "/v3/assets/js/blockshot-rules.js?v=13";
-import { createNet } from "./net.js?v=14";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk } from "/v3/assets/js/blockshot-rules.js?v=14";
+import { createNet } from "./net.js?v=15";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=7";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=9";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=10";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -138,7 +138,8 @@ addEventListener("keydown", (e) => {
   if (e.code === "Escape" && state === "play" && $("over").hidden) { showMenu("play"); if (online) { /* still in the match; Play again rejoins */ } }
   if (/^Digit[123]$/.test(e.code)) {   // instant, like Krunker (2026-10-09): the gun in hand changes now with a short draw, and it is the gun you respawn with
     nextGun = { Digit1: "ar", Digit2: "sniper", Digit3: "shotgun" }[e.code];
-    if (state === "play" && !me.dead && nextGun !== me.gun) swapTo(nextGun); else if (online) net.setGun(nextGun);
+    if (mode === "bomb" && bomb && bomb.phase === "live" && state === "play") { if (online) net.setGun(nextGun); hint(`${GUNS[nextGun].n} next round`); }   // locked mid-round (2026-10-10): the pick waits for the next one
+    else if (state === "play" && !me.dead && nextGun !== me.gun) swapTo(nextGun); else if (online) net.setGun(nextGun);
   }
   if (e.code === "KeyQ" || e.code === "Digit4") swapTo(me.gun === "pistol" ? nextGun : "pistol");   // the sidearm, and back
   if (e.code === "BracketLeft" || e.code === "BracketRight") { profile.settings.sens = clamp(Math.round((profile.settings.sens + (e.code === "BracketRight" ? 0.1 : -0.1)) * 10) / 10, 0.3, 3); save(); hint(`Sensitivity ${profile.settings.sens.toFixed(1)}×`); }
@@ -571,7 +572,9 @@ function drawProfile() { $("hudLevel").textContent = `LV ${profile.level}`; $("m
 function drawSb() { $("sb").innerHTML = ranked().map((b, k) => `<tr class="${b === me ? "me" : ""}"><td>${k + 1}. ${esc(b.name)}${b.bot ? " <small>bot</small>" : ""}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join(""); }
 function drawBoard() { $("board").innerHTML = `<b>${mode === "bomb" ? "Bomb · 3v3" : "Free-for-all"} · ${esc(world?.map.name || "")} · ${fmtT(roundLeft())} left</b><table><tr><td></td><td></td><td>K</td><td>D</td></tr>${ranked().map((b, k) => `<tr class="${b === me ? "me" : ""}"><td>${k + 1}</td><td>${esc(b.name)}${b.bot ? "<small>bot</small>" : ""}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join("")}</table>`; }
 function draw(dt) {
-  for (const b of beans) { if (b === me || !b.mesh.g.visible) continue; paintTag(b); const g = b.mesh.g; g.position.set(b.p.x, b.p.y - R, b.p.z); let dy = b.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3; g.scale.y += ((b.slide ? 0.55 : 1) - g.scale.y) * 0.3; }
+  for (const b of beans) { if (b === me || !b.mesh.g.visible) continue; paintTag(b); const g = b.mesh.g;
+    if (mode === "bomb") { const eye = camera.position, d = new V(b.p.x - eye.x, b.p.y + 0.6 - eye.y, b.p.z - eye.z), dist = d.len() || 1; d.scale(1 / dist); const r = cast(world, [], new V(eye.x, eye.y, eye.z), d, me, dist + 1); b.mesh.tag.visible = b.team === me.team || r.t >= dist - 0.8; }   // a wall between us hides the name (teammates always show)
+    else b.mesh.tag.visible = true; g.position.set(b.p.x, b.p.y - R, b.p.z); let dy = b.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3; g.scale.y += ((b.slide ? 0.55 : 1) - g.scale.y) * 0.3; }
   if (mode === "bomb" && bomb && me.dead && state === "play") {
     if (!spec || spec.dead || spec.team !== me.team) spec = inPlay().find((b) => b !== me && b.team === me.team && !b.dead) || null;
     if (spec) { const back = 3.2, fx = -Math.sin(spec.facing), fz = -Math.cos(spec.facing); camera.position.lerp(new V3(spec.p.x - fx * back, spec.p.y + 2.2, spec.p.z - fz * back), 0.2); camera.lookAt(spec.p.x + fx * 6, spec.p.y + 0.8, spec.p.z + fz * 6); viewGun.visible = false; }
@@ -626,7 +629,7 @@ function hud(dt) {
     $("hudT").textContent = bomb.phase === "freeze" ? String(Math.ceil(bomb.t)) : fmtT(Math.max(0, fuse ?? bomb.t));
     $("hudT").classList.toggle("fuse", Boolean(fuse)); const sc = $("hudScore"); sc.hidden = false; sc.innerHTML = `<b>${bomb.score[myTeam()]}</b> – <b>${bomb.score[1 - myTeam()]}</b>`;
     const carrierName = bomb.carrier >= 0 ? (beans[bomb.carrier] === me ? "you" : beans[bomb.carrier].name) : null, site = bomb.planted ? world.map.bomb.sites[bomb.planted.site].k : "";
-    let line = bomb.phase === "freeze" ? `Round ${bomb.round} · ${atk ? "you attack" : "you defend"}` : bomb.phase === "post" ? (bomb.lastWin ? `${teamName(bomb.lastWin.team)} win the round` : "") :
+    let line = bomb.phase === "freeze" ? `Round ${bomb.round} · ${atk ? "you attack" : "you defend"} · pick your gun: 1 2 3` : bomb.phase === "post" ? (bomb.lastWin ? `${teamName(bomb.lastWin.team)} win the round` : "") :
       bomb.planted ? (atk ? `Bomb planted at ${site} · keep them off it` : `Bomb planted at ${site} · hold E at it to defuse`) : atk ? (bomb.carrier === me.i ? "You have the bomb · hold E at A or B" : bomb.drop ? "The bomb is on the ground · pick it up" : `${carrierName || "nobody"} has the bomb`) : "Hold the sites";
     if (me.dead && spec) line = `Watching ${spec.name} · click for the next`;
     const bl = $("bombLine"); if (bl.textContent !== line) bl.textContent = line; bl.hidden = !line;
