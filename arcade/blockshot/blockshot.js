@@ -122,6 +122,7 @@ const keys = {};
 let yaw = 0, pitch = 0, locked = false, mouseFire = false, scoping = false, dragLook = false, lastX = 0, lastY = 0, fireLatch = false, nextGun = "ar", swapAt = -9;
 const sens = () => 0.0022 * profile.settings.sens / (scoping ? GUNS[me.gun].zoom || 1 : 1), inv = () => (profile.settings.invertY ? -1 : 1);
 addEventListener("keydown", (e) => {
+  if (e.code === "Escape" && !$("over").hidden && state === "play") { resumeGame(); return; }   // the menu is open mid-match: Esc closes it again
   if (!locked && document.activeElement !== canvas) return; keys[e.code] = true;
   if (e.code === "Tab") { $("board").hidden = false; drawBoard(); e.preventDefault(); }
   if (e.code === "Escape" && state === "play" && $("over").hidden) { showMenu("play"); if (online) { /* still in the match; Play again rejoins */ } }
@@ -138,6 +139,8 @@ addEventListener("keyup", (e) => { keys[e.code] = false; if (e.code === "Tab") $
 function swapTo(k) { if (state !== "play" || me.dead || k === me.gun || !GUNS[k]) return; if (online) { net.setGun(k); switchGun(me, k, null); swapAt = performance.now() / 1000; } else switchGun(me, k, events); }
 let wheelAt = 0;
 addEventListener("wheel", (e) => { if (!locked || state !== "play") return; const now = performance.now(); if (now - wheelAt < 250) return; wheelAt = now; swapTo(me.gun === "pistol" ? nextGun : "pistol"); }, { passive: true });
+/** Back into the match from the menu (2026-10-09, the owner: settings had no way out). Settings apply as they change, so Apply is just this. */
+function resumeGame() { if (state !== "play") return showMenu("play"); $("over").hidden = true; canvas.focus(); grabMouse(); }
 function grabMouse() { try { const r = canvas.requestPointerLock?.(); r?.catch?.(() => {}); } catch {} }
 canvas.addEventListener("click", () => { if (state === "play" || state === "count") grabMouse(); canvas.focus(); audioOn(); });
 document.addEventListener("pointerlockchange", () => { locked = document.pointerLockElement === canvas; $("lockHint").hidden = locked || state !== "play"; });
@@ -366,7 +369,7 @@ async function loadBoard() {
 }
 const gunCard = (k, i) => { const g = GUNS[k], dps = (g.dmg * g.pellets) / g.cd, bar = (v, max) => `${Math.round(clamp(v / max, 0.05, 1) * 100)}%`;
   return `<button class="gun${k === nextGun ? " on" : ""}" data-gun="${k}"><b>${i + 1} · ${esc(g.n)}</b>${esc(g.text)}<div class="bars"><div>Damage<i style="--v:${bar(g.dmg * g.pellets, 250)}"></i></div><div>Fire rate<i style="--v:${bar(1 / g.cd, 8)}"></i></div><div>Range<i style="--v:${bar(g.range, 160)}"></i></div><div>Magazine<i style="--v:${bar(g.mag, 28)}"></i></div><div>DPS<i style="--v:${bar(dps, 560)}"></i></div></div></button>`; };
-function showMenu(which, html) { tab = which; if (locked) document.exitPointerLock?.(); for (const b of document.querySelectorAll("[data-tab]")) b.classList.toggle("on", b.dataset.tab === which); if (html !== undefined) $("panel").innerHTML = html; else drawMenu(); $("over").hidden = false; }
+function showMenu(which, html) { tab = which; if (locked) document.exitPointerLock?.(); $("resumeBtn").hidden = state !== "play"; for (const b of document.querySelectorAll("[data-tab]")) b.classList.toggle("on", b.dataset.tab === which); if (html !== undefined) $("panel").innerHTML = html; else drawMenu(); $("over").hidden = false; }
 function drawMenu() {
   if (tab === "play") {   // the Play tab, cut down (2026-10-09, the owner: "a ton of text and overwhelming"): the button, the match, three gun chips, practice, one line of keys
     const ROLE = { ar: "All-rounder", sniper: "One shot, one kill", shotgun: "Close range" };
@@ -412,11 +415,13 @@ function drawMenu() {
       <label class="set"><span>Crosshair size</span><input type="range" min="0.6" max="1.8" step="0.1" value="${st.crosshairSize}" data-set="crosshairSize"><output>${Number(st.crosshairSize).toFixed(1)}×</output></label>
       <label class="set"><span>Scope is a toggle</span><input type="checkbox" ${st.adsToggle ? "checked" : ""} data-set="adsToggle"><output></output></label>
       <label class="set"><span>Mouse smoothing</span><input type="checkbox" ${st.smooth ? "checked" : ""} data-set="smooth"><output></output></label>
-      <p class="note">Saved in this browser. In a match, <b>[</b> and <b>]</b> change the sensitivity without opening this.</p>`;
+      <p class="note">Saved in this browser. In a match, <b>[</b> and <b>]</b> change the sensitivity without opening this.</p>
+      <button class="go" data-resume="1">${state === "play" ? "Apply and return to the game" : "Done"}</button>`;
   }
 }
 $("over").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return; play("click");
+  if (b.dataset.resume) return resumeGame();
   if (b.dataset.tab) return showMenu(b.dataset.tab);
   if (b.dataset.by) { boardBy = b.dataset.by; return drawMenu(); }
   if (b.dataset.range) { boardRange = b.dataset.range; return drawMenu(); }

@@ -11,7 +11,7 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");   /* framed on eastcoin.vip: the class is set before the first paint, or the full page with its sidebar shows for a second */</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap">
-<link rel="stylesheet" href="blockshot.css?v=9">
+<link rel="stylesheet" href="blockshot.css?v=10">
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/" } }</script>
 </head>
 <body>
@@ -43,7 +43,7 @@
           <div class="weps" id="hudWeps"></div>
           <div class="death" id="death" hidden><b>KILLED BY</b><span class="by" id="deathBy"></span><div class="ring"><i id="deathBar"></i></div><small id="deathSub">respawning</small></div>
           <div class="board" id="board" hidden></div>
-          <div class="over" id="over"><div class="tabs"><button data-tab="play">Play</button><button data-tab="locker">Locker</button><button data-tab="stats">Stats</button><button data-tab="board">Board</button><button data-tab="settings">Settings</button><span class="lv" id="menuLevel"></span></div><div class="panel" id="panel"></div></div>
+          <div class="over" id="over"><div class="tabs"><button class="resume" id="resumeBtn" data-resume="1" hidden>◂ Back to the game</button><button data-tab="play">Play</button><button data-tab="locker">Locker</button><button data-tab="stats">Stats</button><button data-tab="board">Board</button><button data-tab="settings">Settings</button><span class="lv" id="menuLevel"></span></div><div class="panel" id="panel"></div></div>
         </div>
         <p class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Space</kbd> jump · <kbd>Shift</kbd> slide · click fires · right click scopes · <kbd>R</kbd> reload · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> gun next spawn · hold <kbd>Tab</kbd> scoreboard · <kbd>Esc</kbd> menu · <span id="loadStat"></span></p>
       </div>
@@ -65,6 +65,6 @@
     </div>
   </section>
 </main>
-<script type="module" src="blockshot.js?v=17"></script>
+<script type="module" src="blockshot.js?v=18"></script>
 </body>
 </html>
