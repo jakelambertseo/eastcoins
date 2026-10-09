@@ -28,6 +28,7 @@
     st.textContent = `body.arcade-on .shell{grid-template-columns:minmax(0,1fr)}
 body.arcade-on .chatrail{display:none!important}
 body.arcade-on .spooky-layer{display:none!important}
+body.arcade-on{overflow:hidden}
 body.arcade-on .view{padding:0;height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));overflow:hidden}
 body.arcade-on .arcade-frame{display:block;width:100%;height:100%;border:0;background:#05030b}`;
     document.head.append(st);

@@ -107,6 +107,6 @@ body.lowhp #hurt{box-shadow:inset 0 0 120px rgba(255,30,50,.35)}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:10px;margin-top:12px}.card{background:rgba(255,255,255,.03);padding:12px 14px;border-top:2px solid var(--line)}
 .card b{display:block;font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--you);margin-bottom:4px}.card span{font-size:14px;line-height:1.5;color:#cfd5de}.card span b{display:inline;font:inherit;color:var(--ink);text-transform:none}
 /* framed on the site: only the game */
-html.embed body{background:#0e1a24}html.embed main{max-width:none;padding:0}html.embed h1,html.embed .lede,html.embed .side,html.embed .keys,html.embed .sec+.sec{display:none}
-html.embed .play{display:block;margin:0}html.embed .stage{height:100vh;height:100dvh;min-height:0;box-shadow:none}
+html.embed,html.embed body{height:100%;overflow:hidden;background:#0e1a24}html.embed main{max-width:none;padding:0;height:100%}html.embed h1,html.embed .lede,html.embed .side,html.embed .keys,html.embed .sec+.sec{display:none}
+html.embed .sec{margin:0!important;padding:0!important;border:0;height:100%}html.embed .play{display:block;margin:0;height:100%}html.embed .play>div{height:100%}html.embed .stage{height:100%;min-height:0;box-shadow:none}
 @media (max-width:640px){.over{grid-template-columns:1fr}.tabs{flex-direction:row;overflow:auto;padding:0}.tabs .lv{display:none}.board{min-width:0;width:92%}}
