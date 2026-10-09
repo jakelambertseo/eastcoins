@@ -9,7 +9,7 @@
 
    Shots are never predicted: the page draws its own tracer and plays the bang at once, and the server's events decide the rest.
    createNet(hooks) -> { connect(opts), close(), on, slot, tick(dt), events(): [...] , roster, round, ping } */
-import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=4";
+import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=5";
 
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
 const INTERP = 0.1, SEND_EVERY = 2;
@@ -74,13 +74,17 @@ export function createNet(hooks) {
   N.tick = (inp, t) => {
     const { me, world, beans } = hooks.state();
     if (!N.on || N.slot < 0) return;
+    if (seq - ack > 10 && snaps.length) { drawOthers(beans); return; }   // the server is more than ten inputs behind us: hold this tick rather than pile on
     seq++; const rt = N.serverTime() - INTERP; const i = { ...inp, seq, rt };
     pending.push(i); if (pending.length > 120) pending.shift();
     toSend.push([seq, +i.x.toFixed(3), +i.z.toFixed(3), i.jump ? 1 : 0, i.fire ? 1 : 0, i.fireTap ? 1 : 0, i.slide ? 1 : 0, i.reload ? 1 : 0, +i.aim.x.toFixed(4), +i.aim.y.toFixed(4), +i.aim.z.toFixed(4), i.scope ? 1 : 0, +rt.toFixed(3)]);
     if (++sendN % SEND_EVERY === 0) { send({ t: "in", s: seq, i: toSend }); toSend = []; }
     if (!me.dead) stepBean(world, beans, me, { ...i, fire: false, fireTap: false }, PHYS.STEP60, t, Math.random, null);   // prediction: movement only
     pingT += PHYS.STEP60; if (pingT > 2) { pingT = 0; send({ t: "ping", t0: now() }); }
-    // everyone else: 100 ms in the past, between the two snapshots around that moment
+    drawOthers(beans);
+  };
+  /* everyone else: 100 ms in the past, between the two snapshots around that moment */
+  function drawOthers(beans) {
     const rt2 = N.serverTime() - INTERP; let a = null, c = null;
     for (let k = snaps.length - 1; k >= 0; k--) { if (snaps[k].now <= rt2) { a = snaps[k]; c = snaps[k + 1] || null; break; } }
     if (!a) a = snaps[0]; if (!a) return;
@@ -94,6 +98,7 @@ export function createNet(hooks) {
       bean.v.set(l[3], l[4], l[5]); bean.hp = l[7]; bean.dead = Boolean(l[8]); bean.gun = GUN_KEYS[l[9]] || "ar"; bean.slide = Boolean(l[11]); bean.grounded = Boolean(l[12]); bean.kills = l[13]; bean.deaths = l[14]; bean.streak = l[15];
       if (was !== bean.dead) hooks.onVisible?.(bean, !bean.dead);
     });
-  };
+  }
+  N.lag = () => seq - ack;
   return N;
 }

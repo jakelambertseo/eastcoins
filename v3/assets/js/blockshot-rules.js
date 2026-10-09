@@ -22,7 +22,7 @@ export const RULES = { PLAYERS: 12, ROUND_S: 300, MAX_HP: 100, REGEN_AFTER: 5, R
    Krunker's (ironsights 1.6 on the rifle, 1.25 on the shotgun, the 2.7 scope on the sniper); `adsSpread` is how much the spread
    tightens and `adsMove` how much you slow while aiming, both applied by the server from the input's `scope` flag. */
 export const GUNS = {
-  ar: { n: "Assault rifle", dmg: 23, head: 1.5, cd: 0.13, mag: 28, reload: 1.5, spread: 0.014, pellets: 1, range: 80, auto: true, zoom: 1.6, adsSpread: 0.45, adsMove: 0.8, text: "23 a hit, 460 a minute, 28 rounds. Right click for the ironsights. The all-rounder." },
+  ar: { n: "Assault rifle", dmg: 23, head: 1.5, cd: 0.13, mag: 28, reload: 1.5, spread: 0.008, pellets: 1, range: 80, auto: true, zoom: 1.6, adsSpread: 0.45, adsMove: 0.8, text: "23 a hit, 460 a minute, 28 rounds. Right click for the ironsights. The all-rounder." },
   sniper: { n: "Sniper", dmg: 109, head: 1.5, cd: 1.0, mag: 3, reload: 1.9, spread: 0.012, pellets: 1, range: 160, auto: false, scope: true, zoom: 2.7, adsSpread: 0.0, adsMove: 0.7, text: "One shot, one kill, once a second. Right click to scope; from the hip it wanders. 3 rounds." },
   shotgun: { n: "Shotgun", dmg: 50, head: 1.25, cd: 0.45, mag: 2, reload: 1.1, spread: 0.06, pellets: 5, range: 20, auto: false, zoom: 1.25, adsSpread: 0.75, adsMove: 0.9, text: "Five pellets of 50 up close, nothing at range. Right click tightens the spread a little. 2 shells." }
 };
@@ -161,7 +161,7 @@ export function respawnBean(world, beans, b, gun, rand = Math.random, events) {
 export function cast(world, beans, o, d, shooter, range = 80) {
   let best = range, bean = null, head = false;
   for (const b of world.boxes) { const tt = rayBox(o, d, b); if (tt < best) { best = tt; bean = null; } }
-  for (const b of beans) { if (b === shooter || b.dead) continue; const th = raySphere(o, d, b.p.x, b.p.y + PHYS.HEAD_Y, b.p.z, 0.36); if (th < best) { best = th; bean = b; head = true; } const tb = raySphere(o, d, b.p.x, b.p.y, b.p.z, 0.5); if (tb < best) { best = tb; bean = b; head = false; } }
+  for (const b of beans) { if (b === shooter || b.dead) continue; const th = raySphere(o, d, b.p.x, b.p.y + PHYS.HEAD_Y, b.p.z, 0.4); if (th < best) { best = th; bean = b; head = true; } const tb = raySphere(o, d, b.p.x, b.p.y + 0.1, b.p.z, 0.55); if (tb < best) { best = tb; bean = b; head = false; } }
   return { t: best, bean, head, point: o.clone().addScaled(d, best) };
 }
 export function damage(target, dmg, from, head, now, events) {
@@ -180,7 +180,7 @@ export function kill(target, by, head, now, events) {
 /** Fire b's gun along dir (unit). `spreadK` scales the spread (scoped, airborne). Returns the pellets as {from, to, hit}. */
 export function fire(world, beans, b, dir, now, rand, events, spreadK = 1) {
   const g = GUNS[b.gun]; b.cd = g.cd; b.ammo--; b.shots++;
-  const eye = b.p.clone(); eye.y += PHYS.EYE; const pellets = [];
+  const eye = b.p.clone(); eye.y += PHYS.EYE * (b.slide ? 0.6 : 1); const pellets = [];   // (the camera sits lower in a slide; the page draws from the same height)
   for (let k = 0; k < g.pellets; k++) {
     const d = dir.clone(); const sp = g.spread * spreadK; d.x += (rand() * 2 - 1) * sp; d.y += (rand() * 2 - 1) * sp; d.z += (rand() * 2 - 1) * sp; d.normalize();
     const r = cast(world, beans, eye, d, b, g.range);
@@ -214,7 +214,7 @@ export function stepBean(world, beans, b, inp, dt, now, rand, events, opts = {})
   else { const acc = b.grounded ? P.ACC_GROUND : P.ACC_AIR, run = P.RUN * (inp.scope ? G.adsMove ?? 1 : 1); b.v.x += clamp(inp.x * run - b.v.x, -acc * dt, acc * dt); b.v.z += clamp(inp.z * run - b.v.z, -acc * dt, acc * dt); }
   if (jumped) { b.v.y = P.JUMP; b.coyote = 0; b.grounded = false; events?.push({ type: "jump", b }); }
   if (inp.aim) b.aim.copy(inp.aim);
-  if ((G.auto ? inp.fire : inp.fireTap) && b.cd <= 0 && !b.reloading) { if (b.ammo > 0) fire(world, beans, b, b.aim, now, rand, events, (opts.spreadK ?? (inp.scope ? G.adsSpread ?? 1 : 1)) * (b.grounded ? 1 : 2.2)); else { reload(b, events); events?.push({ type: "empty", b }); } }
+  if ((G.auto ? inp.fire : inp.fireTap) && b.cd <= 0 && !b.reloading) { if (b.ammo > 0) fire(world, beans, b, b.aim, now, rand, events, (opts.spreadK ?? (inp.scope ? G.adsSpread ?? 1 : 1)) * (b.grounded ? 1 : 1.6)); else { reload(b, events); events?.push({ type: "empty", b }); } }
   if (want !== null && !b.bot) b.facing = want + Math.PI; else if (b.bot && want !== null && !b.target) b.facing = want + Math.PI;
   b.v.y += P.G * dt; b.p.addScaled(b.v, dt);
   const wasGrounded = b.grounded; b.grounded = false;

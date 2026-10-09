@@ -9,8 +9,8 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES } from "/v3/assets/js/blockshot-rules.js?v=4";
-import { createNet } from "./net.js?v=3";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES } from "/v3/assets/js/blockshot-rules.js?v=5";
+import { createNet } from "./net.js?v=4";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=1";
 import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save } from "./profile.js?v=1";
@@ -21,7 +21,7 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");
+if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");   // (index.html sets it inline too, before the first paint)
 const { R, EYE, STEP, RUN } = PHYS, { PLAYERS, ROUND_S, MAX_HP, RESPAWN_S } = RULES;
 
 /* ------------------------------------------------------------------ three */
@@ -214,8 +214,8 @@ function onlineTick(dt) {
   // the shot you see: drawn now, from the rules' own cast against what's on screen; the server's verdict follows
   const g = GUNS[me.gun], wants = g.auto ? inp.fire : inp.fireTap;
   if (!me.dead && wants && me.cd <= 0 && !me.reloading && me.ammo > 0) {
-    me.cd = g.cd; me.ammo--; const eye = me.p.clone(); eye.y += PHYS.EYE; const pellets = [];
-    for (let k = 0; k < g.pellets; k++) { const d = inp.aim.clone(); const sp = g.spread * (scoping ? g.adsSpread ?? 1 : 1) * (me.grounded ? 1 : 2.2); d.x += rnd(-sp, sp); d.y += rnd(-sp, sp); d.z += rnd(-sp, sp); d.normalize(); const r = cast(world, beans, eye, d, me, g.range); pellets.push({ from: eye, to: r.point }); }
+    me.cd = g.cd; me.ammo--; const eye = me.p.clone(); eye.y += PHYS.EYE * (me.slide ? 0.6 : 1); const pellets = [];
+    for (let k = 0; k < g.pellets; k++) { const d = inp.aim.clone(); const sp = g.spread * (scoping ? g.adsSpread ?? 1 : 1) * (me.grounded ? 1 : 1.6); d.x += rnd(-sp, sp); d.y += rnd(-sp, sp); d.z += rnd(-sp, sp); d.normalize(); const r = cast(world, beans, eye, d, me, g.range); pellets.push({ from: eye, to: r.point }); }
     onEvent({ type: "shot", b: me, gun: me.gun, pellets, local: true });
   } else if (!me.dead && wants && me.cd <= 0 && !me.reloading && me.ammo === 0) { play("empty"); me.cd = 0.3; }
   me.cd = Math.max(0, me.cd - dt); if (me.dead) me.respawn = Math.max(0, me.respawn - dt);
@@ -352,7 +352,7 @@ function drawProfile() { $("hudLevel").textContent = `LV ${profile.level}`; $("m
 function drawSb() { $("sb").innerHTML = ranked().map((b, k) => `<tr class="${b === me ? "me" : ""}"><td>${k + 1}. ${esc(b.name)}${b.bot ? " <small>bot</small>" : ""}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join(""); }
 function drawBoard() { $("board").innerHTML = `<b>Free-for-all · ${esc(world?.map.name || "")} · ${fmtT(roundLeft())} left</b><table><tr><td></td><td></td><td>K</td><td>D</td></tr>${ranked().map((b, k) => `<tr class="${b === me ? "me" : ""}"><td>${k + 1}</td><td>${esc(b.name)}${b.bot ? "<small>bot</small>" : ""}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join("")}</table>`; }
 function draw(dt) {
-  for (const b of beans) { if (b === me || !b.mesh.g.visible) continue; const g = b.mesh.g; g.position.set(b.p.x, b.p.y - R, b.p.z); let dy = b.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3; g.scale.y += ((b.slide ? 0.55 : 1) - g.scale.y) * 0.3; }
+  for (const b of beans) { if (b === me || !b.mesh.g.visible) continue; paintTag(b); const g = b.mesh.g; g.position.set(b.p.x, b.p.y - R, b.p.z); let dy = b.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3; g.scale.y += ((b.slide ? 0.55 : 1) - g.scale.y) * 0.3; }
   if (me.dead && me.lastBy && !me.lastBy.dead) { const k = me.lastBy; camera.position.lerp(new V3(k.p.x + 3, k.p.y + 3, k.p.z + 3), 0.1); camera.lookAt(k.p.x, k.p.y + 0.5, k.p.z); viewGun.visible = false; }
   else if (me.dead || state === "menu") { const a = t * 0.1; camera.position.set(Math.sin(a) * 40, 22, Math.cos(a) * 40); camera.lookAt(0, 2, 0); viewGun.visible = false; }
   else {
@@ -383,7 +383,7 @@ function hud(dt) {
   $("hudWeps").innerHTML = GUN_KEYS.map((k, i) => `<span class="${k === nextGun ? "on" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}</span>`).join("");
   $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0);
   $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft());
-  $("hudPing").textContent = online ? `${net.ping} ms` : "";
+  $("hudPing").textContent = online ? `${net.ping} ms${net.lag() > 6 ? ` · lag ${net.lag()}` : ""}` : "";
   const place = ranked().indexOf(me) + 1; $("hudPlace").textContent = state === "play" ? `${ord(place)} of ${PLAYERS}` : "";
   $("hudK").textContent = me.kills; $("hudKD").textContent = `K · ${me.deaths} D${me.streak >= 2 ? ` · ×${me.streak}` : ""}`; $("hudName").textContent = me.name;
   $("hudHpN").textContent = Math.round(Math.max(0, me.hp));
