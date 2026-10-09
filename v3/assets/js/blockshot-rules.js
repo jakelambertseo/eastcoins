@@ -17,11 +17,14 @@ export const RULES = { PLAYERS: 12, ROUND_S: 300, MAX_HP: 100, REGEN_AFTER: 5, R
 /* The guns are Krunker's numbers (the Krunker.io wiki, v6.0.0 / v5.6.9; the owner, 2026-10-08: "the rate of fire seems too high, at least
    for the AK. can we pick up that data anywhere and replicate?"): the assault rifle 23 a hit every 130 ms, 28 rounds, 1.5 s reload,
    headshots ×1.5; the sniper 109 (163.5 to the head) once a second, 3 rounds, 1.9 s, scope 2.7×; the shotgun five pellets of 50 every
-   450 ms, 2 shells, 1.1 s, headshots ×1.25. Krunker's ranges are in its own units; ours are metres on our maps. */
+   450 ms, 2 shells, 1.1 s, headshots ×1.25. Krunker's ranges are in its own units; ours are metres on our maps.
+   AIM DOWN SIGHTS (the owner: "some aim down sight mechanism for guns that are different per gun"): right click on any gun. `zoom` is
+   Krunker's (ironsights 1.6 on the rifle, 1.25 on the shotgun, the 2.7 scope on the sniper); `adsSpread` is how much the spread
+   tightens and `adsMove` how much you slow while aiming, both applied by the server from the input's `scope` flag. */
 export const GUNS = {
-  ar: { n: "Assault rifle", dmg: 23, head: 1.5, cd: 0.13, mag: 28, reload: 1.5, spread: 0.014, pellets: 1, range: 80, auto: true, text: "23 a hit, 460 a minute, 28 rounds. The all-rounder." },
-  sniper: { n: "Sniper", dmg: 109, head: 1.5, cd: 1.0, mag: 3, reload: 1.9, spread: 0.0, pellets: 1, range: 160, auto: false, scope: true, zoom: 2.7, text: "One shot, one kill, once a second. Right click to scope. 3 rounds." },
-  shotgun: { n: "Shotgun", dmg: 50, head: 1.25, cd: 0.45, mag: 2, reload: 1.1, spread: 0.06, pellets: 5, range: 20, auto: false, text: "Five pellets of 50 up close, nothing at range. 2 shells." }
+  ar: { n: "Assault rifle", dmg: 23, head: 1.5, cd: 0.13, mag: 28, reload: 1.5, spread: 0.014, pellets: 1, range: 80, auto: true, zoom: 1.6, adsSpread: 0.45, adsMove: 0.8, text: "23 a hit, 460 a minute, 28 rounds. Right click for the ironsights. The all-rounder." },
+  sniper: { n: "Sniper", dmg: 109, head: 1.5, cd: 1.0, mag: 3, reload: 1.9, spread: 0.012, pellets: 1, range: 160, auto: false, scope: true, zoom: 2.7, adsSpread: 0.0, adsMove: 0.7, text: "One shot, one kill, once a second. Right click to scope; from the hip it wanders. 3 rounds." },
+  shotgun: { n: "Shotgun", dmg: 50, head: 1.25, cd: 0.45, mag: 2, reload: 1.1, spread: 0.06, pellets: 5, range: 20, auto: false, zoom: 1.25, adsSpread: 0.75, adsMove: 0.9, text: "Five pellets of 50 up close, nothing at range. Right click tightens the spread a little. 2 shells." }
 };
 export const GUN_KEYS = Object.keys(GUNS);
 export const HEADSHOT = 1.5;
@@ -208,10 +211,10 @@ export function stepBean(world, beans, b, inp, dt, now, rand, events, opts = {})
   const jumped = inp.jump && b.coyote > 0 && b.v.y < 3;
   if (b.slide) { b.slideT += dt; steer(1.8); setSpeed(hs * Math.exp(-(b.slideT > SL.long ? 3 : SL.decay) * dt)); if (jumped) setSpeed(Math.min(SL.max, hs + SL.hop)); if (jumped || !inp.slide || !b.grounded || hs < SL.min * 0.7) { b.slide = false; b.slideCd = SL.cd; } }
   else if (hs > P.RUN + 0.2) { if (b.grounded) { steer(4); setSpeed(Math.max(P.RUN, hs - SL.drain * dt)); } else steer(2.6); }
-  else { const acc = b.grounded ? P.ACC_GROUND : P.ACC_AIR; b.v.x += clamp(inp.x * P.RUN - b.v.x, -acc * dt, acc * dt); b.v.z += clamp(inp.z * P.RUN - b.v.z, -acc * dt, acc * dt); }
+  else { const acc = b.grounded ? P.ACC_GROUND : P.ACC_AIR, run = P.RUN * (inp.scope ? G.adsMove ?? 1 : 1); b.v.x += clamp(inp.x * run - b.v.x, -acc * dt, acc * dt); b.v.z += clamp(inp.z * run - b.v.z, -acc * dt, acc * dt); }
   if (jumped) { b.v.y = P.JUMP; b.coyote = 0; b.grounded = false; events?.push({ type: "jump", b }); }
   if (inp.aim) b.aim.copy(inp.aim);
-  if ((G.auto ? inp.fire : inp.fireTap) && b.cd <= 0 && !b.reloading) { if (b.ammo > 0) fire(world, beans, b, b.aim, now, rand, events, (opts.spreadK ?? 1) * (b.grounded ? 1 : 2.2)); else { reload(b, events); events?.push({ type: "empty", b }); } }
+  if ((G.auto ? inp.fire : inp.fireTap) && b.cd <= 0 && !b.reloading) { if (b.ammo > 0) fire(world, beans, b, b.aim, now, rand, events, (opts.spreadK ?? (inp.scope ? G.adsSpread ?? 1 : 1)) * (b.grounded ? 1 : 2.2)); else { reload(b, events); events?.push({ type: "empty", b }); } }
   if (want !== null && !b.bot) b.facing = want + Math.PI; else if (b.bot && want !== null && !b.target) b.facing = want + Math.PI;
   b.v.y += P.G * dt; b.p.addScaled(b.v, dt);
   const wasGrounded = b.grounded; b.grounded = false;

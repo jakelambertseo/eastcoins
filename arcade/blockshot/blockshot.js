@@ -9,8 +9,8 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES } from "/v3/assets/js/blockshot-rules.js?v=3";
-import { createNet } from "./net.js?v=2";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES } from "/v3/assets/js/blockshot-rules.js?v=4";
+import { createNet } from "./net.js?v=3";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=1";
 import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save } from "./profile.js?v=1";
@@ -96,7 +96,7 @@ const viewGun = new THREE.Group(); let viewGunBody;
 /* ------------------------------------------------------------------ input */
 const keys = {};
 let yaw = 0, pitch = 0, locked = false, mouseFire = false, scoping = false, dragLook = false, lastX = 0, lastY = 0, fireLatch = false, nextGun = "ar";
-const sens = () => 0.0022 * profile.settings.sens * (scoping ? 0.35 : 1), inv = () => (profile.settings.invertY ? -1 : 1);
+const sens = () => 0.0022 * profile.settings.sens / (scoping ? GUNS[me.gun].zoom || 1 : 1), inv = () => (profile.settings.invertY ? -1 : 1);
 addEventListener("keydown", (e) => {
   if (!locked && document.activeElement !== canvas) return; keys[e.code] = true;
   if (e.code === "Tab") { $("board").hidden = false; drawBoard(); e.preventDefault(); }
@@ -113,7 +113,7 @@ addEventListener("mousemove", (e) => {
   if (locked) { yaw -= e.movementX * sens(); pitch = clamp(pitch - e.movementY * sens() * inv(), -1.45, 1.45); }
   else if (dragLook) { yaw -= (e.clientX - lastX) * 0.005; pitch = clamp(pitch - (e.clientY - lastY) * 0.005 * inv(), -1.45, 1.45); lastX = e.clientX; lastY = e.clientY; }
 });
-canvas.addEventListener("mousedown", (e) => { if (e.button === 0) { mouseFire = true; if (!locked) { dragLook = true; lastX = e.clientX; lastY = e.clientY; } } if (e.button === 2) scoping = Boolean(GUNS[me.gun].scope); });
+canvas.addEventListener("mousedown", (e) => { if (e.button === 0) { mouseFire = true; if (!locked) { dragLook = true; lastX = e.clientX; lastY = e.clientY; } } if (e.button === 2 && !me.dead) scoping = true; });
 addEventListener("mouseup", (e) => { if (e.button === 0) { mouseFire = false; dragLook = false; } if (e.button === 2) scoping = false; });
 canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 const lookDir = () => new V(-Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
@@ -147,7 +147,7 @@ function onEvent(e) {
       if (online && e.b === me && !e.local) return;   // drawn when the trigger was pulled (see onlineTick)
       const muzzle = e.b === me ? camera.localToWorld(new V3(0.2, -0.15, -0.75)) : e.pellets[0].from.clone().addScaled(e.b.aim, 0.6);
       for (const p of e.pellets) tracer(muzzle, p.to, e.b === me);
-      if (e.b === me) { viewGun.position.z = -0.3; meStats.shots++; gunStat(me.gun).shots++; play(e.gun); } else play(e.gun, clamp(0.6 - e.b.p.dist(me.p) / 70, 0, 0.6));
+      if (e.b === me) { viewGun.position.z += scoping ? 0.06 : 0.12; meStats.shots++; gunStat(me.gun).shots++; play(e.gun); } else play(e.gun, clamp(0.6 - e.b.p.dist(me.p) / 70, 0, 0.6));
       return;
     }
     case "hit": paintTag(e.target);
@@ -215,7 +215,7 @@ function onlineTick(dt) {
   const g = GUNS[me.gun], wants = g.auto ? inp.fire : inp.fireTap;
   if (!me.dead && wants && me.cd <= 0 && !me.reloading && me.ammo > 0) {
     me.cd = g.cd; me.ammo--; const eye = me.p.clone(); eye.y += PHYS.EYE; const pellets = [];
-    for (let k = 0; k < g.pellets; k++) { const d = inp.aim.clone(); const sp = g.spread * (scoping ? 0.1 : 1) * (me.grounded ? 1 : 2.2); d.x += rnd(-sp, sp); d.y += rnd(-sp, sp); d.z += rnd(-sp, sp); d.normalize(); const r = cast(world, beans, eye, d, me, g.range); pellets.push({ from: eye, to: r.point }); }
+    for (let k = 0; k < g.pellets; k++) { const d = inp.aim.clone(); const sp = g.spread * (scoping ? g.adsSpread ?? 1 : 1) * (me.grounded ? 1 : 2.2); d.x += rnd(-sp, sp); d.y += rnd(-sp, sp); d.z += rnd(-sp, sp); d.normalize(); const r = cast(world, beans, eye, d, me, g.range); pellets.push({ from: eye, to: r.point }); }
     onEvent({ type: "shot", b: me, gun: me.gun, pellets, local: true });
   } else if (!me.dead && wants && me.cd <= 0 && !me.reloading && me.ammo === 0) { play("empty"); me.cd = 0.3; }
   me.cd = Math.max(0, me.cd - dt); if (me.dead) me.respawn = Math.max(0, me.respawn - dt);
@@ -355,9 +355,16 @@ function draw(dt) {
   for (const b of beans) { if (b === me || !b.mesh.g.visible) continue; const g = b.mesh.g; g.position.set(b.p.x, b.p.y - R, b.p.z); let dy = b.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3; g.scale.y += ((b.slide ? 0.55 : 1) - g.scale.y) * 0.3; }
   if (me.dead && me.lastBy && !me.lastBy.dead) { const k = me.lastBy; camera.position.lerp(new V3(k.p.x + 3, k.p.y + 3, k.p.z + 3), 0.1); camera.lookAt(k.p.x, k.p.y + 0.5, k.p.z); viewGun.visible = false; }
   else if (me.dead || state === "menu") { const a = t * 0.1; camera.position.set(Math.sin(a) * 40, 22, Math.cos(a) * 40); camera.lookAt(0, 2, 0); viewGun.visible = false; }
-  else { camera.position.set(me.p.x, me.p.y + EYE * (me.slide ? 0.6 : 1), me.p.z); camera.rotation.set(pitch, yaw, 0); viewGun.visible = !scoping; viewGun.position.z += (-0.42 - viewGun.position.z) * 0.25; const bob = Math.hypot(me.v.x, me.v.z) > 1 && me.grounded && !me.slide ? Math.sin(t * 12) * 0.012 : 0; viewGun.position.y = -0.17 + bob; }
-  const fov = scoping ? profile.settings.fov / (GUNS[me.gun].zoom || 2.7) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 9, 0, 1) * 10; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
-  $("scope").classList.toggle("on", scoping && !me.dead && state === "play");
+  else {
+    camera.position.set(me.p.x, me.p.y + EYE * (me.slide ? 0.6 : 1), me.p.z); camera.rotation.set(pitch, yaw, 0);
+    // aiming down the sights: the gun slides to the middle of the view (the sniper's scope hides it); the kick settles on z
+    const ads = scoping && !me.dead, g = GUNS[me.gun]; viewGun.visible = !(ads && g.scope);
+    const tx = ads ? 0 : 0.2, ty = ads ? -0.095 : -0.17, tz = ads ? -0.3 : -0.42, kick = Math.max(0, viewGun.position.z - tz);
+    viewGun.position.x += (tx - viewGun.position.x) * 0.25; viewGun.position.z = tz + kick * 0.75;
+    const bob = Math.hypot(me.v.x, me.v.z) > 1 && me.grounded && !me.slide && !ads ? Math.sin(t * 12) * 0.012 : 0; viewGun.position.y += (ty + bob - viewGun.position.y) * 0.25;
+  }
+  const fov = scoping && !me.dead ? profile.settings.fov / (GUNS[me.gun].zoom || 1) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 9, 0, 1) * 10; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
+  $("scope").classList.toggle("on", Boolean(scoping && GUNS[me.gun].scope && !me.dead && state === "play"));   // (Boolean: toggle with an undefined second argument FLIPS the class, and the rifle has no scope field)
   for (let k = fx.length - 1; k >= 0; k--) { const f = fx[k]; f.life -= dt; const a = Math.max(0, f.life / f.max); f.o.material.opacity = a; if (f.grow) f.o.scale.setScalar(1 + (1 - a) * f.grow); if (f.life <= 0) { scene.remove(f.o); f.o.geometry.dispose(); fx.splice(k, 1); } }
   for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.life -= dt; f.s.position.y += dt * 1.2; f.s.material.opacity = Math.min(1, f.life * 2); if (f.life <= 0) { scene.remove(f.s); f.s.material.map.dispose(); floats.splice(i, 1); } }
   sun.position.set(camera.position.x + 20, 50, camera.position.z + 14); sun.target.position.set(camera.position.x, 0, camera.position.z);
@@ -367,7 +374,7 @@ const hpSeg = $("hudHpSeg"); for (let k = 0; k < 10; k++) hpSeg.append(document.
 function hud(dt) {
   hitTimer = Math.max(0, hitTimer - dt); killTimer = Math.max(0, killTimer - dt); dmgT = Math.max(0, dmgT - dt);
   // the crosshair opens with speed, in the air and when hit; it closes scoped
-  { const sp = Math.hypot(me.v.x, me.v.z), gap = scoping ? 2 : 5 + Math.min(14, sp * 0.9) + (me.grounded ? 0 : 10) + (hitTimer > 0 ? 2 : 0); $("xhair").style.setProperty("--gap", `${gap.toFixed(1)}px`); }
+  { const sp = Math.hypot(me.v.x, me.v.z), g = GUNS[me.gun], ads = scoping && !me.dead, gap = (ads ? 2 : 5 + Math.min(14, sp * 0.9) + (me.grounded ? 0 : 10)) + (hitTimer > 0 ? 2 : 0); $("xhair").style.setProperty("--gap", `${gap.toFixed(1)}px`); $("xhair").style.opacity = ads && g.scope ? "0" : "1"; }
   { const el = $("dmgDir"); el.classList.toggle("on", dmgT > 0); if (dmgT > 0) { let a = dmgAngle - yaw; el.firstElementChild.style.transform = `rotate(${(-a * 180) / Math.PI}deg)`; } }
   $("hpBox").classList.toggle("low", me.hp <= 30 && !me.dead); document.body.classList.toggle("lowhp", me.hp <= 30 && !me.dead && state === "play");
   { const on = Math.ceil(clamp(me.hp / MAX_HP, 0, 1) * 10); hpSeg.childNodes.forEach((i, k) => i.classList.toggle("on", k < on)); }
