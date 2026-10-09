@@ -9,11 +9,11 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk } from "/v3/assets/js/blockshot-rules.js?v=14";
-import { createNet } from "./net.js?v=15";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk } from "/v3/assets/js/blockshot-rules.js?v=15";
+import { createNet } from "./net.js?v=16";
 import { material, skin as skinTex } from "./tex.js?v=1";
-import { play, setVolume, ensure as audioOn } from "./audio.js?v=7";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=10";
+import { play, setVolume, ensure as audioOn } from "./audio.js?v=8";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=11";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -213,7 +213,7 @@ const gunStat = (g) => (meStats.byGun[g] ||= { kills: 0, shots: 0, hits: 0 });
    hitmarker and hit sound (now shown from the page's own cast the instant you fire; the server's hit event, which follows within a
    round trip, is the one that counts and is not sounded twice), and nothing else — damage, kills and everyone else stay the server's. */
 const LOCAL_SOUNDS = new Set(["jump", "slide", "pad", "reload", "empty", "swap"]);
-let localHitAt = -9;
+let localHitAt = -9, lastReloadAt = -9;
 function onEvent(e) {
   const mine = e.b === me || e.by === me;
   if (online && LOCAL_SOUNDS.has(e.type) && e.b === me && !e.local) return;   // the server's copy of something the prediction already sounded
@@ -247,7 +247,7 @@ function onEvent(e) {
     case "jump": if (mine) play("jump"); return;
     case "slide": if (mine) play("slide", clamp(Math.hypot(e.b.v.x, e.b.v.z) / 14, 0.4, 1)); return;
     case "pad": play("pad", mine ? 1 : 0.2); return;
-    case "reload": if (mine) play("reload", GUNS[e.b.gun].reload / 1.5); return;
+    case "reload": if (mine) { if (performance.now() - lastReloadAt < 400) return; lastReloadAt = performance.now(); play("reload", GUNS[e.b.gun].reload / 1.5); } return;   // once, whichever of the prediction and the snapshot says it first
     case "swap": if (mine) { play("swap"); swapAt = performance.now() / 1000; } return;
     case "bomb": onBombEvent(e); return;
     case "pickup": if (mine) { play(e.kind); floatText(me.p, e.kind === "health" ? "+50 HP" : "AMMO", e.kind === "health" ? "#ff6a6a" : "#ffd84a"); } else play(e.kind, clamp(0.4 - e.b.p.dist(me.p) / 40, 0, 0.4), panTo(e.b.p)); return;
@@ -342,7 +342,7 @@ function onlineTick(dt) {
     for (let k = 0; k < g.pellets; k++) { const d = inp.aim.clone(); const sp = g.spread * (scoping ? g.adsSpread ?? 1 : 1) * (me.grounded ? 1 : 1.6); d.x += rnd(-sp, sp); d.y += rnd(-sp, sp); d.z += rnd(-sp, sp); d.normalize(); const r = cast(world, beans, eye, d, me, g.range); pellets.push({ from: eye, to: r.point, bean: r.bean, head: r.head }); }
     onEvent({ type: "shot", b: me, gun: me.gun, pellets, local: true });
     const hitP = pellets.find((p) => p.bean); if (hitP) { localHitAt = performance.now(); hitTimer = 0.14; if (hitP.head) hsTimer = 0.22; play(hitP.head ? "headshot" : "hit"); }   // provisional: the server confirms
-  } else if (!me.dead && wants && me.cd <= 0 && !me.reloading && me.ammo === 0) { play("empty"); me.cd = 0.3; }
+  }   // (no empty click: an empty gun reloads itself, and the click on top of the reload sounded like a double, 2026-10-10)
   if (me.dead) me.respawn = Math.max(0, me.respawn - dt);   // (the cooldown is the prediction's to count down, inside net.tick; counting it here as well doubled the fire rate)
   net.tick(inp, t);
 }

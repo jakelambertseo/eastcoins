@@ -9,7 +9,7 @@
 
    Shots are never predicted: the page draws its own tracer and plays the bang at once, and the server's events decide the rest.
    createNet(hooks) -> { connect(opts), close(), on, slot, tick(dt), events(): [...] , roster, round, ping } */
-import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=14";
+import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=15";
 
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
 const INTERP = 0.1, SEND_EVERY = 2;
@@ -74,7 +74,8 @@ export function createNet(hooks) {
     bean.kills = b[13]; bean.deaths = b[14]; bean.streak = b[15];
     if (keepGun) return;   // a swap we sent in the last half second: the snapshot still shows the old gun for a moment
     bean.gun = GUN_KEYS[b[9]] || "ar"; bean.ammo = b[10];
-    bean.reloading = b[16] ? (bean.reloading > 0 ? bean.reloading : GUNS[bean.gun].reload) : 0;   // the server sends a flag; the page keeps its own countdown for the animation
+    const was = bean.reloading; bean.reloading = b[16] ? (bean.reloading > 0 ? bean.reloading : GUNS[bean.gun].reload) : 0;   // the server sends a flag; the page keeps its own countdown for the animation
+    if (!was && bean.reloading > 0) hooks.onLocal?.([{ type: "reload", b: bean }]);   // a reload the server started before the prediction did (its ammo count arrives first): sound it now, once (the page dedupes)
   }
 
   /** One fixed tick: make this tick's input, predict with it, queue it for the server. Returns the input. */

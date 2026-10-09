@@ -61,4 +61,5 @@ const SOUNDS = {
   click: () => tone({ f: 1000, dur: 0.03, type: "square", gain: 0.04 })
 };
 /** play("ar", 0.4): the name, and how loud (0..1, distance for other people's shots). */
-export function play(name, k = 1, pan = 0) { const s = SOUNDS[name]; if (s && k > 0.02) s(k, pan); }
+const LOG = (window.__sndLog = []);   // the last sounds played, for checking a double from the console: __sndLog
+export function play(name, k = 1, pan = 0) { const s = SOUNDS[name]; if (s && k > 0.02) { s(k, pan); LOG.push([name, Math.round(performance.now())]); if (LOG.length > 60) LOG.shift(); } }

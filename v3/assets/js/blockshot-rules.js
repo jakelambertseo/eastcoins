@@ -302,7 +302,7 @@ export function stepBean(world, beans, b, inp, dt, now, rand, events, opts = {})
   else { const acc = b.grounded ? P.ACC_GROUND : P.ACC_AIR, run = P.RUN * (inp.scope ? G.adsMove ?? 1 : 1); b.v.x += clamp(inp.x * run - b.v.x, -acc * dt, acc * dt); b.v.z += clamp(inp.z * run - b.v.z, -acc * dt, acc * dt); }
   if (jumped) { b.v.y = P.JUMP; b.coyote = 0; b.grounded = false; events?.push({ type: "jump", b }); }
   if (inp.aim) b.aim.copy(inp.aim);
-  if ((G.auto ? inp.fire : inp.fireTap) && b.cd <= 0 && !b.reloading) { if (b.ammo > 0) fire(world, beans, b, b.aim, now, rand, events, (opts.spreadK ?? (inp.scope ? G.adsSpread ?? 1 : 1)) * (b.grounded ? 1 : 1.6)); else { reload(b, events); events?.push({ type: "empty", b }); } }
+  if ((G.auto ? inp.fire : inp.fireTap) && b.cd <= 0 && !b.reloading) { if (b.ammo > 0) fire(world, beans, b, b.aim, now, rand, events, (opts.spreadK ?? (inp.scope ? G.adsSpread ?? 1 : 1)) * (b.grounded ? 1 : 1.6)); else if (!reload(b, events)) events?.push({ type: "empty", b }); }   // the click only when a reload could not start (already reloading): the two at once sounded like a double (2026-10-10)
   if (b.ammo === 0 && !b.reloading && b.cd <= 0) reload(b, events);   // an empty gun reloads on its own (2026-10-09, the owner)
   if (want !== null && !b.bot) b.facing = want + Math.PI; else if (b.bot && want !== null && !b.target) b.facing = want + Math.PI;
   b.v.y += P.G * dt; b.p.addScaled(b.v, dt);
