@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Blockshot Armory — mockup</title>
+<!-- A MOCKUP (2026-10-10, the owner: "knifes and gun skins … users can roll zcoins or some type of currency they get from the blockshot
+     games, and can apply skins to their guns, knives, or even skins for their bean guys"). Nothing here touches an account or a coin:
+     the wallet, the rolls and the inventory live in this page and reset on reload. It exists to settle the shape — what is earned, what
+     a case costs, how a roll feels, what a skin looks like on the four guns, a knife and a bean — before anything is wired to D1. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap">
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }</script>
+<style>
+:root{--bg:#0e1118;--panel:#171b25;--line:#2a3040;--ink:#f2f4f8;--dim:#8a93a6;--you:#ffd84a;--info:#6ad0ff;--danger:#ff5a5a;--font:"Rajdhani",system-ui,sans-serif;
+  --c-common:#9aa3b5;--c-uncommon:#5ac8fa;--c-rare:#b06cff;--c-legend:#ff5a8a;--c-knife:#ffd84a}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:600 15px/1.45 var(--font)}
+main{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
+h1{margin:0;font-size:38px;letter-spacing:3px;text-transform:uppercase}h1 small{display:block;font-size:12px;letter-spacing:3px;color:var(--info)}
+h2{margin:30px 0 10px;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--info)}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.wallet{display:flex;gap:10px}.wallet div{padding:10px 16px;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--you);min-width:130px}.wallet b{display:block;font-size:26px;line-height:1}.wallet small{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}.wallet div.zc{border-top-color:var(--info)}
+.note{color:var(--dim);font-size:13.5px;max-width:760px}.note b{color:#cfd5de}
+.cases{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.case{padding:14px 16px;background:var(--panel);border:1px solid var(--line);display:grid;gap:8px}.case h3{margin:0;font-size:18px;letter-spacing:2px;text-transform:uppercase}.case .odds{display:flex;flex-wrap:wrap;gap:6px}.case .odds span{font-size:11px;letter-spacing:1px;padding:2px 7px;background:rgba(255,255,255,.06)}
+.case button{justify-self:start;padding:10px 22px;border:0;background:var(--you);color:#1a1300;font:800 15px var(--font);letter-spacing:2px;text-transform:uppercase;cursor:pointer;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}.case button.alt{background:rgba(255,255,255,.1);color:var(--ink)}
+.reel{position:relative;height:120px;margin:14px 0;background:var(--panel);border:1px solid var(--line);overflow:hidden}.reel::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:3px;background:var(--you);z-index:2;transform:translateX(-50%)}
+.strip{position:absolute;left:0;top:10px;display:flex;gap:8px;will-change:transform}
+.card{width:150px;height:100px;flex:0 0 auto;display:grid;align-content:end;padding:8px 10px;background:#11151d;border:1px solid var(--line);border-bottom:4px solid var(--c);--c:var(--c-common)}.card b{font-size:14px;letter-spacing:1px;text-transform:uppercase;line-height:1.1}.card small{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--c)}.card .sw{position:absolute;inset:8px 10px auto;height:34px;background:var(--sw);border:1px solid rgba(255,255,255,.1)}.card{position:relative}
+.result{display:flex;gap:16px;align-items:center;padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--c);--c:var(--c-common)}.result[hidden]{display:none}.result .sw{width:72px;height:48px;background:var(--sw);border:1px solid rgba(255,255,255,.1)}.result b{display:block;font-size:20px;letter-spacing:2px;text-transform:uppercase}.result small{color:var(--c);letter-spacing:2px;text-transform:uppercase;font-size:11px}.result button{margin-left:auto;padding:9px 18px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--ink);font:700 13px var(--font);letter-spacing:2px;text-transform:uppercase;cursor:pointer}
+.loadout{display:grid;grid-template-columns:520px 1fr;gap:16px}@media (max-width:900px){.loadout{grid-template-columns:1fr}}
+.view{background:radial-gradient(ellipse at 50% 40%,#1b2130,#0b0e14 70%);border:1px solid var(--line);position:relative}.view canvas{display:block;width:100%;height:340px}.view .tabs{position:absolute;left:0;right:0;bottom:0;display:flex;background:rgba(0,0,0,.5)}.view .tabs button{flex:1;padding:9px 4px;border:0;background:transparent;color:var(--dim);font:700 12px var(--font);letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-top:3px solid transparent}.view .tabs button.on{color:var(--ink);border-top-color:var(--you)}
+.skins{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;align-content:start}
+.skin{position:relative;padding:8px 10px 10px;background:var(--panel);border:1px solid var(--line);border-bottom:4px solid var(--c);--c:var(--c-common);cursor:pointer;text-align:left;color:var(--ink);font:inherit}.skin .sw{height:40px;background:var(--sw);border:1px solid rgba(255,255,255,.1);margin-bottom:6px}.skin b{display:block;font-size:13px;letter-spacing:1px;text-transform:uppercase;line-height:1.1}.skin small{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--c)}.skin.locked{opacity:.45}.skin.on{outline:2px solid var(--you)}.skin .tag{position:absolute;right:8px;top:8px;font-size:10px;letter-spacing:2px;padding:1px 6px;background:var(--you);color:#1a1300;text-transform:uppercase}
+.earn{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}.earn div{padding:12px 14px;background:var(--panel);border:1px solid var(--line)}.earn b{display:block;font-size:24px;line-height:1;color:var(--you)}.earn small{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.inv{display:flex;flex-wrap:wrap;gap:6px}.inv span{padding:4px 10px;background:rgba(255,255,255,.06);border-left:3px solid var(--c);--c:var(--c-common);font-size:12px;letter-spacing:1px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>Blockshot Armory<small>mockup · nothing here is real yet</small></h1>
+    <div class="wallet"><div><b id="shells">1,240</b><small>Shells</small></div><div class="zc"><b id="zc">312</b><small>ZCoins</small></div></div>
+  </div>
+  <p class="note"><b>Shells</b> are the Blockshot currency: you earn them by playing and spend them on cases. <b>ZCoins</b> can buy the Knife Case too, so the site's money has a way in without being the only way. Skins change how a gun, a knife or your bean looks and nothing else. Everything is a one-off: a skin found twice turns into Shells.</p>
+
+  <h2>How Shells are earned</h2>
+  <div class="earn"><div><b>5</b><small>a kill</small></div><div><b>+5</b><small>a headshot</small></div><div><b>25</b><small>a round won (bomb)</small></div><div><b>60</b><small>a match played to the end</small></div><div><b>100</b><small>first match of the day</small></div><div><b>150</b><small>top of the board</small></div></div>
+
+  <h2>Cases</h2>
+  <div class="cases">
+    <div class="case"><h3>Weapon Case</h3><div class="odds"><span style="color:var(--c-common)">Common 79.9%</span><span style="color:var(--c-uncommon)">Uncommon 16%</span><span style="color:var(--c-rare)">Rare 3.2%</span><span style="color:var(--c-legend)">Legendary 0.9%</span></div><p class="note">A finish for one of the four guns.</p><button data-case="weapon">Roll · 120 Shells</button></div>
+    <div class="case"><h3>Knife Case</h3><div class="odds"><span style="color:var(--c-uncommon)">Plain knife 70%</span><span style="color:var(--c-rare)">Finished knife 25%</span><span style="color:var(--c-knife)">Legendary knife 5%</span></div><p class="note">Always a knife; the finish is the roll. The only case ZCoins can open.</p><button data-case="knife">Roll · 480 Shells</button> <button class="alt" data-case="knife" data-zc="1">Roll · 40 ZC</button></div>
+    <div class="case"><h3>Bean Case</h3><div class="odds"><span style="color:var(--c-common)">Colour 70%</span><span style="color:var(--c-uncommon)">Pattern 25%</span><span style="color:var(--c-rare)">Effect 5%</span></div><p class="note">Body colours, patterns, visors and the odd effect (a trail, a glow).</p><button data-case="bean">Roll · 80 Shells</button></div>
+  </div>
+  <div class="reel"><div class="strip" id="strip"></div></div>
+  <div class="result" id="result" hidden><div class="sw" id="rsw"></div><div><b id="rname"></b><small id="rrar"></small></div><button id="requip">Equip</button></div>
+
+  <h2>Loadout</h2>
+  <div class="loadout">
+    <div class="view"><canvas id="cv" width="1040" height="680"></canvas><div class="tabs" id="tabs"><button data-slot="ar" class="on">Assault</button><button data-slot="sniper">Sniper</button><button data-slot="shotgun">Shotgun</button><button data-slot="pistol">Pistol</button><button data-slot="knife">Knife</button><button data-slot="bean">Bean</button></div></div>
+    <div class="skins" id="skins"></div>
+  </div>
+
+  <h2>Inventory</h2>
+  <div class="inv" id="inv"></div>
+</main>
+<script type="module">
+import * as THREE from "three";
+/* ---------------------------------------------------------------- the catalogue: finishes drawn in code, with a rarity and a slot */
+const RAR = { common: ["Common", "var(--c-common)"], uncommon: ["Uncommon", "var(--c-uncommon)"], rare: ["Rare", "var(--c-rare)"], legend: ["Legendary", "var(--c-legend)"], knife: ["Legendary", "var(--c-knife)"] };
+const FIN = {   // name, rarity, the painter (a canvas 256x256)
+  factory: ["Factory", "common", (g) => { g.fillStyle = "#2a2d36"; g.fillRect(0, 0, 256, 256); }],
+  desert: ["Desert Camo", "common", (g) => camo(g, ["#c9b07a", "#a88d5a", "#8a7046", "#d9c79a"])],
+  urban: ["Urban Camo", "common", (g) => camo(g, ["#5a5f6a", "#3a3e48", "#8a8f9a", "#2a2d36"])],
+  forest: ["Forest Camo", "common", (g) => camo(g, ["#4a6a3a", "#2f4a2a", "#7a8a4a", "#1f2f1f"])],
+  stripes: ["Hazard Stripes", "common", (g) => { g.fillStyle = "#222"; g.fillRect(0, 0, 256, 256); g.fillStyle = "#ffd84a"; for (let i = -256; i < 512; i += 48) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 24, 0); g.lineTo(i - 232, 256); g.lineTo(i - 256, 256); g.fill(); } }],
+  hex: ["Hex", "uncommon", (g) => { g.fillStyle = "#1a2a3a"; g.fillRect(0, 0, 256, 256); g.strokeStyle = "#6ad0ff"; g.lineWidth = 2; for (let y = 0; y < 300; y += 28) for (let x = 0; x < 300; x += 32) { const ox = (Math.floor(y / 28) % 2) * 16; g.beginPath(); for (let k = 0; k < 6; k++) { const a = Math.PI / 3 * k + Math.PI / 6; g.lineTo(x + ox + 14 * Math.cos(a), y + 14 * Math.sin(a)); } g.closePath(); g.stroke(); } }],
+  carbon: ["Carbon", "uncommon", (g) => { g.fillStyle = "#15171c"; g.fillRect(0, 0, 256, 256); for (let y = 0; y < 256; y += 8) for (let x = 0; x < 256; x += 8) { g.fillStyle = ((x + y) / 8) % 2 ? "#262a33" : "#1b1e25"; g.fillRect(x, y, 8, 8); } }],
+  toxic: ["Toxic", "uncommon", (g) => { g.fillStyle = "#101810"; g.fillRect(0, 0, 256, 256); g.strokeStyle = "#7dff6a"; g.lineWidth = 6; for (let i = 0; i < 8; i++) { g.beginPath(); g.moveTo(0, i * 36); g.bezierCurveTo(80, i * 36 + 30, 170, i * 36 - 30, 256, i * 36 + 10); g.stroke(); } }],
+  ice: ["Ice", "uncommon", (g) => { const r = g.createLinearGradient(0, 0, 256, 256); r.addColorStop(0, "#e8f6ff"); r.addColorStop(0.5, "#7ac8ff"); r.addColorStop(1, "#2a6aa8"); g.fillStyle = r; g.fillRect(0, 0, 256, 256); g.strokeStyle = "rgba(255,255,255,.6)"; g.lineWidth = 2; for (let i = 0; i < 20; i++) { g.beginPath(); g.moveTo(Math.random() * 256, Math.random() * 256); g.lineTo(Math.random() * 256, Math.random() * 256); g.stroke(); } }],
+  neon: ["Neon Fade", "rare", (g) => { const r = g.createLinearGradient(0, 0, 256, 0); r.addColorStop(0, "#ff4fd8"); r.addColorStop(0.5, "#7a3cff"); r.addColorStop(1, "#2ad8ff"); g.fillStyle = r; g.fillRect(0, 0, 256, 256); }],
+  lava: ["Lava", "rare", (g) => { g.fillStyle = "#1a0a05"; g.fillRect(0, 0, 256, 256); for (let i = 0; i < 400; i++) { g.fillStyle = `hsl(${10 + Math.random() * 30},100%,${40 + Math.random() * 30}%)`; const x = Math.random() * 256, y = Math.random() * 256; g.beginPath(); g.ellipse(x, y, 4 + Math.random() * 14, 2 + Math.random() * 5, Math.random() * 3, 0, 7); g.fill(); } }],
+  galaxy: ["Galaxy", "rare", (g) => { const r = g.createLinearGradient(0, 0, 256, 256); r.addColorStop(0, "#1a0b3a"); r.addColorStop(0.5, "#3a1a6a"); r.addColorStop(1, "#0a1a4a"); g.fillStyle = r; g.fillRect(0, 0, 256, 256); for (let i = 0; i < 300; i++) { g.fillStyle = `rgba(255,255,255,${Math.random()})`; g.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 2, 1 + Math.random() * 2); } }],
+  hardened: ["Case Hardened", "rare", (g) => { for (let i = 0; i < 300; i++) { g.fillStyle = `hsl(${200 + Math.random() * 90},${50 + Math.random() * 40}%,${30 + Math.random() * 40}%)`; const x = Math.random() * 256, y = Math.random() * 256; g.beginPath(); g.ellipse(x, y, 10 + Math.random() * 30, 6 + Math.random() * 20, Math.random() * 3, 0, 7); g.fill(); } }],
+  dragon: ["Dragon", "legend", (g) => { g.fillStyle = "#6a0e0e"; g.fillRect(0, 0, 256, 256); for (let y = 0; y < 280; y += 16) for (let x = 0; x < 280; x += 20) { const ox = (Math.floor(y / 16) % 2) * 10; g.fillStyle = ((x + y) / 4) % 3 ? "#b8221a" : "#ffb347"; g.beginPath(); g.arc(x + ox, y, 11, 0, Math.PI); g.fill(); g.strokeStyle = "#ffd84a"; g.lineWidth = 1.5; g.stroke(); } }],
+  gold: ["Solid Gold", "legend", (g) => { const r = g.createLinearGradient(0, 0, 256, 256); r.addColorStop(0, "#fff0a0"); r.addColorStop(0.4, "#ffc83a"); r.addColorStop(0.6, "#b8860b"); r.addColorStop(1, "#ffe070"); g.fillStyle = r; g.fillRect(0, 0, 256, 256); }],
+  glitch: ["Glitch", "legend", (g) => { for (let y = 0; y < 256; y += 6) { g.fillStyle = `hsl(${(y * 3) % 360},100%,55%)`; g.fillRect(Math.random() * 40 - 20, y, 300, 6); } g.fillStyle = "rgba(0,0,0,.4)"; for (let i = 0; i < 30; i++) g.fillRect(Math.random() * 256, Math.random() * 256, 30 + Math.random() * 80, 2 + Math.random() * 4); }]
+};
+function camo(g, cols) { g.fillStyle = cols[0]; g.fillRect(0, 0, 256, 256); for (let i = 0; i < 90; i++) { g.fillStyle = cols[1 + Math.floor(Math.random() * (cols.length - 1))]; g.beginPath(); g.ellipse(Math.random() * 256, Math.random() * 256, 14 + Math.random() * 30, 8 + Math.random() * 18, Math.random() * 3, 0, 7); g.fill(); } }
+const SLOTS = { ar: "Assault rifle", sniper: "Sniper", shotgun: "Shotgun", pistol: "Pistol", knife: "Knife", bean: "Bean" };
+const KNIVES = { combat: "Combat Knife", karambit: "Karambit", butterfly: "Butterfly" };
+/* the pool each case draws from */
+const POOL = {
+  weapon: Object.keys(FIN).filter((k) => k !== "factory").flatMap((f) => ["ar", "sniper", "shotgun", "pistol"].map((s) => ({ slot: s, fin: f }))),
+  knife: Object.keys(FIN).flatMap((f) => Object.keys(KNIVES).map((k) => ({ slot: "knife", fin: f, knife: k }))),
+  bean: Object.keys(FIN).filter((k) => k !== "factory").map((f) => ({ slot: "bean", fin: f }))
+};
+const rarityOf = (it) => (it.slot === "knife" ? (FIN[it.fin][1] === "legend" ? "knife" : FIN[it.fin][1] === "common" ? "uncommon" : "rare") : FIN[it.fin][1]);
+const idOf = (it) => `${it.slot}:${it.fin}${it.knife ? ":" + it.knife : ""}`;
+const nameOf = (it) => `${it.slot === "knife" ? KNIVES[it.knife] : SLOTS[it.slot]} · ${FIN[it.fin][0]}`;
+/* textures, made once per finish */
+const texCache = new Map();
+function texOf(fin) { if (!texCache.has(fin)) { const c = document.createElement("canvas"); c.width = c.height = 256; FIN[fin][2](c.getContext("2d")); texCache.set(fin, c); } return texCache.get(fin); }
+const swatchCss = (fin) => `url(${texOf(fin).toDataURL()})`;
+
+/* ---------------------------------------------------------------- the page's state (reset on reload) */
+const state = { shells: 1240, zc: 312, owned: new Set(["ar:factory", "sniper:factory", "shotgun:factory", "pistol:factory", "knife:factory:combat", "bean:factory"]), equipped: { ar: "ar:factory", sniper: "sniper:factory", shotgun: "shotgun:factory", pistol: "pistol:factory", knife: "knife:factory:combat", bean: "bean:factory" }, slot: "ar" };
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => n.toLocaleString("en-US");
+function wallet() { $("shells").textContent = fmt(state.shells); $("zc").textContent = fmt(state.zc); }
+
+/* ---------------------------------------------------------------- the roll: a reel that slows onto the item */
+const ODDS = { weapon: [["common", 0.799], ["uncommon", 0.16], ["rare", 0.032], ["legend", 0.009]], knife: [["uncommon", 0.7], ["rare", 0.25], ["knife", 0.05]], bean: [["common", 0.7], ["uncommon", 0.25], ["rare", 0.05]] };
+const COST = { weapon: 120, knife: 480, bean: 80 };
+function draw(caseKey) {
+  const r = Math.random(); let acc = 0, rar = ODDS[caseKey][0][0]; for (const [k, p] of ODDS[caseKey]) { acc += p; if (r < acc) { rar = k; break; } }
+  const pool = POOL[caseKey].filter((it) => rarityOf(it) === rar); return pool[Math.floor(Math.random() * pool.length)];
+}
+let rolling = false;
+async function roll(caseKey, withZc) {
+  if (rolling) return; const cost = withZc ? 40 : COST[caseKey];
+  if (withZc ? state.zc < cost : state.shells < cost) { alert(withZc ? "Not enough ZCoins (this is a mockup: reload for more)." : "Not enough Shells (this is a mockup: reload for more)."); return; }
+  if (withZc) state.zc -= cost; else state.shells -= cost; wallet(); rolling = true; $("result").hidden = true;
+  const win = draw(caseKey), strip = $("strip"), cards = [];
+  for (let i = 0; i < 48; i++) cards.push(i === 40 ? win : POOL[caseKey][Math.floor(Math.random() * POOL[caseKey].length)]);
+  strip.innerHTML = cards.map((it) => `<div class="card" style="--c:${RAR[rarityOf(it)][1]};--sw:${swatchCss(it.fin)}"><div class="sw"></div><b>${nameOf(it)}</b><small>${RAR[rarityOf(it)][0]}</small></div>`).join("");
+  const reelW = strip.parentElement.clientWidth, target = 40 * 158 + 75 - reelW / 2 + (Math.random() * 100 - 50);
+  strip.style.transition = "none"; strip.style.transform = "translateX(0px)"; void strip.offsetWidth;
+  strip.style.transition = "transform 4.2s cubic-bezier(.12,.8,.18,1)"; strip.style.transform = `translateX(${-target}px)`;
+  await new Promise((r) => setTimeout(r, 4400));
+  const id = idOf(win), dup = state.owned.has(id); if (!dup) state.owned.add(id); else { state.shells += Math.round(COST[caseKey] * 0.4); wallet(); }
+  const res = $("result"); res.style.setProperty("--c", RAR[rarityOf(win)][1]); $("rsw").style.setProperty("--sw", swatchCss(win.fin)); $("rname").textContent = nameOf(win); $("rrar").textContent = `${RAR[rarityOf(win)][0]}${dup ? ` · already owned, turned into ${Math.round(COST[caseKey] * 0.4)} Shells` : ""}`;
+  $("requip").hidden = dup; $("requip").onclick = () => { state.equipped[win.slot] = id; state.slot = win.slot; showSlot(); };
+  res.hidden = false; rolling = false; inventory(); showSlot();
+}
+document.querySelectorAll("[data-case]").forEach((b) => b.addEventListener("click", () => roll(b.dataset.case, b.dataset.zc === "1")));
+
+/* ---------------------------------------------------------------- the loadout: a 3D look at the thing wearing the skin */
+const renderer = new THREE.WebGLRenderer({ canvas: $("cv"), antialias: true, alpha: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(32, 1040 / 680, 0.05, 50); cam.position.set(0, 0.35, 2.2); cam.lookAt(0, 0, 0);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.3)); const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(2, 3, 3); scene.add(key); const rim = new THREE.DirectionalLight(0x6ad0ff, 0.8); rim.position.set(-3, 1, -2); scene.add(rim);
+let model = null;
+const M = (c, r = 0.6, m = 0.3) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+const steel = M(0x55555f, 0.45, 0.6), dark = M(0x1a1a22), wood = M(0x6b4423, 0.8, 0), glass = M(0x3a6a9a, 0.2, 0.8);
+const box = (w, h, d, mat, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); o.position.set(x, y, z); return o; };
+const tube = (r, len, mat, x, y, z, r2 = r) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r2, len, 12), mat); o.rotation.x = Math.PI / 2; o.position.set(x, y, z); return o; };
+function skinMat(fin, metal = false) { const t = new THREE.CanvasTexture(texOf(fin)); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 2); t.colorSpace = THREE.SRGBColorSpace; return new THREE.MeshStandardMaterial({ map: t, roughness: fin === "gold" ? 0.25 : 0.55, metalness: fin === "gold" || metal ? 0.8 : 0.3 }); }
+function gunModel(slot, fin) {
+  const body = skinMat(fin), g = new THREE.Group();
+  if (slot === "ar") g.add(box(0.12, 0.14, 0.62, body, 0, 0, 0), tube(0.035, 0.4, steel, 0, 0.01, -0.5, 0.04), box(0.07, 0.09, 0.16, dark, 0, -0.05, -0.33), box(0.07, 0.18, 0.12, dark, 0, -0.14, -0.06), box(0.08, 0.2, 0.1, wood, 0, -0.14, 0.16), box(0.09, 0.11, 0.24, body, 0, -0.01, 0.42), box(0.03, 0.05, 0.14, dark, 0, 0.09, -0.08));
+  if (slot === "sniper") g.add(box(0.1, 0.12, 0.7, body, 0, 0, 0), tube(0.025, 0.7, steel, 0, 0.01, -0.68, 0.03), tube(0.045, 0.32, dark, 0, 0.13, -0.04), tube(0.05, 0.03, glass, 0, 0.13, -0.21), box(0.03, 0.06, 0.03, dark, 0, 0.08, 0.06), box(0.03, 0.06, 0.03, dark, 0, 0.08, -0.14), tube(0.012, 0.07, steel, 0.075, 0.01, 0.1), box(0.08, 0.2, 0.1, wood, 0, -0.14, 0.18), box(0.08, 0.14, 0.3, body, 0, -0.02, 0.48));
+  if (slot === "shotgun") g.add(box(0.11, 0.13, 0.4, body, 0, 0, 0.04), tube(0.045, 0.62, steel, 0, 0.025, -0.5), tube(0.03, 0.5, steel, 0, -0.04, -0.46), box(0.09, 0.09, 0.18, body, 0, -0.04, -0.3), box(0.08, 0.2, 0.1, wood, 0, -0.14, 0.14), box(0.09, 0.13, 0.3, body, 0, -0.02, 0.4));
+  if (slot === "pistol") g.add(box(0.08, 0.09, 0.3, body, 0, 0.02, 0.08), tube(0.02, 0.1, steel, 0, 0.02, -0.11), box(0.07, 0.2, 0.1, body, 0, -0.1, 0.17), box(0.03, 0.03, 0.08, dark, 0, -0.04, 0.1));
+  g.scale.setScalar(slot === "pistol" ? 2.2 : 1.5); g.rotation.y = Math.PI / 2 + 0.5; return g;
+}
+function knifeModel(kind, fin) {
+  const blade = skinMat(fin, true), g = new THREE.Group();
+  if (kind === "combat") { const b = box(0.04, 0.22, 0.9, blade, 0, 0, -0.45); b.geometry.translate(0, 0, 0); g.add(b, box(0.08, 0.3, 0.06, steel, 0, 0, 0.03), box(0.06, 0.16, 0.5, dark, 0, 0, 0.3), box(0.07, 0.18, 0.06, steel, 0, 0, 0.56)); const tip = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.3, 4), blade); tip.rotation.x = -Math.PI / 2; tip.rotation.y = Math.PI / 4; tip.scale.set(1, 1, 0.36); tip.position.set(0, 0, -1.03); g.add(tip); }
+  if (kind === "karambit") { const curve = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.06, 8, 24, Math.PI * 0.9), blade); curve.scale.set(1, 1, 0.3); curve.position.set(-0.1, 0.1, 0); g.add(curve); g.add(box(0.06, 0.16, 0.5, dark, 0.32, -0.2, 0)); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.03, 8, 20), steel); ring.position.set(0.62, -0.2, 0); g.add(ring); }
+  if (kind === "butterfly") { g.add(box(0.04, 0.2, 0.8, blade, 0, 0, -0.4)); for (const s of [-1, 1]) { const h = box(0.05, 0.1, 0.78, dark, s * 0.05, 0, 0.42); h.rotation.y = s * 0.35; g.add(h); } g.add(box(0.12, 0.22, 0.06, steel, 0, 0, 0.02)); }
+  g.scale.setScalar(1.3); g.rotation.y = Math.PI / 2 + 0.4; g.rotation.z = -0.2; return g;
+}
+function beanModel(fin) {
+  const skin = skinMat(fin), g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.5, 6, 16), skin); g.add(body);
+  const visor = new THREE.Mesh(new THREE.SphereGeometry(0.46, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.42), M(0x101418, 0.2, 0.6)); visor.position.set(0, 0.05, 0); visor.rotation.x = -1.1; g.add(visor);
+  g.scale.setScalar(1.1); g.position.y = -0.1; return g;
+}
+function showSlot() {
+  if (model) { scene.remove(model); } const slot = state.slot, id = state.equipped[slot], [, fin, kind] = id.split(":");
+  model = slot === "knife" ? knifeModel(kind, fin) : slot === "bean" ? beanModel(fin) : gunModel(slot, fin); scene.add(model);
+  document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.slot === slot));
+  const list = slot === "knife" ? POOL.knife : slot === "bean" ? [{ slot: "bean", fin: "factory" }, ...POOL.bean] : [{ slot, fin: "factory" }, ...POOL.weapon.filter((it) => it.slot === slot)];
+  $("skins").innerHTML = list.map((it) => { const iid = idOf(it), own = state.owned.has(iid); return `<button class="skin${own ? "" : " locked"}${state.equipped[slot] === iid ? " on" : ""}" data-id="${iid}" style="--c:${RAR[rarityOf(it)][1]};--sw:${swatchCss(it.fin)}"${own ? "" : " disabled"}>${state.equipped[slot] === iid ? '<span class="tag">worn</span>' : ""}<div class="sw"></div><b>${it.slot === "knife" ? KNIVES[it.knife] + " · " : ""}${FIN[it.fin][0]}</b><small>${RAR[rarityOf(it)][0]}${own ? "" : " · from a case"}</small></button>`; }).join("");
+}
+document.querySelectorAll("#tabs button").forEach((b) => b.addEventListener("click", () => { state.slot = b.dataset.slot; showSlot(); }));
+$("skins").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (!b || b.disabled) return; state.equipped[state.slot] = b.dataset.id; showSlot(); });
+function inventory() { const items = [...state.owned].map((id) => { const [slot, fin, knife] = id.split(":"); return { slot, fin, knife }; }); $("inv").innerHTML = items.map((it) => `<span style="--c:${RAR[rarityOf(it)][1]}">${nameOf(it)}</span>`).join("") || "<span>nothing yet</span>"; }
+function frame(t) { if (model) { model.rotation.y += 0.006; model.position.y = (state.slot === "bean" ? -0.1 : 0) + Math.sin(t / 900) * 0.03; } renderer.render(scene, cam); requestAnimationFrame(frame); }
+wallet(); inventory(); showSlot(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
