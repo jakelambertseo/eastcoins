@@ -51,7 +51,8 @@ h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffcf6a}
 .maps,.guns{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;max-width:760px}
 .mapc,.gun{display:grid;gap:4px;padding:12px;border-radius:10px;background:#1a1226;box-shadow:0 0 0 1.5px #4a3a5a;text-align:left;cursor:pointer;color:#e8e0cc;font:600 12.5px/1.45 Lora,serif;border:0}
 .mapc:hover,.gun:hover,.mapc.on,.gun.on{box-shadow:0 0 0 2px #ffd27a}.mapc b,.gun b{font:800 15px Cinzel,serif;color:#ffd27a;display:block}
-.go{margin-top:14px;padding:12px 28px;border:0;border-radius:8px;background:#ffd84a;color:#1a1006;font:800 16px Lora,serif;cursor:pointer}
+.go{margin-top:14px;padding:12px 28px;border:0;border-radius:8px;background:#ffd84a;color:#1a1006;font:800 16px Lora,serif;cursor:pointer}.go.ghost{background:#2a1a36;color:#ffd27a;box-shadow:0 0 0 1.5px #4a3a5a}
+.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.row .note{margin:14px 0 0;max-width:420px}
 .xp{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:760px;margin:8px 0}@media (max-width:640px){.xp{grid-template-columns:1fr}}
 .xpl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font:600 13px Lora,serif;color:#cdc2a8}.xpl b{color:#8ae07a}.xpl span:last-of-type,.xpl b:last-of-type{margin-top:4px;padding-top:4px;border-top:1px solid #3a2a44;color:#fff0cc}
 .lvl b{font:800 18px Cinzel,serif;color:#ffd27a}.lvl small{font:700 12px Lora,serif;color:#b8a888;margin-left:6px}.lvl .bar{height:10px;border-radius:5px;background:#0a0812;overflow:hidden;margin:6px 0 4px;box-shadow:0 0 0 1px #3a2a44}.lvl .bar i{display:block;height:100%;background:linear-gradient(90deg,#4ad0ff,#a0f0ff);transition:width .6s}
@@ -86,7 +87,7 @@ html.embed .play{display:block;margin:0}html.embed .stage{height:100vh;height:10
         <div class="stage">
           <canvas id="cv" tabindex="0" aria-label="The map, first person. Click to aim with the mouse."></canvas>
           <div id="hurt"></div><div id="scope"></div><div id="xhair"></div>
-          <div class="hud"><div><b>Blockshot</b> <small id="hudLevel"></small><br><span id="hudPlace"></span> <small id="hudMap"></small></div><div class="mid"><b id="hudT">5:00</b></div><div style="text-align:right"><b id="hudK">0</b><br><span id="hudKD">kills</span></div></div>
+          <div class="hud"><div><b>Blockshot</b> <small id="hudLevel"></small><br><span id="hudPlace"></span> <small id="hudMap"></small></div><div class="mid"><b id="hudT">5:00</b><br><small id="hudPing"></small></div><div style="text-align:right"><b id="hudK">0</b><br><span id="hudKD">kills</span></div></div>
           <div class="feed" id="feed"></div>
           <div class="msg" id="hudMsg"></div><div class="sub" id="hudSub"></div>
           <div id="lockHint" hidden>Click to aim with the mouse</div>
@@ -114,6 +115,6 @@ html.embed .play{display:block;margin:0}html.embed .stage{height:100vh;height:10
     </div>
   </section>
 </main>
-<script type="module" src="blockshot.js?v=2"></script>
+<script type="module" src="blockshot.js?v=3"></script>
 </body>
 </html>
