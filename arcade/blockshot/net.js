@@ -64,9 +64,10 @@ export function createNet(hooks) {
   function applySelf(s) {
     const { me, world, beans } = hooks.state(); if (!me || N.slot < 0) return;
     const b = s.b[N.slot]; if (!b) return;
-    unpack(me, b, now() - swapT < 0.5);
+    const cd = me.cd; unpack(me, b, now() - swapT < 0.5); const reloading = me.reloading;
     pending = pending.filter((i) => i.seq > s.ack);
     for (const i of pending) { const q = { ...i, fire: false, fireTap: false }; stepBean(world, beans, me, q, PHYS.STEP, s.now, Math.random, null); stepBean(world, beans, me, q, PHYS.STEP, s.now, Math.random, null); }   // two 1/120 sub-steps, as the server
+    me.cd = cd; me.reloading = reloading;   // the replay moves the bean and nothing else (2026-10-10): it used to run the gun's cooldown and the reload down again on every snapshot, so the rifle fired two or three times too fast on screen
   }
   function unpack(bean, b, keepGun) {
     bean.p.set(b[0], b[1], b[2]); bean.v.set(b[3], b[4], b[5]); bean.facing = b[6]; bean.hp = b[7]; bean.dead = Boolean(b[8]); bean.slide = Boolean(b[11]); bean.grounded = Boolean(b[12]);

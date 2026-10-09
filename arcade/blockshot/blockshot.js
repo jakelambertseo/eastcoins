@@ -10,7 +10,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk } from "/v3/assets/js/blockshot-rules.js?v=13";
-import { createNet } from "./net.js?v=13";
+import { createNet } from "./net.js?v=14";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=7";
 import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=9";
@@ -342,7 +342,7 @@ function onlineTick(dt) {
     onEvent({ type: "shot", b: me, gun: me.gun, pellets, local: true });
     const hitP = pellets.find((p) => p.bean); if (hitP) { localHitAt = performance.now(); hitTimer = 0.14; if (hitP.head) hsTimer = 0.22; play(hitP.head ? "headshot" : "hit"); }   // provisional: the server confirms
   } else if (!me.dead && wants && me.cd <= 0 && !me.reloading && me.ammo === 0) { play("empty"); me.cd = 0.3; }
-  me.cd = Math.max(0, me.cd - dt); if (me.dead) me.respawn = Math.max(0, me.respawn - dt);
+  if (me.dead) me.respawn = Math.max(0, me.respawn - dt);   // (the cooldown is the prediction's to count down, inside net.tick; counting it here as well doubled the fire rate)
   net.tick(inp, t);
 }
 function endOnline(m) {
