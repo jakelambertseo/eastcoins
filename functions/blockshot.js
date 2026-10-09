@@ -11,7 +11,7 @@ const BASE = "/arcade/blockshot/";
 
 export async function onRequestGet(context) {
   const { request, env } = context;
-  const pageUrl = new URL(request.url); pageUrl.pathname = `${BASE}index.html`; pageUrl.search = "";
+  const pageUrl = new URL(request.url); pageUrl.pathname = BASE; pageUrl.search = "";   // the directory, not index.html: the asset server answers "/x/index.html" with a 308 to "/x/", and that would be passed through
   const page = await env.ASSETS.fetch(new Request(pageUrl.toString(), request));
   const meta = `<meta property="og:title" content="${h(TITLE)}"><meta property="og:description" content="${h(DESC)}">` +
     `<meta property="og:image" content="https://eastcoin.vip/assets/eastcoin-og.png"><meta name="twitter:card" content="summary_large_image">`;
