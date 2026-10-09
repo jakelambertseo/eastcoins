@@ -263,7 +263,7 @@ async function playOnline() {
   if (!okc) { feedNote(net.why === "timeout" ? "The match server didn't answer; playing against bots instead." : "Couldn't reach the match server; playing against bots instead."); start(); }
 }
 const STATE_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? `http://${location.hostname}:8788/bs/state` : "https://arcade.eastcoin.vip/bs/state";
-async function whoIsOn() { try { const j = await fetch(STATE_URL, { cache: "no-store" }).then((r) => r.json()); const el = $("whoOn"); if (!el || !j.ok) return; el.textContent = j.playing ? `${j.playing} playing now on ${MAPS[j.map] ? MAPS[j.map]().name : j.map} · ${Math.floor(j.left / 60)}:${String(j.left % 60).padStart(2, "0")} left · ${j.names.join(", ")}` : `Nobody on right now: the bots are holding the fort on ${MAPS[j.map] ? MAPS[j.map]().name : j.map}.`; } catch { const el = $("whoOn"); if (el) el.textContent = "The match server isn't answering; Practice still works."; } }
+async function whoIsOn() { try { const j = await fetch(STATE_URL, { cache: "no-store" }).then((r) => r.json()); const el = $("whoOn"); if (!el || !j.ok) return; const mapName = MAPS[j.map] ? MAPS[j.map]().name : j.map, left = `${Math.floor(j.left / 60)}:${String(j.left % 60).padStart(2, "0")} left`; el.innerHTML = j.playing ? `<b>${j.playing} playing</b> · ${esc(mapName)} · ${left}<br><small>${esc(j.names.join(", "))}</small>` : `<b>Bots only right now</b> · ${esc(mapName)} · ${left}`; } catch { const el = $("whoOn"); if (el) el.textContent = "The match server isn't answering. Practice still works."; } }
 
 function tick(dt) {
   t += dt; if (state === "play") roundT += dt;
@@ -320,13 +320,16 @@ const gunCard = (k, i) => { const g = GUNS[k], dps = (g.dmg * g.pellets) / g.cd,
   return `<button class="gun${k === nextGun ? " on" : ""}" data-gun="${k}"><b>${i + 1} · ${esc(g.n)}</b>${esc(g.text)}<div class="bars"><div>Damage<i style="--v:${bar(g.dmg * g.pellets, 250)}"></i></div><div>Fire rate<i style="--v:${bar(1 / g.cd, 8)}"></i></div><div>Range<i style="--v:${bar(g.range, 160)}"></i></div><div>Magazine<i style="--v:${bar(g.mag, 28)}"></i></div><div>DPS<i style="--v:${bar(dps, 560)}"></i></div></div></button>`; };
 function showMenu(which, html) { tab = which; if (locked) document.exitPointerLock?.(); for (const b of document.querySelectorAll("[data-tab]")) b.classList.toggle("on", b.dataset.tab === which); if (html !== undefined) $("panel").innerHTML = html; else drawMenu(); $("over").hidden = false; }
 function drawMenu() {
-  if (tab === "play") { $("panel").innerHTML = `<b>Free-for-all</b><p>Five minutes, most kills wins. <b>Shift</b> slides, <b>Space</b> hops out of a slide and keeps the speed; chain them. Jump pads fly you onto the roofs.</p>
-    <p class="eyebrow">Gun</p><div class="guns">${GUN_KEYS.map((k, i) => gunCard(k, i)).join("")}</div>
-    ${site.on && !profile.server ? `<div class="row acct"><a class="go ghost" href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a><span class="note">Keeps your level, skins and stats. A guest plays without them.</span></div>` : profile.server ? `<p class="note acct">Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button></p>` : ""}
-    <p class="eyebrow">The match</p><p id="whoOn" class="note">Looking…</p>
-    <div class="row"><button class="go" data-online="1">Play online</button><span class="note">One match, always on: you drop into the round in progress and bots fill the empty slots.</span></div>
-    <p class="eyebrow">Practice vs bots</p><div class="maps">${MAP_LIST.map((k) => { const m = MAPS[k](); return `<button class="mapc${k === mapKey ? " on" : ""}" data-map="${k}"><b>${esc(m.name)}</b>${esc(m.blurb)}</button>`; }).join("")}</div>
-    <button class="go ghost" data-go="1">Practice on ${esc(MAPS[mapKey]().name)}</button>`; whoIsOn(); }
+  if (tab === "play") {   // the Play tab, cut down (2026-10-09, the owner: "a ton of text and overwhelming"): the button, the match, three gun chips, practice, one line of keys
+    const ROLE = { ar: "All-rounder", sniper: "One shot, one kill", shotgun: "Close range" };
+    $("panel").innerHTML = `<div class="pm">
+    <div class="pm-top"><button class="go big" data-online="1">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
+    <p class="eyebrow">Gun</p>
+    <div class="gpick">${GUN_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div>
+    <div class="pm-row"><span class="eyebrow inl">Practice</span><div class="seg">${MAP_LIST.map((k) => `<button class="${k === mapKey ? "on" : ""}" data-map="${k}" title="${esc(MAPS[k]().blurb)}">${esc(MAPS[k]().name)}</button>`).join("")}</div><button class="go ghost sm" data-go="1">vs bots</button></div>
+    <p class="pm-keys"><b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>Tab</b> scores · <b>Esc</b> menu</p>
+    ${site.on && !profile.server ? `<p class="note acct"><a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats.</p>` : profile.server ? `<p class="note acct">Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button></p>` : ""}
+    </div>`; whoIsOn(); }
   else if (tab === "locker") {
     const sw = (slot, s) => { const col = slot === "body" || slot === "visor" ? COLORS[s.k] : COLORS[profile.skin.body] || 0xffd84a, on = profile.skin[slot] === s.k, have = owns(slot, s.k);
       return `<button class="sw${on ? " on" : ""}${have ? "" : " lock"}" data-slot="${slot}" data-k="${s.k}" title="${have ? esc(s.n) : `${esc(s.n)} · level ${s.lvl}`}"><i class="p-${slot === "body" || slot === "visor" ? "plain" : s.k}" style="--c:#${col.toString(16).padStart(6, "0")}"></i><span>${have ? esc(s.n) : `🔒 ${s.lvl}`}</span></button>`; };
