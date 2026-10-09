@@ -28,5 +28,9 @@ export async function onRequestPost(context) {
      ignores the field. A failed read is just no picture. */
   let avatar = null;
   try { const a = await db.prepare(`SELECT avatar_url FROM users WHERE twitch_id = ?`).bind(String(row.user_id)).first(); if (a?.avatar_url) avatar = String(a.avatar_url).replace("-300x300.", "-70x70."); } catch (e) { /* no picture */ }
-  return Response.json({ ok: true, user: { id: String(row.user_id), login: row.login, name: row.display, admin: isAdminLogin(row.login), role: roleOf(row.login), cos, avatar } }, { headers: noStore });
+  /* (2026-10-10) Blockshot's Armory loadout — the finishes the player wears — so the match server can tell everyone at the table
+     without a second round trip. Null when they have never touched the Armory; a failed read is a plain bean. */
+  let look = null;
+  try { const { ensureArmory, lookOf } = await import("../blockshot/_armory.js"); await ensureArmory(db); look = await lookOf(db, String(row.user_id)); } catch (e) { /* plain */ }
+  return Response.json({ ok: true, user: { id: String(row.user_id), login: row.login, name: row.display, admin: isAdminLogin(row.login), role: roleOf(row.login), cos, avatar, look } }, { headers: noStore });
 }

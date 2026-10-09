@@ -9,6 +9,7 @@
 const need = (lvl) => Math.round(100 * Math.pow(lvl, 1.5));
 function levelOf(total) { let lvl = 1, xp = Math.max(0, Math.floor(total)); while (xp >= need(lvl)) { xp -= need(lvl); lvl++; } return { level: lvl, xp, next: need(lvl) }; }
 import { chicagoDay } from "../casino/_pot.js";
+import { ensureArmory, creditBrass, brassForResult } from "./_armory.js";
 
 let ready = false;
 export async function ensureBlockshot(db) {
@@ -33,7 +34,7 @@ export async function ensureBlockshot(db) {
 const n = (v, max = 1e6) => Math.max(0, Math.min(max, Math.floor(Number(v) || 0)));
 /** One round's results, from the match server. Each player's row is inserted once; only a fresh insert touches the lifetime stats. */
 export async function applyRound(db, roundId, map, results, now = Date.now()) {
-  const day = chicagoDay(now); let applied = 0;
+  const day = chicagoDay(now); let applied = 0; await ensureArmory(db);
   for (const r of results.slice(0, 16)) {
     const id = String(r.id || ""), login = String(r.login || "").toLowerCase().slice(0, 40), display = String(r.name || login).slice(0, 40);
     if (!id || !login || id.startsWith("guest:")) continue;
@@ -47,6 +48,9 @@ export async function applyRound(db, roundId, map, results, now = Date.now()) {
         kills = kills + excluded.kills, deaths = deaths + excluded.deaths, headshots = headshots + excluded.headshots, shots = shots + excluded.shots, hits = hits + excluded.hits,
         wins = wins + excluded.wins, rounds = rounds + 1, best_streak = MAX(best_streak, excluded.best_streak), seconds = seconds + excluded.seconds, xp = xp + excluded.xp, updated_at = CURRENT_TIMESTAMP`)
       .bind(id, login, display, row.kills, row.deaths, row.headshots, row.shots, row.hits, row.won, row.streak, row.seconds, row.xp).run();
+    // Brass (2026-10-10): paid here, so it is exactly as idempotent as the stats; the first counted round of the day pays extra
+    const today = await db.prepare(`SELECT COUNT(*) AS n FROM blockshot_rounds WHERE user_id = ? AND day = ?`).bind(id, day).first();
+    await creditBrass(db, id, brassForResult({ kills: row.kills, headshots: row.headshots, won: row.won, mode: r.mode, roundsWon: r.roundsWon }, { first: (today?.n || 0) <= 1 }));
     applied++;
   }
   return applied;

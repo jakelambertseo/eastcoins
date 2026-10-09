@@ -9,11 +9,12 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk } from "/v3/assets/js/blockshot-rules.js?v=15";
-import { createNet } from "./net.js?v=16";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk } from "/v3/assets/js/blockshot-rules.js?v=16";
+import { finMat, finCss, finOf, knifeOf } from "./armory-fin.js?v=1";
+import { createNet } from "./net.js?v=17";
 import { material, skin as skinTex } from "./tex.js?v=1";
-import { play, setVolume, ensure as audioOn } from "./audio.js?v=9";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=11";
+import { play, setVolume, ensure as audioOn } from "./audio.js?v=10";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=12";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -72,20 +73,25 @@ const pickMats = { red: new THREE.MeshStandardMaterial({ color: 0xe03a3a, emissi
 
 /* ------------------------------------------------------------------ beans and skins */
 const skinMat = (pattern, colKey) => new THREE.MeshStandardMaterial({ map: skinTex(pattern, COLORS[colKey] ?? 0xffd84a), roughness: pattern === "gold" || pattern === "carbon" ? 0.3 : 0.5, metalness: pattern === "gold" ? 0.6 : pattern === "carbon" ? 0.3 : 0 });
-function beanMesh(sk, parent = scene) {
+/* THE ARMORY ON A BEAN (2026-10-10): `look` is what the player wears ({ ar, sniper, shotgun, pistol, knife, bean } item ids from the
+   Armory, only the ones that are not factory). The bean's body takes the bean finish; the gun in its hand takes the finish of the gun it
+   holds (set as the held gun changes, in draw). The Locker's level skins are the fallback for both. */
+let myLook = null;
+const lookGunMat = (look, gun, fallback) => (look && look[gun] ? finMat(finOf(look[gun])) : fallback);
+function beanMesh(sk, parent = scene, look = null) {
   const g = new THREE.Group(); g.rotation.order = "YXZ";
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.55, 6, 14), skinMat(sk.pattern, sk.body)); body.castShadow = true; body.position.y = 0.7; g.add(body);
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.42, 0.55, 6, 14), look && look.bean ? finMat(finOf(look.bean)) : skinMat(sk.pattern, sk.body)); body.castShadow = true; body.position.y = 0.7; g.add(body);
   const visor = new THREE.Mesh(new THREE.SphereGeometry(0.3, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: COLORS[sk.visor] ?? 0xffffff, roughness: 0.2, metalness: sk.visor === "gold" ? 0.6 : 0 }));
   visor.scale.set(1, 0.55, 0.6); visor.rotation.x = Math.PI / 2; visor.position.set(0, 0.98, -0.3); g.add(visor);
   for (const x of [-0.11, 0.11]) { const eye = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), new THREE.MeshBasicMaterial({ color: sk.visor === "black" ? 0xffffff : 0x111111 })); eye.position.set(x, 1.0, -0.45); g.add(eye); }
-  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.7), skinMat(sk.gun, "black")); gun.position.set(0.38, 0.75, -0.35); g.add(gun);
+  const gun = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.7), skinMat(sk.gun, "black")); gun.position.set(0.38, 0.75, -0.35); g.add(gun); g.userData.gun = gun; g.userData.gunDefault = gun.material;
   parent.add(g); return g;
 }
-function makeBean(sk) {
-  const g = beanMesh(sk);
+function makeBean(sk, look = null) {
+  const g = beanMesh(sk, scene, look);
   const c = document.createElement("canvas"); c.width = 256; c.height = 64;
   const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); tag.scale.set(2.2, 0.55, 1); tag.position.y = 1.9; g.add(tag);
-  return { g, tag, tagCanvas: c, tagKey: "" };
+  return { g, tag, tagCanvas: c, tagKey: "", look, gunKey: "" };
 }
 function paintTag(b) {
   const carrier = Boolean(bomb) && bomb.carrier === b.i, side = b.team === undefined || !me || me.team === undefined ? "" : b.team === me.team ? "us" : "them";
@@ -100,16 +106,21 @@ const randomSkin = () => ({ body: pick(SKINS.body).k, pattern: pick(["plain", "p
 const beans = [];
 for (let i = 0; i < PLAYERS; i++) { const b = newBean(i, i ? BOT_NAMES[i - 1] : "You", i > 0); b.skill = rnd(BOTS.skill[0], BOTS.skill[1]); b.mesh = makeBean(i ? randomSkin() : profile.skin); beans.push(b); }
 let me = beans[0]; me.mesh.g.visible = false;   // first person: you don't see your own bean (online, `me` is whichever slot the server gives)
-function redressMe() { scene.remove(me.mesh.g); me.mesh = makeBean(profile.skin); me.mesh.g.visible = false; for (const m of viewGunBodies) m.material = skinMat(profile.skin.gun, "black"); }
+function redressMe() { scene.remove(me.mesh.g); me.mesh = makeBean(profile.skin, myLook); me.mesh.g.visible = false; me.look = myLook; dressGuns(); }
+/** The guns in your hands wear the Armory finishes, the Locker's gun finish where there is none; the knife's blade likewise. */
+function dressGuns() {
+  for (const [k, g] of Object.entries(gunModels)) { if (k === "knife") { for (const m of g.userData.blade || []) m.material = myLook && myLook.knife ? finMat(finOf(myLook.knife), true) : steelMat; } else for (const m of g.userData.bodies || []) m.material = lookGunMat(myLook, k, skinMat(profile.skin.gun, "black")); }
+}
+function redressBean(b, look) { const vis = b.mesh.g.visible; scene.remove(b.mesh.g); b.mesh = makeBean(b.bot ? randomSkin() : profile.skin, look); b.look = look; b.mesh.g.visible = vis; paintTag(b); }
 
 // the gun in your hands
 /* THE GUNS IN YOUR HANDS (2026-10-09, the owner: "different gun models for the different gun selections"): four models built from
    boxes and tubes, one shown at a time, all hung from the same group so the kick, the bob and the reload dip are shared. The receiver
    of each wears the gun skin from the Locker (`viewGunBodies`). */
-const viewGun = new THREE.Group(); const viewGunBodies = [], gunModels = {};
+const viewGun = new THREE.Group(); const viewGunBodies = [], gunModels = {}; let steelMat = null;
 {
   const M = (c, r = 0.6, m = 0.3) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
-  const steel = M(0x55555f, 0.45, 0.6), dark = M(0x1a1a22), wood = M(0x6b4423, 0.8, 0), glass = M(0x3a6a9a, 0.2, 0.8);
+  const steel = M(0x55555f, 0.45, 0.6), dark = M(0x1a1a22), wood = M(0x6b4423, 0.8, 0), glass = M(0x3a6a9a, 0.2, 0.8); steelMat = steel;
   const box = (w, h, d, mat, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); o.position.set(x, y, z); return o; };
   const tube = (r, len, mat, x, y, z, r2 = r) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r, r2, len, 10), mat); o.rotation.x = Math.PI / 2; o.position.set(x, y, z); return o; };
   const body = (w, h, d, x, y, z) => { const o = box(w, h, d, skinMat(profile.skin.gun, "black"), x, y, z); viewGunBodies.push(o); return o; };
@@ -120,8 +131,11 @@ const viewGun = new THREE.Group(); const viewGunBodies = [], gunModels = {};
   // the shotgun: a fat barrel over the magazine tube, a wooden pump, a short receiver, a wooden stock
   const sg = new THREE.Group(); sg.add(body(0.11, 0.13, 0.4, 0, 0, 0.04), tube(0.045, 0.62, steel, 0, 0.025, -0.5), tube(0.03, 0.5, steel, 0, -0.04, -0.46), box(0.09, 0.09, 0.18, wood, 0, -0.04, -0.3), box(0.08, 0.2, 0.1, wood, 0, -0.14, 0.14), box(0.09, 0.13, 0.3, wood, 0, -0.02, 0.4));
   // the pistol: a slide, a stub of barrel, the grip, a trigger guard
+  const kn = new THREE.Group(); { const bl = box(0.035, 0.2, 0.75, steel, 0, 0.02, -0.5); kn.add(bl, box(0.07, 0.26, 0.05, steel, 0, 0, -0.1), box(0.06, 0.15, 0.42, dark, 0, -0.02, 0.14)); const tip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.26, 4), steel); tip.rotation.x = -Math.PI / 2; tip.rotation.y = Math.PI / 4; tip.scale.set(1, 1, 0.35); tip.position.set(0, 0.02, -1.0); kn.add(tip); kn.userData.blade = [bl, tip]; kn.position.set(0.05, -0.05, 0.1); kn.rotation.set(0.1, 0.25, -0.35); }
   const pi = new THREE.Group(); pi.add(body(0.08, 0.09, 0.3, 0, 0.02, 0.08), tube(0.02, 0.1, steel, 0, 0.02, -0.11), box(0.07, 0.2, 0.1, dark, 0, -0.1, 0.17), box(0.03, 0.03, 0.08, dark, 0, -0.04, 0.1));
-  Object.assign(gunModels, { ar, sniper: sn, shotgun: sg, pistol: pi }); for (const g of Object.values(gunModels)) { g.visible = false; viewGun.add(g); }
+  // which receivers belong to which gun (the body() helper pushed them in build order)
+  { let n = 0; for (const [g, c] of [[ar, 1], [sn, 1], [sg, 1], [pi, 1]]) { g.userData.bodies = viewGunBodies.slice(n, n + c); n += c; } }
+  Object.assign(gunModels, { ar, sniper: sn, shotgun: sg, pistol: pi, knife: kn }); for (const g of Object.values(gunModels)) { g.visible = false; viewGun.add(g); }
   viewGun.scale.setScalar(0.55); viewGun.position.set(0.2, -0.17, -0.42); camera.add(viewGun);
 }
 let shownGun = "";
@@ -129,7 +143,7 @@ function fitViewGun(k) { if (k === shownGun) return; shownGun = k; for (const [n
 
 /* ------------------------------------------------------------------ input */
 const keys = {};
-let yaw = 0, pitch = 0, locked = false, mouseFire = false, scoping = false, dragLook = false, lastX = 0, lastY = 0, fireLatch = false, nextGun = "ar", swapAt = -9;
+let yaw = 0, pitch = 0, locked = false, mouseFire = false, scoping = false, dragLook = false, lastX = 0, lastY = 0, fireLatch = false, nextGun = "ar", swapAt = -9, swingAt = -9;
 const sens = () => 0.0022 * profile.settings.sens / (scoping ? GUNS[me.gun].zoom || 1 : 1), inv = () => (profile.settings.invertY ? -1 : 1);
 addEventListener("keydown", (e) => {
   if (e.code === "Escape" && !$("over").hidden && state === "play") { resumeGame(); return; }   // the menu is open mid-match: Esc closes it again
@@ -138,18 +152,21 @@ addEventListener("keydown", (e) => {
   if (e.code === "Escape" && state === "play" && $("over").hidden) { showMenu("play"); if (online) { /* still in the match; Play again rejoins */ } }
   if (/^Digit[123]$/.test(e.code)) {   // instant, like Krunker (2026-10-09): the gun in hand changes now with a short draw, and it is the gun you respawn with
     nextGun = { Digit1: "ar", Digit2: "sniper", Digit3: "shotgun" }[e.code];
-    if (mode === "bomb" && bomb && bomb.phase === "live" && state === "play") { if (online) net.setGun(nextGun); hint(`${GUNS[nextGun].n} next round`); }   // locked mid-round (2026-10-10): the pick waits for the next one
+    if (mode === "bomb" && bomb && bomb.phase === "live" && state === "play" && nextGun !== me.roundGun) { if (online) net.setGun(nextGun); hint(`${GUNS[nextGun].n} next round`); }   // locked mid-round (2026-10-10): the pick waits for the next one; your own primary is always allowed back
     else if (state === "play" && !me.dead && nextGun !== me.gun) swapTo(nextGun); else if (online) net.setGun(nextGun);
   }
-  if (e.code === "KeyQ" || e.code === "Digit4") swapTo(me.gun === "pistol" ? nextGun : "pistol");   // the sidearm, and back
+  if (e.code === "KeyQ") swapTo(me.gun === "pistol" ? "knife" : me.gun === "knife" ? myPrimary() : "pistol");   // primary -> pistol -> knife -> primary
+  if (e.code === "Digit4") swapTo(me.gun === "pistol" ? myPrimary() : "pistol"); if (e.code === "Digit5") swapTo(me.gun === "knife" ? myPrimary() : "knife");
   if (e.code === "BracketLeft" || e.code === "BracketRight") { profile.settings.sens = clamp(Math.round((profile.settings.sens + (e.code === "BracketRight" ? 0.1 : -0.1)) * 10) / 10, 0.3, 3); save(); hint(`Sensitivity ${profile.settings.sens.toFixed(1)}×`); }
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.code)) e.preventDefault();
 });
 addEventListener("keyup", (e) => { keys[e.code] = false; if (e.code === "Tab") $("board").hidden = true; });
 /** Change the gun in hand now (the server hears the same; the rules give it a draw time). */
+/** The primary to go back to: the one this round started with in the bomb mode, else the pick. */
+const myPrimary = () => (mode === "bomb" && me.roundGun && GUNS[me.roundGun] ? me.roundGun : nextGun);
 function swapTo(k) { if (state !== "play" || me.dead || k === me.gun || !GUNS[k]) return; if (online) { net.setGun(k); switchGun(me, k, null); swapAt = performance.now() / 1000; play("swap"); } else switchGun(me, k, events); }
 let wheelAt = 0;
-addEventListener("wheel", (e) => { if (!locked || state !== "play") return; const now = performance.now(); if (now - wheelAt < 250) return; wheelAt = now; swapTo(me.gun === "pistol" ? nextGun : "pistol"); }, { passive: true });
+addEventListener("wheel", (e) => { if (!locked || state !== "play") return; const now = performance.now(); if (now - wheelAt < 250) return; wheelAt = now; swapTo(me.gun === "pistol" ? "knife" : me.gun === "knife" ? myPrimary() : "pistol"); }, { passive: true });
 /** Back into the match from the menu (2026-10-09, the owner: settings had no way out). Settings apply as they change, so Apply is just this. */
 function resumeGame() { if (state !== "play") return showMenu("play"); $("over").hidden = true; canvas.focus(); grabMouse(); }
 function grabMouse() { try { const r = canvas.requestPointerLock?.(); r?.catch?.(() => {}); } catch {} }
@@ -221,8 +238,8 @@ function onEvent(e) {
     case "shot": {
       if (online && e.b === me && !e.local) return;   // drawn when the trigger was pulled (see onlineTick)
       const muzzle = e.b === me ? camera.localToWorld(new V3(0.2, -0.15, -0.75)) : e.pellets[0].from.clone().addScaled(e.b.aim, 0.6);
-      for (const p of e.pellets) tracer(muzzle, p.to, e.b === me);
-      if (e.b === me) { viewGun.position.z += scoping ? 0.06 : 0.12; meStats.shots++; gunStat(me.gun).shots++; play(e.gun); } else play(e.gun, clamp(0.6 - e.b.p.dist(me.p) / 70, 0, 0.6), panTo(e.b.p));
+      if (!GUNS[e.gun]?.melee) for (const p of e.pellets) tracer(muzzle, p.to, e.b === me);
+      if (e.b === me) { if (GUNS[e.gun]?.melee) swingAt = performance.now() / 1000; else viewGun.position.z += scoping ? 0.06 : 0.12; meStats.shots++; gunStat(me.gun).shots++; play(e.gun); } else play(e.gun, clamp(0.6 - e.b.p.dist(me.p) / 70, 0, 0.6), panTo(e.b.p));
       return;
     }
     case "hit": paintTag(e.target);
@@ -294,7 +311,7 @@ function onBombEvent(e) {
   const who = (b) => (b ? (b === me ? "<b>you</b>" : esc(b.name)) : "someone"), mine = e.b === me, us = (team) => team === myTeam();
   switch (e.what) {
     case "round": if (e.score) bomb && (bomb.score = e.score.slice()); if (bomb) { bomb.round = e.round; bomb.atk = e.atk ?? bomb.atk; bomb.phase = "freeze"; } roundLog.plant = ""; roundLog.defuse = ""; lastAlive.us = -1; lastAlive.them = -1; spec = null; say(""); setTimeout(() => roundCard("start"), 60); return;
-    case "go": play("go"); roundCard(null); if (bomb?.carrier === me.i) { say("YOU HAVE THE BOMB", "hold E at A or B to plant"); clearTimeout(say.t); say.t = setTimeout(() => say(""), 2500); } return;
+    case "go": play("go"); roundCard(null); me.roundGun = GUNS[me.gun]?.secondary ? nextGun : me.gun; if (bomb?.carrier === me.i) { say("YOU HAVE THE BOMB", "hold E at A or B to plant"); clearTimeout(say.t); say.t = setTimeout(() => say(""), 2500); } return;
     case "drop": feed(`${who(e.b)} dropped the bomb`); return;
     case "pick": feed(`${who(e.b)} picked up the bomb`); if (mine) say("YOU HAVE THE BOMB", "hold E at a site to plant"); return;
     case "planting": if (!mine) feed(`${who(e.b)} is planting at ${world?.map.bomb?.sites[e.site]?.k || "?"}`); return;
@@ -335,13 +352,13 @@ const net = createNet({
 });
 function feedNote(text) { feed(esc(text)); log(text); }
 function applyRoster(r) {
-  r.names.forEach((n, i) => { beans[i].name = n; beans[i].bot = !r.humans[i]; beans[i].team = r.teams ? r.teams[i] : undefined; beans[i].mesh.tagKey = ""; paintTag(beans[i]); });
+  r.names.forEach((n, i) => { beans[i].name = n; beans[i].bot = !r.humans[i]; beans[i].team = r.teams ? r.teams[i] : undefined; beans[i].mesh.tagKey = ""; const look = r.looks ? r.looks[i] : null; if (beans[i] !== me && JSON.stringify(look || null) !== JSON.stringify(beans[i].look || null)) redressBean(beans[i], look); paintTag(beans[i]); });
   for (let i = r.names.length; i < beans.length; i++) { const b = beans[i]; b.team = undefined; b.dead = true; b.respawn = 9e9; b.wantsRespawn = false; b.mesh.g.visible = false; }
   if (r.teams) { if (!bomb) bomb = newBomb(); bomb.atk = r.atk ?? 0; }
   drawSb();
 }
 function joinMatch(map, slot, roster) {
-  online = true; buildMap(map); roundT = 0;
+  online = true; if (mode !== "bomb") { bomb = null; spec = null; roundCard(null); } buildMap(map); roundT = 0;
   for (const b of beans) { const keep = { mesh: b.mesh, skill: b.skill }; Object.assign(b, newBean(b.i, b.name, b.bot), keep); b.p.set(0, -50, 0); b.mesh.g.visible = false; }
   if (me) me.mesh.g.visible = false; me = beans[slot]; me.mesh.g.visible = false;
   applyRoster(roster); state = "play"; $("over").hidden = true; $("hudMap").textContent = world.map.name; $("log").innerHTML = ""; $("feed").innerHTML = ""; Object.assign(meStats, { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 });
@@ -477,7 +494,7 @@ function drawMenu() {
     <div class="pm-top"><button class="go big" data-online="1">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
     <p class="eyebrow">Gun</p>
     <div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div>
-    <p class="pm-pistol">Everyone also carries the <b>Pistol</b> · <b>Q</b> or the wheel swaps to it</p>
+    <p class="pm-pistol">Everyone also carries a <b>Pistol</b> (4) and a <b>Knife</b> (5) · <b>Q</b> or the wheel cycles through them</p>
     <div class="pm-row"><span class="eyebrow inl">Practice</span>${mode === "bomb" ? `<span class="note" style="margin:0">${esc(MAPS[BOMB_MAP]().name)} · you and two bots against three</span>` : `<div class="seg">${MAP_LIST.map((k) => `<button class="${k === mapKey ? "on" : ""}" data-map="${k}" title="${esc(MAPS[k]().blurb)}">${esc(MAPS[k]().name)}</button>`).join("")}</div>`}<button class="go ghost sm" data-go="1">vs bots</button></div>
     <p class="pm-keys"><b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>Tab</b> scores · <b>Esc</b> menu</p>
     ${site.on && !profile.server ? `<p class="note acct"><a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats.</p>` : profile.server ? `<p class="note acct">Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button></p>` : ""}
@@ -488,7 +505,8 @@ function drawMenu() {
     $("panel").innerHTML = `<b>Locker</b><p>Level <b>${profile.level}</b> · ${esc(titleFor(profile.level))}. Skins unlock by level; nothing is bought. Bots wear whatever they like.</p>
       <div class="locker"><canvas id="pv" width="220" height="260"></canvas><div>${[["body", "Body colour"], ["pattern", "Body pattern"], ["visor", "Visor"], ["gun", "Gun finish"]].map(([slot, n]) => `<p class="eyebrow">${n}</p><div class="sws">${SKINS[slot].map((s) => sw(slot, s)).join("")}</div>`).join("")}</div></div>`;
     drawPreview();
-  } else if (tab === "stats") {
+  } else if (tab === "armory") { drawArmory(); }
+  else if (tab === "stats") {
     const s = profile.stats, guns = Object.entries(s.byGun), maps = Object.entries(s.byMap);
     $("panel").innerHTML = `<b>Your stats</b><p>Level <b>${profile.level}</b> · ${esc(titleFor(profile.level))} · ${profile.xp} / ${need(profile.level)} XP to the next.</p>
       <div class="grid4"><div><b>${s.kills}</b><span>kills</span></div><div><b>${s.deaths}</b><span>deaths</span></div><div><b>${kd()}</b><span>K/D</span></div><div><b>${accuracy()}%</b><span>accuracy</span></div>
@@ -522,6 +540,9 @@ function drawMenu() {
 $("over").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return; play("click");
   if (b.dataset.resume) return resumeGame();
+  if (b.dataset.roll) return rollCase(b.dataset.roll, b.dataset.zc === "1");
+  if (b.dataset.aslot) { armory.slot = b.dataset.aslot; return drawArmory(); }
+  if (b.dataset.wear) return wearItem(b.dataset.wear);
   if (b.dataset.tab) return showMenu(b.dataset.tab);
   if (b.dataset.by) { boardBy = b.dataset.by; return drawMenu(); }
   if (b.dataset.range) { boardRange = b.dataset.range; return drawMenu(); }
@@ -554,7 +575,7 @@ function resultHtml({ headline, sub, line, xpHtml, ranks, meSlot, foot, top: top
 }
 function drawPodium(slots) {
   const c = $("podium"); if (!c) return;
-  if (!podR) { podR = new THREE.WebGLRenderer({ antialias: true, alpha: true }); podR.setSize(c.width, c.height, false); }
+  if (!podR) podR = new THREE.WebGLRenderer({ antialias: true, alpha: true }); podR.setSize(c.width, c.height, false);
   const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(28, c.width / c.height, 0.1, 30); cam.position.set(0, 1.9, 7.2); cam.lookAt(0, 0.9, 0);
   sc.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.5)); const l = new THREE.DirectionalLight(0xffffff, 1.2); l.position.set(2, 5, 4); sc.add(l);
   const xs = [-1.9, 0, 1.9], hs = [0.55, 0.95, 0.35], cols = [0xc0c0c0, 0xffd84a, 0xb87333];
@@ -575,6 +596,72 @@ function xpBlock(lines, total, pctFrom, gained, unlocked, note) {
 const fillBars = () => setTimeout(() => { for (const i of document.querySelectorAll(".lvl .bar i[data-to]")) i.style.width = i.dataset.to; }, 60);
 let nextTimer = 0;
 function nextCountdown(secs) { clearInterval(nextTimer); let n = secs; const tick = () => { const el = $("nextIn"); if (!el) { clearInterval(nextTimer); return; } el.textContent = n > 0 ? `Next map in ${n}` : "Starting…"; n--; }; tick(); nextTimer = setInterval(tick, 1000); }
+/* THE ARMORY TAB (2026-10-10). The catalogue, the player's Brass, finishes and loadout come from /api/blockshot/armory; a roll POSTs
+   to armory/roll and the reel plays back what the server drew; wearing POSTs to armory/equip and takes effect at once on your own guns
+   (others see it from your next match, when the server reads the loadout at login). The preview is a tiny scene of the slot's model
+   wearing the chosen finish, rendered by the podium's spare renderer onto the tab's canvas. */
+const armory = { data: null, slot: "ar", rolling: false, result: null, loading: false };
+const RAR = { common: ["Common", "#9aa3b5"], uncommon: ["Uncommon", "#5ac8fa"], rare: ["Rare", "#b06cff"], legend: ["Legendary", "#ff5a8a"], knife: ["Legendary", "#ffd84a"] };
+const rarityOfId = (id) => { const [slot, fin] = id.split(":"); const r = armory.data?.catalogue.finishes[fin]?.r || "common"; return slot === "knife" ? (r === "legend" ? "knife" : r === "common" ? "uncommon" : "rare") : r; };
+const itemName = (id) => { const c = armory.data?.catalogue; const [slot, fin, kind] = id.split(":"); return `${slot === "knife" ? c?.knives[kind] || "Knife" : c?.slotNames[slot] || slot} · ${c?.finishes[fin]?.n || fin}`; };
+async function loadArmory() {
+  try { const j = await fetch("/api/blockshot/armory", { credentials: "same-origin", cache: "no-store" }).then((r) => r.json()); if (j.ok) { armory.data = j; myLook = lookFrom(j.me?.loadout); } } catch {}
+  return armory.data;
+}
+const lookFrom = (lo) => { if (!lo) return null; const look = {}; for (const [s, id] of Object.entries(lo)) if (id && !id.includes(":factory")) look[s] = id; return Object.keys(look).length ? look : null; };
+function drawArmory() {
+  const d = armory.data, c = d?.catalogue, me0 = d?.me;
+  if (!d) { $("panel").innerHTML = `<b>Armory</b><p class="note">Loading…</p>`; if (!armory.loading) { armory.loading = true; loadArmory().then(() => { armory.loading = false; if (tab === "armory") drawArmory(); }); } return; }
+  const fmt = (n) => Number(n || 0).toLocaleString("en-US"), slot = armory.slot;
+  const owned = new Set(me0?.items || []), worn = me0?.loadout || {}, pool = (k) => c.cases[k].pool;
+  const list = slot === "knife" ? pool("knife") : slot === "bean" ? [`bean:factory`, ...pool("bean")] : [`${slot}:factory`, ...pool("weapon").filter((id) => id.startsWith(slot + ":"))];
+  const isFactory = (id) => id.includes(":factory"), wornId = worn[slot] || (slot === "knife" ? "knife:factory:combat" : `${slot}:factory`);
+  const res = armory.result;
+  $("panel").innerHTML = `<div class="ay">
+    <div class="ay-top"><div><b>Armory</b><p class="note ay-note">${me0 ? `<b>${c.currency}</b> comes from playing: ${c.rates.kill} a kill, +${c.rates.headshot} a headshot, ${c.rates.roundWon} a bomb round won, ${c.rates.match} a match played out, ${c.rates.firstOfDay} for the first of the day, ${c.rates.win.ffa} for topping the board. Finishes change looks and nothing else; a duplicate turns into ${c.currency}.` : `Sign in with Twitch to earn <b>${c.currency}</b> by playing and roll for finishes.`}</p></div>
+      <div class="ay-wallet"><b>${fmt(me0?.brass)}</b><small>${c.currency}</small></div></div>
+    <div class="ay-cases">${Object.entries(c.cases).map(([k, cs]) => `<div class="ay-case"><h3>${esc(cs.n)}</h3><div class="ay-odds">${cs.odds.map(([r, p]) => `<span style="color:${RAR[r][1]}">${RAR[r][0]} ${(p * 100).toFixed(p < 0.01 ? 1 : 0)}%</span>`).join("")}</div><p class="note">${esc(cs.blurb)}</p><div class="ay-row"><button class="go sm" data-roll="${k}" ${!me0 || armory.rolling ? "disabled" : ""}>Roll · ${cs.price} ${c.currency}</button>${cs.zc ? `<button class="go ghost sm" data-roll="${k}" data-zc="1" ${!me0 || armory.rolling ? "disabled" : ""}>Roll · ${cs.zc} ZC</button>` : ""}</div></div>`).join("")}</div>
+    <div class="ay-reel"><div class="ay-strip" id="ayStrip"></div></div>
+    ${res ? `<div class="ay-result" style="--c:${RAR[res.rarity][1]};--sw:${finCss(finOf(res.item))}"><div class="sw"></div><div><b>${esc(res.name)}</b><small>${RAR[res.rarity][0]}${res.dup ? ` · already owned, turned into ${res.refund} ${c.currency}` : ""}</small></div>${res.dup ? "" : `<button class="go ghost sm" data-wear="${res.item}">Wear it</button>`}</div>` : ""}
+    <p class="eyebrow">Loadout</p>
+    <div class="ay-load"><div class="ay-view"><canvas id="apv" width="520" height="300"></canvas><div class="ay-tabs">${c.slots.map((s) => `<button class="${s === slot ? "on" : ""}" data-aslot="${s}">${esc(c.slotNames[s].split(" ")[0])}</button>`).join("")}</div></div>
+      <div class="ay-skins">${list.map((id) => { const own = isFactory(id) || owned.has(id), on = id === wornId, [, fin, kind] = id.split(":"); return `<button class="ay-skin${own ? "" : " locked"}${on ? " on" : ""}" ${own && me0 ? `data-wear="${id}"` : "disabled"} style="--c:${RAR[rarityOfId(id)][1]};--sw:${finCss(fin)}">${on ? '<span class="tag">worn</span>' : ""}<div class="sw"></div><b>${slot === "knife" ? esc(c.knives[kind]) + " · " : ""}${esc(c.finishes[fin].n)}</b><small>${RAR[rarityOfId(id)][0]}${own ? "" : " · from a case"}</small></button>`; }).join("")}</div></div>
+  </div>`;
+  if (armory.rolling && armory.stripHtml) { $("ayStrip").innerHTML = armory.stripHtml; $("ayStrip").style.transform = armory.stripTransform || ""; }
+  buildArmoryPreview();
+}
+async function rollCase(caseKey, zc) {
+  if (armory.rolling || !armory.data?.me) return; armory.rolling = true; armory.result = null; drawArmory();
+  let j; try { j = await fetch("/api/blockshot/armory/roll", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ case: caseKey, zc }) }).then((r) => r.json()); } catch { j = { ok: false, message: "No answer." }; }
+  if (!j.ok) { armory.rolling = false; hint(j.message || j.code || "Could not roll"); if (j.brass !== undefined && armory.data.me) armory.data.me.brass = j.brass; drawArmory(); return; }
+  // the reel: 48 cards, the server's item at the 41st, the strip slides there and eases to a stop
+  const pool = armory.data.catalogue.cases[caseKey].pool, cards = []; for (let i = 0; i < 48; i++) cards.push(i === 40 ? j.item : pool[Math.floor(Math.random() * pool.length)]);
+  const strip = $("ayStrip"); strip.innerHTML = armory.stripHtml = cards.map((id) => `<div class="ay-card" style="--c:${RAR[rarityOfId(id)][1]};--sw:${finCss(finOf(id))}"><div class="sw"></div><b>${esc(itemName(id))}</b><small>${RAR[rarityOfId(id)][0]}</small></div>`).join("");
+  const reelW = strip.parentElement.clientWidth, target = 40 * 158 + 75 - reelW / 2 + (Math.random() * 100 - 50);
+  strip.style.transition = "none"; strip.style.transform = "translateX(0px)"; void strip.offsetWidth; strip.style.transition = "transform 4.2s cubic-bezier(.12,.8,.18,1)"; strip.style.transform = armory.stripTransform = `translateX(${-target}px)`;
+  play("click"); await new Promise((r) => setTimeout(r, 4400));
+  const me0 = armory.data.me; me0.brass = j.brass; if (!j.dup && !me0.items.includes(j.item)) me0.items.push(j.item);
+  armory.result = j; armory.rolling = false; armory.stripHtml = ""; play(j.rarity === "legend" || j.rarity === "knife" ? "levelup" : j.rarity === "rare" ? "top" : "kill"); drawArmory();
+}
+async function wearItem(id) {
+  const slot = id.split(":")[0]; let j; try { j = await fetch("/api/blockshot/armory/equip", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ slot, item: id.includes(":factory") ? "factory" : id }) }).then((r) => r.json()); } catch { j = { ok: false }; }
+  if (!j.ok) { hint(j.message || "Could not wear that"); return; }
+  armory.data.me = j.me; myLook = lookFrom(j.me.loadout); armory.slot = slot; redressMe(); play("swap"); drawArmory();
+}
+let apvScene = null, apvModel = null, apvCam = null;
+function buildArmoryPreview() {
+  const d = armory.data; if (!d) return; const slot = armory.slot, worn = d.me?.loadout || {}, id = worn[slot] || (slot === "knife" ? "knife:factory:combat" : `${slot}:factory`), fin = finOf(id);
+  if (!apvScene) { apvScene = new THREE.Scene(); apvCam = new THREE.PerspectiveCamera(32, 520 / 300, 0.05, 50); apvCam.position.set(0, 0.35, 2.2); apvCam.lookAt(0, 0, 0); apvScene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.3)); const key = new THREE.DirectionalLight(0xffffff, 1.4); key.position.set(2, 3, 3); apvScene.add(key); const rim = new THREE.DirectionalLight(0x6ad0ff, 0.8); rim.position.set(-3, 1, -2); apvScene.add(rim); }
+  if (apvModel) apvScene.remove(apvModel);
+  if (slot === "bean") { const g = beanMesh(profile.skin, apvScene, fin === "factory" ? null : { bean: id }); g.position.y = -0.75; g.scale.setScalar(1.05); apvModel = g; }
+  else { const src = gunModels[slot]; if (!src) return; const g = src.clone(true); g.visible = true; g.position.set(0, 0, 0); g.rotation.set(0, Math.PI / 2 + 0.5, slot === "knife" ? -0.2 : 0); g.scale.setScalar(slot === "pistol" ? 2.2 : slot === "knife" ? 1.6 : 1.5);
+    g.traverse((o) => { if (!o.isMesh) return; if (slot === "knife") { if ((src.userData.blade || []).some((b) => b.geometry === o.geometry)) o.material = fin === "factory" ? steelMat : finMat(fin, true); } else if ((src.userData.bodies || []).some((b) => b.geometry === o.geometry)) o.material = fin === "factory" ? skinMat(profile.skin.gun, "black") : finMat(fin); });
+    apvModel = g; apvScene.add(g); }
+}
+function drawArmoryPreview() {
+  const c = $("apv"); if (!c || !apvModel) return; if (!podR) { podR = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+  podR.setSize(c.width, c.height, false); apvModel.rotation.y += 0.008; podR.render(apvScene, apvCam); c.getContext("2d").clearRect(0, 0, c.width, c.height); c.getContext("2d").drawImage(podR.domElement, 0, 0);
+}
 let pvR = null;
 function drawPreview() {
   const c = $("pv"); if (!c) return; if (!pvR) pvR = new THREE.WebGLRenderer({ canvas: c, antialias: true, alpha: true });
@@ -589,6 +676,7 @@ function drawSb() { $("sb").innerHTML = ranked().map((b, k) => `<tr class="${b =
 function drawBoard() { $("board").innerHTML = `<b>${mode === "bomb" ? "Bomb · 3v3" : "Free-for-all"} · ${esc(world?.map.name || "")} · ${fmtT(roundLeft())} left</b><table><tr><td></td><td></td><td>K</td><td>D</td></tr>${ranked().map((b, k) => `<tr class="${b === me ? "me" : ""}"><td>${k + 1}</td><td>${esc(b.name)}${b.bot ? "<small>bot</small>" : ""}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join("")}</table>`; }
 function draw(dt) {
   for (const b of beans) { if (b === me || !b.mesh.g.visible) continue; paintTag(b); const g = b.mesh.g;
+    if (b.mesh.gunKey !== b.gun && g.userData.gun) { b.mesh.gunKey = b.gun; g.userData.gun.material = lookGunMat(b.look, b.gun, g.userData.gunDefault); g.userData.gun.visible = b.gun !== "knife"; }
     if (mode === "bomb") { const eye = camera.position, d = new V(b.p.x - eye.x, b.p.y + 0.6 - eye.y, b.p.z - eye.z), dist = d.len() || 1; d.scale(1 / dist); const r = cast(world, [], new V(eye.x, eye.y, eye.z), d, me, dist + 1); b.mesh.tag.visible = b.team === me.team || r.t >= dist - 0.8; }   // a wall between us hides the name (teammates always show)
     else b.mesh.tag.visible = true; g.position.set(b.p.x, b.p.y - R, b.p.z); let dy = b.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3; g.scale.y += ((b.slide ? 0.55 : 1) - g.scale.y) * 0.3; }
   if (mode === "bomb" && bomb && me.dead && state === "play") {
@@ -610,6 +698,7 @@ function draw(dt) {
     const bob = Math.hypot(me.v.x, me.v.z) > 1 && me.grounded && !me.slide && !ads ? Math.sin(t * 12) * 0.012 : 0;
     const rl = me.reloading ? 1 - me.reloading / g.reload : 0, sw = (performance.now() / 1000 - swapAt) / SWAP_S;   // reloading: down and rolled over, back up as it finishes; a swap is the same dip, quicker
     const dip = Math.max(rl > 0 ? Math.sin(rl * Math.PI) : 0, sw >= 0 && sw < 1 ? Math.sin(sw * Math.PI) * 0.8 : 0);
+    { const k = (performance.now() / 1000 - swingAt) / 0.28, sg = k >= 0 && k < 1 ? Math.sin(k * Math.PI) : 0; viewGun.rotation.y = -sg * 1.1; }   // the knife's swing: across and back
     viewGun.position.y += (ty + bob - dip * 0.12 - viewGun.position.y) * 0.25; viewGun.rotation.z += (-dip * 0.6 - viewGun.rotation.z) * 0.25; viewGun.rotation.x += (dip * 0.25 - viewGun.rotation.x) * 0.25;
   }
   const fov = scoping && !me.dead ? profile.settings.fov / (GUNS[me.gun].zoom || 1) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 8, 0, 1) * 14; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
@@ -636,7 +725,7 @@ function hud(dt) {
   { const on = Math.ceil(clamp(me.hp / MAX_HP, 0, 1) * 10); hpSeg.childNodes.forEach((i, k) => i.classList.toggle("on", k < on)); }
   { const g = GUNS[me.gun]; $("ammoBox").classList.toggle("empty", me.ammo === 0 && !me.reloading); $("hudReload").firstElementChild.style.width = me.reloading ? `${(1 - me.reloading / g.reload) * 100}%` : "0"; }
   if (me.dead && state === "play") { if (mode === "bomb") { $("deathBar").style.width = "0%"; $("deathSub").textContent = "no respawn this round · watching your team"; } else { $("deathBar").style.width = `${clamp(me.respawn / RESPAWN_S, 0, 1) * 100}%`; $("deathSub").textContent = `respawning in ${Math.ceil(me.respawn)}`; } }
-  { const weps = PRIMARY_KEYS.map((k, i) => `<span class="${k === me.gun ? "on" : ""}${k === nextGun && k !== me.gun && me.gun !== "pistol" ? " next" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}${k === nextGun && k !== me.gun && me.gun !== "pistol" ? " · next" : ""}</span>`).join("") + `<span class="${me.gun === "pistol" ? "on" : ""}">Q Pistol</span>`; if (hud.weps !== weps) { hud.weps = weps; $("hudWeps").innerHTML = weps; } }
+  { const held = Boolean(GUNS[me.gun]?.secondary), weps = PRIMARY_KEYS.map((k, i) => `<span class="${k === me.gun ? "on" : ""}${k === nextGun && k !== me.gun && !held ? " next" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}${k === nextGun && k !== me.gun && !held ? " · next" : ""}</span>`).join("") + `<span class="${me.gun === "pistol" ? "on" : ""}">4 Pistol</span><span class="${me.gun === "knife" ? "on" : ""}">5 Knife</span>`; if (hud.weps !== weps) { hud.weps = weps; $("hudWeps").innerHTML = weps; } }
   fitViewGun(me.gun);
   { const gn = GUNS[me.gun].n; if ($("hudGun").textContent !== gn) $("hudGun").textContent = gn; }
   $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0); $("xhair").classList.toggle("hs", hsTimer > 0);
@@ -669,7 +758,7 @@ function hud(dt) {
   if (state === "play" && mode !== "bomb") { if (place === 1 && lastPlace > 1 && me.kills > 0) { say("TOP OF THE BOARD"); play("top"); } lastPlace = place; } else lastPlace = 0;
   $("hudK").textContent = me.kills; $("hudKD").textContent = `K · ${me.deaths} D${me.streak >= 2 ? ` · ×${me.streak}` : ""}`; $("hudName").textContent = me.name;
   $("hudHpN").textContent = Math.round(Math.max(0, me.hp));
-  const g = GUNS[me.gun]; $("hudAmmo").textContent = me.reloading ? "··" : me.ammo; $("hudMag").textContent = `/ ${g.mag}`;
+  const g = GUNS[me.gun]; $("hudAmmo").textContent = g.melee ? "—" : me.reloading ? "··" : me.ammo; $("hudMag").textContent = g.melee ? "" : `/ ${g.mag}`;
   $("lockHint").hidden = locked || state !== "play" || me.dead;
   if (!me.dead && !$("death").hidden) $("death").hidden = true;   // (online, the snapshot that says you're alive lands a frame or two after the spawn event)
 }
@@ -689,10 +778,12 @@ function frame(now, driven) {
   if (raw > 0.06 && raw < 5 && state !== "menu") { perf.lastAt = now; perf.lastMs = Math.round(raw * 1000); perf.spikes.push({ at: Math.round(now / 100) / 10, ms: perf.lastMs, lag: online ? net.lag() : 0, snapGap: online ? Math.round(net.gapNow() * 1000) : 0, heapMB: performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null }); if (perf.spikes.length > 40) perf.spikes.shift(); }
   resize(); advance(dt); draw(dt); hud(dt);
   fpsN++; fpsT += dt; if (fpsT >= 1) { $("loadStat").textContent = `${fpsN} fps`; fpsN = 0; fpsT = 0; }
+  if (tab === "armory" && !$("over").hidden) drawArmoryPreview();
   if (!driven) requestAnimationFrame(frame);
 }
 buildMap(mapKey); reset(); state = "menu"; $("hudGun").textContent = GUNS.ar.n; $("hudMag").textContent = `/ ${GUNS.ar.mag}`; drawProfile(); showMenu("play");
+loadArmory().then(() => { if (myLook) redressMe(); });
 syncFromServer().then((me2) => { if (me2) { redressMe(); drawProfile(); } if (!$("over").hidden) drawMenu(); });   // redrawn for a guest too: that is when the sign-in row appears
-window.__bs = { perf, onEvent, killCard, get bomb() { return bomb; }, get mode() { return mode; }, drive(on) { clearInterval(perf.drive); perf.drive = on ? setInterval(() => frame(performance.now(), true), 1000 / 60) : 0; }, beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
+window.__bs = { perf, onEvent, killCard, buildArmoryPreview, drawArmoryPreview, get armory() { return armory; }, get apv() { return { apvModel, apvScene, podR }; }, get bomb() { return bomb; }, get mode() { return mode; }, drive(on) { clearInterval(perf.drive); perf.drive = on ? setInterval(() => frame(performance.now(), true), 1000 / 60) : 0; }, beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
   sim(seconds) { for (let k = 0; k < seconds * 60; k++) advance(1 / 60); draw(1 / 60); hud(1 / 60); } };
 requestAnimationFrame(frame);

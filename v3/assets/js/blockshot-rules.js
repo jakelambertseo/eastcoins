@@ -26,6 +26,9 @@ export const GUNS = {
   sniper: { n: "Sniper", dmg: 109, head: 1.5, cd: 1.0, mag: 3, reload: 1.9, spread: 0.012, pellets: 1, range: 160, auto: false, scope: true, zoom: 2.7, adsSpread: 0.0, adsMove: 0.7, text: "One shot, one kill, once a second. Right click to scope; from the hip it wanders. 3 rounds." },
   shotgun: { n: "Shotgun", dmg: 50, head: 1.25, cd: 0.45, mag: 2, reload: 1.1, spread: 0.06, pellets: 5, range: 20, auto: false, zoom: 1.25, adsSpread: 0.75, adsMove: 0.9, text: "Five pellets of 50 up close, nothing at range. Right click tightens the spread a little. 2 shells." },
   // the sidearm everyone carries (2026-10-09, the owner: "build the secondary pistol"): Q or the wheel swaps to it, a quick draw, its own magazine, never the gun you spawn with
+  // the knife (2026-10-10, the owner: "knives in both free for all, bomb mode, and future game modes"): no ammo, a quick draw, a short reach, a
+  // little faster on your feet; two hits kill. Always carried, never the spawn gun. Its look is the Armory's.
+  knife: { n: "Knife", dmg: 55, head: 1.3, cd: 0.45, mag: 1, reload: 0, spread: 0, pellets: 1, range: 2.3, auto: false, zoom: 1, adsSpread: 1, adsMove: 1, secondary: true, melee: true, draw: 0.15, speed: 1.1, text: "No ammo, two hits. Faster on your feet. 5 or Q." },
   pistol: { n: "Pistol", dmg: 24, head: 1.5, cd: 0.2, mag: 12, reload: 1.0, spread: 0.014, pellets: 1, range: 60, auto: false, zoom: 1.3, adsSpread: 0.5, adsMove: 0.95, secondary: true, draw: 0.22, text: "The sidearm everyone carries. 24 a hit, 12 rounds, quick to draw. Q swaps to it." }
 };
 export const GUN_KEYS = Object.keys(GUNS);
@@ -259,7 +262,7 @@ export function kill(target, by, head, now, events) {
 }
 /** Fire b's gun along dir (unit). `spreadK` scales the spread (scoped, airborne). Returns the pellets as {from, to, hit}. */
 export function fire(world, beans, b, dir, now, rand, events, spreadK = 1) {
-  const g = GUNS[b.gun]; b.cd = g.cd; b.ammo--; b.shots++;
+  const g = GUNS[b.gun]; b.cd = g.cd; if (!g.melee) b.ammo--; b.shots++;
   const eye = b.p.clone(); eye.y += PHYS.EYE * (b.slide ? 0.6 : 1); const pellets = [];   // (the camera sits lower in a slide; the page draws from the same height)
   for (let k = 0; k < g.pellets; k++) {
     const d = dir.clone(); const sp = g.spread * spreadK; d.x += (rand() * 2 - 1) * sp; d.y += (rand() * 2 - 1) * sp; d.z += (rand() * 2 - 1) * sp; d.normalize();
@@ -299,7 +302,7 @@ export function stepBean(world, beans, b, inp, dt, now, rand, events, opts = {})
   const jumped = inp.jump && b.coyote > 0 && b.v.y < 3;
   if (b.slide) { b.slideT += dt; steer(1.8); setSpeed(hs * Math.exp(-(b.slideT > SL.long ? 3 : SL.decay) * dt)); if (jumped) setSpeed(Math.min(SL.max, hs + SL.hop)); if (jumped || !inp.slide || !b.grounded || hs < SL.min * 0.7) { b.slide = false; b.slideCd = SL.cd; } }
   else if (hs > P.RUN + 0.2) { if (b.grounded) { steer(4); setSpeed(Math.max(P.RUN, hs - SL.drain * dt)); } else steer(2.6); }
-  else { const acc = b.grounded ? P.ACC_GROUND : P.ACC_AIR, run = P.RUN * (inp.scope ? G.adsMove ?? 1 : 1); b.v.x += clamp(inp.x * run - b.v.x, -acc * dt, acc * dt); b.v.z += clamp(inp.z * run - b.v.z, -acc * dt, acc * dt); }
+  else { const acc = b.grounded ? P.ACC_GROUND : P.ACC_AIR, run = P.RUN * (inp.scope ? G.adsMove ?? 1 : 1) * (G.speed ?? 1); b.v.x += clamp(inp.x * run - b.v.x, -acc * dt, acc * dt); b.v.z += clamp(inp.z * run - b.v.z, -acc * dt, acc * dt); }
   if (jumped) { b.v.y = P.JUMP; b.coyote = 0; b.grounded = false; events?.push({ type: "jump", b }); }
   if (inp.aim) b.aim.copy(inp.aim);
   if ((G.auto ? inp.fire : inp.fireTap) && b.cd <= 0 && !b.reloading) { if (b.ammo > 0) fire(world, beans, b, b.aim, now, rand, events, (opts.spreadK ?? (inp.scope ? G.adsSpread ?? 1 : 1)) * (b.grounded ? 1 : 1.6)); else if (!reload(b, events)) events?.push({ type: "empty", b }); }   // the click only when a reload could not start (already reloading): the two at once sounded like a double (2026-10-10)
@@ -390,7 +393,7 @@ export const isAtk = (b, bomb) => b.team === bomb.atk;
 /** Seats both teams and starts a round: freeze, then live. `gunFor(b)` names each bean's primary. */
 export function bombStartRound(world, beans, bomb, gunFor, rand = Math.random, events) {
   const seats = { [bomb.atk]: world.map.bomb.atk, [1 - bomb.atk]: world.map.bomb.def }, used = { 0: 0, 1: 0 };
-  for (const b of beans) { if (b.team === undefined) continue; const list = seats[b.team], s = list[Math.min(used[b.team]++, list.length - 1)]; placeBean(b, s, gunFor(b), events); b.facing = b.team === bomb.atk ? Math.PI : 0; b.use = false; }
+  for (const b of beans) { if (b.team === undefined) continue; const list = seats[b.team], s = list[Math.min(used[b.team]++, list.length - 1)]; placeBean(b, s, gunFor(b), events); b.roundGun = b.gun; b.facing = b.team === bomb.atk ? Math.PI : 0; b.use = false; }   // roundGun: the primary this round is played with (a swap back to it is always allowed)
   const atk = beans.filter((b) => b.team === bomb.atk);
   bomb.phase = "freeze"; bomb.t = BOMB.FREEZE_S; bomb.carrier = atk.length ? atk[Math.floor(rand() * atk.length)].i : -1; bomb.drop = null; bomb.planted = null; bomb.act = null; bomb.siteFor = Math.floor(rand() * world.map.bomb.sites.length);
   events?.push({ type: "bomb", what: "round", round: bomb.round, score: bomb.score.slice(), atk: bomb.atk, carrier: bomb.carrier });

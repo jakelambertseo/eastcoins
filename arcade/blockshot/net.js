@@ -9,7 +9,7 @@
 
    Shots are never predicted: the page draws its own tracer and plays the bang at once, and the server's events decide the rest.
    createNet(hooks) -> { connect(opts), close(), on, slot, tick(dt), events(): [...] , roster, round, ping } */
-import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=15";
+import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=16";
 
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
 const INTERP = 0.1, SEND_EVERY = 2;
@@ -21,6 +21,10 @@ export function createNet(hooks) {
   const now = () => performance.now() / 1000;
 
   N.connect = async ({ gun, name, mode = "ffa" }) => {
+    // one socket at a time (2026-10-10): joining the other mode from the menu used to open a second socket while the first kept sending
+    // its map and positions, so the Compound was rebuilt under a Lot match and the player fell through it
+    if (ws) { const old = ws; ws = null; try { old.onmessage = null; old.onclose = null; old.onerror = null; old.close(); } catch {} }
+    N.on = false; N.slot = -1; N.roster = null; N.round = null; snaps = []; pending = []; toSend = []; seq = 0; ack = 0; sendN = 0; lastSnapAt = 0; N.worstGap = 0;
     let url; const path = mode === "bomb" ? "/bomb" : "/bs";
     if (DEV) { const as = new URLSearchParams(location.search).get("as") || name || "you"; url = `ws://${location.hostname}:8788${path}?dev=1&login=${encodeURIComponent(as)}&gun=${gun}`; }
     else {
@@ -33,11 +37,11 @@ export function createNet(hooks) {
     }
     return new Promise((resolve) => {
       let settled = false; const done = (v, why) => { if (!settled) { settled = true; N.why = why || ""; resolve(v); } };
-      try { ws = new WebSocket(url); } catch { return done(false, "down"); }
-      const timer = setTimeout(() => { if (!N.on) { try { ws.close(); } catch {} done(false, "timeout"); } }, DEV ? 2500 : 6000);
-      ws.onmessage = (e) => { let m; try { m = JSON.parse(e.data); } catch { return; } onMsg(m); if (m.t === "hello") { clearTimeout(timer); done(true); } };
-      ws.onclose = () => { const was = N.on; N.on = false; ws = null; if (was) hooks.onDrop?.(N.why || "closed"); done(false, "down"); };
-      ws.onerror = () => { done(false, "down"); };
+      let sock; try { sock = ws = new WebSocket(url); } catch { return done(false, "down"); }
+      const timer = setTimeout(() => { if (!N.on && sock === ws) { try { sock.close(); } catch {} done(false, "timeout"); } }, DEV ? 2500 : 6000);
+      sock.onmessage = (e) => { if (sock !== ws) return; let m; try { m = JSON.parse(e.data); } catch { return; } onMsg(m); if (m.t === "hello") { clearTimeout(timer); done(true); } };
+      sock.onclose = () => { if (sock !== ws) return; const was = N.on; N.on = false; ws = null; if (was) hooks.onDrop?.(N.why || "closed"); done(false, "down"); };
+      sock.onerror = () => { if (sock === ws) done(false, "down"); };
     });
   };
   N.close = () => { N.on = false; if (ws) { try { ws.close(); } catch {} ws = null; } snaps = []; pending = []; toSend = []; };
@@ -104,7 +108,8 @@ export function createNet(hooks) {
     beans.forEach((bean, k) => {
       if (k === N.slot) return; const p = a.b[k], q = c ? c.b[k] : null, l = latest.b[k]; if (!p || !l) return;
       const was = bean.dead; let x, y, z;
-      if (q && !l[8]) { x = p[0] + (q[0] - p[0]) * u; y = p[1] + (q[1] - p[1]) * u; z = p[2] + (q[2] - p[2]) * u; let df = q[6] - p[6]; df = Math.atan2(Math.sin(df), Math.cos(df)); bean.facing = p[6] + df * u; }
+      if (q && !l[8] && !p[8]) { x = p[0] + (q[0] - p[0]) * u; y = p[1] + (q[1] - p[1]) * u; z = p[2] + (q[2] - p[2]) * u; let df = q[6] - p[6]; df = Math.atan2(Math.sin(df), Math.cos(df)); bean.facing = p[6] + df * u; }
+      else if (p[8] && !l[8]) { x = l[0]; y = l[1]; z = l[2]; bean.facing = l[6]; if (bean.sm) bean.sm.px = NaN; }   // a respawn: straight to the spawn, never a slide across the map from where they died (2026-10-10)
       else {   // the newest snapshot is already behind the moment we draw (snapshots arrive in bunches): carry on along its velocity for up to 0.4 s rather than stand still
         const ahead = l[8] ? 0 : Math.min(0.4, Math.max(0, rt2 - latest.now));
         x = l[0] + l[3] * ahead; y = l[1] + (l[12] ? 0 : l[4] * ahead); z = l[2] + l[5] * ahead; bean.facing = l[6];
