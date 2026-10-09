@@ -12,7 +12,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk } from "/v3/assets/js/blockshot-rules.js?v=15";
 import { createNet } from "./net.js?v=16";
 import { material, skin as skinTex } from "./tex.js?v=1";
-import { play, setVolume, ensure as audioOn } from "./audio.js?v=8";
+import { play, setVolume, ensure as audioOn } from "./audio.js?v=9";
 import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=11";
 
 const V3 = THREE.Vector3;
@@ -265,6 +265,22 @@ const inPlay = () => (mode === "bomb" ? beans.filter((b) => b.team !== undefined
 const myTeam = () => (bomb && me && me.team !== undefined ? me.team : 0);
 const teamName = (team) => (bomb ? (team === bomb.atk ? "Attackers" : "Defenders") : "");
 const WHY = { boom: "the bomb went off", defused: "the bomb was defused", wipe: "the other side was wiped out", time: "time ran out" };
+/* The round cards (2026-10-10, the owner: "round start/end cards … more horizontal than vertical"): one wide strip across the view.
+   At the freeze: the attackers on the left, the defenders on the right (name and gun), the round and your side in the middle with the
+   pick-your-gun countdown. After the round: who lived and who died on each side, who won and why in the middle, and the score. */
+const roundLog = { plant: "", defuse: "" }, lastAlive = { us: -1, them: -1 };
+function roundCard(kind) {
+  const el = $("roundCard"); if (!bomb || !kind) { el.hidden = true; return; }
+  const teams = [0, 1], mine = myTeam(), nameOf = (b) => esc(b.name), gunOf = (b) => GUNS[b.gun]?.n.split(" ")[0] || "";
+  const side = (team) => { const list = inPlay().filter((b) => b.team === team); const h = `<h4>${teamName(team)}${team === mine ? " · you" : ""}</h4>`;
+    return h + list.map((b) => kind === "start" ? `<span>${nameOf(b)} <small>${gunOf(b)}</small></span>` : `<span class="${b.dead ? "dead" : ""}">${nameOf(b)}${roundLog.plant === b.name ? " <small>planted</small>" : ""}${roundLog.defuse === b.name ? " <small>defused</small>" : ""}</span>`).join(""); };
+  const left = bomb.atk, right = 1 - bomb.atk;
+  $("rcLeft").className = `rc-side ${left === mine ? "us" : "them"}`; $("rcLeft").innerHTML = side(left);
+  $("rcRight").className = `rc-side r ${right === mine ? "us" : "them"}`; $("rcRight").innerHTML = side(right);
+  if (kind === "start") $("rcMid").innerHTML = `<b>Round ${bomb.round}</b><small>${isAtk(me, bomb) ? "you attack" : "you defend"}</small><small id="rcCount">pick your gun · 1 2 3</small>`;
+  else { const w = bomb.lastWin, won = w && w.team === mine; $("rcMid").innerHTML = `<b class="${won ? "" : "lost"}">${won ? "Round won" : "Round lost"}</b><small>${w ? WHY[w.why] || w.why : ""}</small><em><i>${bomb.score[mine]}</i> – <i>${bomb.score[1 - mine]}</i></em>`; }
+  el.hidden = false;
+}
 function decodeBomb(bm) {
   if (!bomb) bomb = newBomb();
   bomb.phase = ["freeze", "live", "post"][bm[0]] || "live"; bomb.t = bm[1]; bomb.round = bm[2]; bomb.score = [bm[3], bm[4]]; bomb.atk = bm[5]; bomb.carrier = bm[6];
@@ -277,16 +293,16 @@ function onBombEvent(e) {
   if (!e.b && e.s >= 0 && beans[e.s]) e.b = beans[e.s];   // practice events name a slot, not a bean
   const who = (b) => (b ? (b === me ? "<b>you</b>" : esc(b.name)) : "someone"), mine = e.b === me, us = (team) => team === myTeam();
   switch (e.what) {
-    case "round": if (e.score) bomb && (bomb.score = e.score.slice()); say(`ROUND ${e.round}`, e.carrier === me.i ? "you have the bomb" : `${teamName(myTeam())}`); spec = null; return;
-    case "go": play("go"); say(""); if (bomb?.carrier === me.i) { say("YOU HAVE THE BOMB", "hold E at A or B to plant"); clearTimeout(say.t); say.t = setTimeout(() => say(""), 2500); } return;
+    case "round": if (e.score) bomb && (bomb.score = e.score.slice()); if (bomb) { bomb.round = e.round; bomb.atk = e.atk ?? bomb.atk; bomb.phase = "freeze"; } roundLog.plant = ""; roundLog.defuse = ""; lastAlive.us = -1; lastAlive.them = -1; spec = null; say(""); setTimeout(() => roundCard("start"), 60); return;
+    case "go": play("go"); roundCard(null); if (bomb?.carrier === me.i) { say("YOU HAVE THE BOMB", "hold E at A or B to plant"); clearTimeout(say.t); say.t = setTimeout(() => say(""), 2500); } return;
     case "drop": feed(`${who(e.b)} dropped the bomb`); return;
     case "pick": feed(`${who(e.b)} picked up the bomb`); if (mine) say("YOU HAVE THE BOMB", "hold E at a site to plant"); return;
     case "planting": if (!mine) feed(`${who(e.b)} is planting at ${world?.map.bomb?.sites[e.site]?.k || "?"}`); return;
-    case "planted": say("BOMB PLANTED", `at ${world?.map.bomb?.sites[e.site]?.k || "?"} · ${isAtk(me, bomb) ? "defend it" : "hold E to defuse"}`); play("planted"); feed(`${who(e.b)} planted the bomb at ${world?.map.bomb?.sites[e.site]?.k || "?"}`); return;
-    case "defusing": if (!mine) feed(`${who(e.b)} is defusing`); return;
-    case "defused": say("BOMB DEFUSED", who(e.b).replace(/<[^>]+>/g, "")); play("defused"); return;
+    case "planted": if (e.b) roundLog.plant = e.b.name; say("BOMB PLANTED", `at ${world?.map.bomb?.sites[e.site]?.k || "?"} · ${isAtk(me, bomb) ? "defend it" : "hold E to defuse"}`); play("planted"); feed(`${who(e.b)} planted the bomb at ${world?.map.bomb?.sites[e.site]?.k || "?"}`); return;
+    case "defusing": if (e.b && e.b.team !== myTeam()) { say("DEFUSING", `${e.b.name} is on the bomb · stop them`); play("alarm"); clearTimeout(say.t); say.t = setTimeout(() => say(""), 2200); } else if (!mine) feed(`${who(e.b)} is defusing`); return;
+    case "defused": if (e.b) roundLog.defuse = e.b.name; say("BOMB DEFUSED", who(e.b).replace(/<[^>]+>/g, "")); play("defused"); return;
     case "boom": play("boom"); say("BOOM", ""); return;
-    case "win": { bomb && (bomb.score = e.score.slice()); const won = us(e.team); say(won ? "ROUND WON" : "ROUND LOST", WHY[e.why] || e.why); play(won ? "win" : "lose"); feed(`${teamName(e.team)} win the round: ${WHY[e.why] || e.why}`, won ? "me" : "dead"); clearTimeout(say.t); say.t = setTimeout(() => say(""), 2500); return; }
+    case "win": { if (bomb) { bomb.score = e.score.slice(); bomb.lastWin = { team: e.team, why: e.why }; bomb.phase = "post"; } const won = us(e.team); say(""); play(won ? "win" : "lose"); feed(`${teamName(e.team)} win the round: ${WHY[e.why] || e.why}`, won ? "me" : "dead"); setTimeout(() => roundCard("end"), 60); return; }
     case "match": return;
   }
 }
@@ -627,16 +643,26 @@ function hud(dt) {
   if (mode === "bomb" && bomb && state === "play") {
     const atk = isAtk(me, bomb), fuse = bomb.planted ? bomb.planted.t : null;
     $("hudT").textContent = bomb.phase === "freeze" ? String(Math.ceil(bomb.t)) : fmtT(Math.max(0, fuse ?? bomb.t));
-    $("hudT").classList.toggle("fuse", Boolean(fuse)); const sc = $("hudScore"); sc.hidden = false; sc.innerHTML = `<b>${bomb.score[myTeam()]}</b> – <b>${bomb.score[1 - myTeam()]}</b>`;
+    $("hudT").classList.toggle("fuse", Boolean(fuse));
+    { const us = inPlay().filter((b) => b.team === myTeam() && !b.dead).length, them = inPlay().filter((b) => b.team !== undefined && b.team !== myTeam() && !b.dead).length;
+      const su = $("scoreUs"), st = $("scoreThem"); su.hidden = st.hidden = false;
+      const hu = `<b>${bomb.score[myTeam()]}</b><small>you · ${us} up</small>`, ht = `<b>${bomb.score[1 - myTeam()]}</b><small>them · ${them} up</small>`; if (su.innerHTML !== hu) su.innerHTML = hu; if (st.innerHTML !== ht) st.innerHTML = ht;
+      if (bomb.phase === "live") {   // last-alive callouts (2026-10-10): you are the last of your side, or they are down to one
+        if (lastAlive.us > 1 && us === 1 && !me.dead && them >= 1) { say("LAST ONE STANDING", `1 v ${them}`); play("last"); clearTimeout(say.t); say.t = setTimeout(() => say(""), 2600); }
+        else if (lastAlive.them > 1 && them === 1 && us >= 1) { say("ONE LEFT", `${us} v 1`); play("top"); clearTimeout(say.t); say.t = setTimeout(() => say(""), 1800); }
+      }
+      lastAlive.us = us; lastAlive.them = them;
+      if (bomb.phase === "freeze") { const rc = $("rcCount"); if (rc) rc.textContent = `pick your gun · 1 2 3 · ${Math.ceil(bomb.t)}`; if ($("roundCard").hidden) roundCard("start"); }
+      else if (bomb.phase === "live" && !$("roundCard").hidden) roundCard(null); }
     const carrierName = bomb.carrier >= 0 ? (beans[bomb.carrier] === me ? "you" : beans[bomb.carrier].name) : null, site = bomb.planted ? world.map.bomb.sites[bomb.planted.site].k : "";
     let line = bomb.phase === "freeze" ? `Round ${bomb.round} · ${atk ? "you attack" : "you defend"} · pick your gun: 1 2 3` : bomb.phase === "post" ? (bomb.lastWin ? `${teamName(bomb.lastWin.team)} win the round` : "") :
-      bomb.planted ? (atk ? `Bomb planted at ${site} · keep them off it` : `Bomb planted at ${site} · hold E at it to defuse`) : atk ? (bomb.carrier === me.i ? "You have the bomb · hold E at A or B" : bomb.drop ? "The bomb is on the ground · pick it up" : `${carrierName || "nobody"} has the bomb`) : "Hold the sites";
+      bomb.planted ? (bomb.act?.kind === "defuse" ? (atk ? `${beans[bomb.act.s]?.name || "someone"} is DEFUSING at ${site} · stop them` : `${beans[bomb.act.s] === me ? "You are" : (beans[bomb.act.s]?.name || "someone") + " is"} defusing at ${site}`) : atk ? `Bomb planted at ${site} · keep them off it` : `Bomb planted at ${site} · hold E at it to defuse`) : atk ? (bomb.carrier === me.i ? "You have the bomb · hold E at A or B" : bomb.drop ? "The bomb is on the ground · pick it up" : `${carrierName || "nobody"} has the bomb`) : "Hold the sites";
     if (me.dead && spec) line = `Watching ${spec.name} · click for the next`;
     const bl = $("bombLine"); if (bl.textContent !== line) bl.textContent = line; bl.hidden = !line;
     const act = bomb.act && bomb.act.s === me.i ? bomb.act : null, rb = $("reloadBar");
     if (act) { rb.hidden = false; rb.firstElementChild.textContent = act.kind === "plant" ? "Planting" : "Defusing"; $("reloadFill").style.width = `${((act.p ?? act.t / (act.kind === "plant" ? BOMB.PLANT_S : BOMB.DEFUSE_S)) * 100).toFixed(1)}%`; }
     else if (rb.firstElementChild.textContent !== "Reloading") { rb.firstElementChild.textContent = "Reloading"; rb.hidden = true; }
-  } else { $("hudScore").hidden = true; $("bombLine").hidden = true; $("hudT").classList.remove("fuse"); $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft()); }
+  } else { $("scoreUs").hidden = true; $("scoreThem").hidden = true; $("roundCard").hidden = true; $("bombLine").hidden = true; $("hudT").classList.remove("fuse"); $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft()); }
   { const spike = perf.lastAt && performance.now() - perf.lastAt < 3000 ? ` · spike ${perf.lastMs}ms` : "", snap = online && net.worstGap > 0.15 ? ` · snap ${Math.round(net.worstGap * 1000)}ms` : "";
     $("hudPing").textContent = online ? `${net.ping} ms${net.lag() > 12 ? ` · lag ${net.lag()}` : ""}${snap}${spike}` : spike.replace(" · ", ""); }
   const place = ranked().indexOf(me) + 1; $("hudPlace").textContent = state !== "play" ? "" : mode === "bomb" && bomb ? `Round ${bomb.round} · ${isAtk(me, bomb) ? "attacking" : "defending"}` : `${ord(place)} of ${inPlay().length}`;

@@ -11,7 +11,7 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");   /* framed on eastcoin.vip: the class is set before the first paint, or the full page with its sidebar shows for a second */</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap">
-<link rel="stylesheet" href="blockshot.css?v=11">
+<link rel="stylesheet" href="blockshot.css?v=12">
 <script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/" } }</script>
 </head>
 <body>
@@ -28,11 +28,14 @@
           <div class="dmgdir" id="dmgDir"><i></i></div>
           <div class="hud-top">
             <div class="chip"><b id="hudName">You</b><span class="lv" id="hudLevel"></span><span class="kd"><span id="hudK">0</span> <span id="hudKD">kills</span></span></div>
-            <div class="clock"><small id="hudScore" hidden></small><b id="hudT">4:00</b><small id="hudPlace"></small><small id="hudMap"></small><small id="hudPing"></small></div>
-            <div id="bombLine" hidden></div>
+            <div class="top-mid">
+              <div class="clock"><div class="sc us" id="scoreUs" hidden><b>0</b><small>you</small></div><div class="mid"><b id="hudT">4:00</b><small id="hudPlace"></small><small id="hudMap"></small><small id="hudPing"></small></div><div class="sc them" id="scoreThem" hidden><b>0</b><small>them</small></div></div>
+              <div id="bombLine" hidden></div>
+            </div>
             <div class="feed" id="feed"></div>
           </div>
           <div class="streak" id="hudMsg"></div><div class="sub" id="hudSub"></div>
+          <div id="roundCard" hidden><div class="rc-side" id="rcLeft"></div><div class="rc-mid" id="rcMid"></div><div class="rc-side" id="rcRight"></div></div>
           <div id="reloadBar" hidden><span>Reloading</span><div class="rb"><i id="reloadFill"></i></div></div>
           <div id="hint" hidden></div>
           <div id="killcard" hidden><small>You got</small><b id="kcName"></b><span id="kcTag" hidden>Headshot</span><em id="kcXp"></em></div>
@@ -66,6 +69,6 @@
     </div>
   </section>
 </main>
-<script type="module" src="blockshot.js?v=22"></script>
+<script type="module" src="blockshot.js?v=23"></script>
 </body>
 </html>

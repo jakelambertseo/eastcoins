@@ -27,6 +27,8 @@ function noise({ dur = 0.1, gain = 0.2, lp = 2000, hp = 0, decay = 2, delay = 0,
   node.connect(g); out(a, g, pan); s.start(t0);
 }
 const SOUNDS = {
+  alarm: () => { for (let i = 0; i < 4; i++) tone({ f: i % 2 ? 620 : 880, dur: 0.14, type: "square", gain: 0.08, delay: i * 0.15 }); },
+  last: () => { noise({ dur: 0.3, gain: 0.35, lp: 220, decay: 2 }); tone({ f: 220, to: 440, dur: 0.6, type: "triangle", gain: 0.1, delay: 0.1 }); },
   planted: () => { for (let i = 0; i < 3; i++) tone({ f: 1200, dur: 0.08, type: "square", gain: 0.09, delay: i * 0.16 }); },
   defused: () => { [880, 1175, 1568].forEach((f, i) => tone({ f, dur: 0.18, type: "triangle", gain: 0.1, delay: i * 0.1 })); },
   boom: () => { noise({ dur: 1.2, gain: 0.9, lp: 300, decay: 1.5 }); tone({ f: 70, to: 25, dur: 1.0, type: "sine", gain: 0.3 }); noise({ dur: 0.5, gain: 0.4, lp: 2000, decay: 3 }); },
