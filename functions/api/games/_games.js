@@ -26,7 +26,9 @@ export const GAMES = {
   simon: { key: "simon", name: "Simon", daily: false, route: "simon", icon: "🟩", blurb: "Four pads, a sequence that grows by one every round. Repeat it back until you can't." },
   fg: { key: "fg", name: "Field Goal", daily: false, route: "fg", icon: "🏈", blurb: "Power, then aim, into the wind. Every kick is five yards further; one miss ends the run." },
   centre: { key: "centre", name: "Dead Centre", daily: false, route: "centre", icon: "🎯", blurb: "Stop the bar in the middle, five times. Two hundred a go, and a quick sweep is worth more." },
-  gold: { key: "gold", name: "The Gold Button", daily: true, route: null, icon: "🟡", blurb: "Once a day, at a moment nobody knows, it appears on every page for two minutes. First press takes the day." }
+  gold: { key: "gold", name: "The Gold Button", daily: true, route: null, icon: "🟡", blurb: "Once a day, at a moment nobody knows, it appears on every page for two minutes. First press takes the day." },
+  // (2026-10-08) Blockshot is its own page (/blockshot, framed by the shell like the lounge) and keeps its own stats; the room only lists it
+  blockshot: { key: "blockshot", name: "Blockshot", daily: false, route: "blockshot", icon: "🔫", blurb: "A Krunker-style free-for-all: big maps built for slide-hopping, three guns, levels that unlock skins. You against eleven bots for now." }
 };
 
 export { chicagoDay };

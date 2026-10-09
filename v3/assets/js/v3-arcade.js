@@ -18,7 +18,8 @@
    site they live under /arcade/ in the same folder layout (/arcade/lounge3d-mock/, /arcade/climb3d-mock/, /arcade/arcade-kit/...), so no path inside them changes. */
 (() => {
   const ROOMS = { lounge: { title: "The Lounge", local: "/tools/lounge3d-mock/index.html", live: "/arcade/lounge3d-mock/" },
-    climb: { title: "The Climb", local: "/tools/climb3d-mock/index.html", live: "/arcade/climb3d-mock/" } };
+    climb: { title: "The Climb", local: "/tools/climb3d-mock/index.html", live: "/arcade/climb3d-mock/" },
+    blockshot: { title: "Blockshot", local: "/tools/blockshot/index.html", live: "/arcade/blockshot/" } };   // (2026-10-08) the shooter: a standalone in the Games section, not a lounge room
   let frame = null, onMsg = null;
   const CSS_ID = "css-arcade-embed";
   function needCss() {

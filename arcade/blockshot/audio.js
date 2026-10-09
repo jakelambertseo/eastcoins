@@ -1,0 +1,49 @@
+/* Blockshot's sounds: all synthesised, no files (2026-10-08, the owner: "free sounds"). WebAudio: a noise burst shaped by a filter is a
+   gunshot, a sine with a fast decay is a tick, a couple of notes is a chime. Volume is one setting; other people's shots fade with
+   distance. A real sound pack can replace any of these one by one: `play(name, gain)` is the only door. */
+let ac = null, master = null, vol = 0.8;
+const ensure = () => {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = vol; master.connect(ac.destination); } catch { return null; } }
+  if (ac.state === "suspended") ac.resume().catch(() => {});
+  return ac;
+};
+export const setVolume = (v) => { vol = Math.max(0, Math.min(1, v)); if (master) master.gain.value = vol; };
+export { ensure };
+
+function tone({ f = 440, to = 0, dur = 0.1, type = "sine", gain = 0.1, delay = 0 }) {
+  const a = ensure(); if (!a) return; const t0 = a.currentTime + delay;
+  const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0); if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+  g.gain.setValueAtTime(gain, t0); g.gain.exponentialRampToValueAtTime(0.0005, t0 + dur); o.connect(g).connect(master); o.start(t0); o.stop(t0 + dur + 0.02);
+}
+function noise({ dur = 0.1, gain = 0.2, lp = 2000, hp = 0, decay = 2, delay = 0 }) {
+  const a = ensure(); if (!a) return; const t0 = a.currentTime + delay, n = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay);
+  const s = a.createBufferSource(); s.buffer = buf; const g = a.createGain(); g.gain.value = gain;
+  let node = s; if (lp) { const f = a.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = lp; node.connect(f); node = f; } if (hp) { const f = a.createBiquadFilter(); f.type = "highpass"; f.frequency.value = hp; node.connect(f); node = f; }
+  node.connect(g).connect(master); s.start(t0);
+}
+const SOUNDS = {
+  ar: (k) => { noise({ dur: 0.09, gain: 0.5 * k, lp: 2600, decay: 3 }); tone({ f: 180, to: 60, dur: 0.07, type: "square", gain: 0.12 * k }); },
+  sniper: (k) => { noise({ dur: 0.35, gain: 0.7 * k, lp: 1800, decay: 2.5 }); tone({ f: 900, to: 90, dur: 0.25, type: "sawtooth", gain: 0.14 * k }); noise({ dur: 0.5, gain: 0.12 * k, lp: 600, decay: 1.5, delay: 0.05 }); },
+  shotgun: (k) => { noise({ dur: 0.28, gain: 0.8 * k, lp: 1400, decay: 2 }); tone({ f: 120, to: 40, dur: 0.22, type: "square", gain: 0.2 * k }); },
+  hit: () => tone({ f: 1400, dur: 0.05, type: "square", gain: 0.08 }),
+  headshot: () => { tone({ f: 1800, dur: 0.07, type: "square", gain: 0.1 }); tone({ f: 2400, dur: 0.1, type: "square", gain: 0.08, delay: 0.05 }); },
+  kill: () => { tone({ f: 660, dur: 0.12, type: "triangle", gain: 0.12 }); tone({ f: 990, dur: 0.18, type: "triangle", gain: 0.12, delay: 0.09 }); },
+  hurt: () => { tone({ f: 160, to: 70, dur: 0.14, type: "sawtooth", gain: 0.1 }); noise({ dur: 0.08, gain: 0.15, lp: 900 }); },
+  die: () => { tone({ f: 300, to: 60, dur: 0.5, type: "sawtooth", gain: 0.12 }); noise({ dur: 0.4, gain: 0.2, lp: 500 }); },
+  reload: () => { tone({ f: 500, to: 700, dur: 0.06, type: "square", gain: 0.05 }); tone({ f: 350, dur: 0.05, type: "square", gain: 0.05, delay: 0.35 }); tone({ f: 800, dur: 0.05, type: "square", gain: 0.05, delay: 0.7 }); },
+  empty: () => tone({ f: 600, dur: 0.04, type: "square", gain: 0.05 }),
+  jump: () => noise({ dur: 0.08, gain: 0.08, lp: 1200, hp: 300 }),
+  slide: () => noise({ dur: 0.25, gain: 0.07, lp: 800, hp: 150, decay: 1 }),
+  pad: () => { tone({ f: 300, to: 900, dur: 0.25, type: "triangle", gain: 0.12 }); noise({ dur: 0.15, gain: 0.1, lp: 1500 }); },
+  spawn: () => { tone({ f: 440, dur: 0.1, type: "triangle", gain: 0.06 }); tone({ f: 660, dur: 0.12, type: "triangle", gain: 0.06, delay: 0.08 }); },
+  streak: () => { for (let i = 0; i < 3; i++) tone({ f: 520 + i * 160, dur: 0.14, type: "square", gain: 0.07, delay: i * 0.08 }); },
+  levelup: () => { [523, 659, 784, 1047].forEach((f, i) => tone({ f, dur: 0.22, type: "triangle", gain: 0.1, delay: i * 0.11 })); },
+  win: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tone({ f, dur: 0.3, type: "triangle", gain: 0.1, delay: i * 0.13 })); },
+  lose: () => { [440, 349, 262].forEach((f, i) => tone({ f, dur: 0.35, type: "triangle", gain: 0.08, delay: i * 0.18 })); },
+  count: () => tone({ f: 880, dur: 0.08, type: "square", gain: 0.06 }),
+  go: () => tone({ f: 1320, dur: 0.2, type: "square", gain: 0.08 }),
+  click: () => tone({ f: 1000, dur: 0.03, type: "square", gain: 0.04 })
+};
+/** play("ar", 0.4): the name, and how loud (0..1, distance for other people's shots). */
+export function play(name, k = 1) { const s = SOUNDS[name]; if (s && k > 0.02) s(k); }

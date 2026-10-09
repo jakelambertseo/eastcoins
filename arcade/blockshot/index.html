@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Blockshot</title>
+<!-- Blockshot: a Krunker-style free-for-all on the bean engine (2026-10-08). The standalone game for the site's Games section: two big
+     maps built for slide-hopping, three guns, bots, levels and skins, lifetime stats, settings. Everything in the page, all sounds and
+     textures drawn in code; nothing calls /api/ yet. ?embed=1 frames it on eastcoin.vip. http://localhost:4321/tools/blockshot/ -->
+<link rel="stylesheet" href="../ui-kit/kit.css?v=2">
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/" } }</script>
+<style>
+:root{color-scheme:dark}
+html,body{margin:0;background:#0b0912;color:#e8e0cc;font-family:Lora,Georgia,serif}
+body{background:radial-gradient(1100px 600px at 8% -10%,#102a3a,transparent),radial-gradient(900px 600px at 100% 30%,#3a1030,transparent),#0b0912}
+main{max-width:1320px;margin:0 auto;padding:28px 16px 80px}
+h1{margin:0 0 4px;font:800 38px/1.1 Cinzel,Georgia,serif;color:#ffd27a}
+h2{margin:0 0 6px;font:800 26px Cinzel,Georgia,serif;color:#ffcf6a}
+.lede{margin:0 0 10px;color:#cdc2a8;max-width:1000px;line-height:1.6}.lede b,.sec>p b{color:#fff0cc}
+.sec{margin:40px 0 0;padding:22px 0 0;border-top:2px solid #2e1e34}
+.play{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;margin-top:14px;align-items:start}@media (max-width:1050px){.play{grid-template-columns:1fr}}
+.stage{position:relative;border-radius:12px;overflow:hidden;box-shadow:0 0 0 2px #5a3a1a,0 14px 40px rgba(0,0,0,.6);background:#0e1a24;height:min(74vh,700px);min-height:420px}
+.stage canvas{display:block;width:100%;height:100%;outline:none;touch-action:none;cursor:crosshair}
+.hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;padding:12px 14px;pointer-events:none;font:800 14px Lora,serif;color:#fff;text-shadow:0 2px 6px #000}
+.hud b{font:800 22px Cinzel,serif;color:#ffd27a}.hud .mid{text-align:center}.hud .mid b{font-size:30px}.hud small{font:700 12px Lora,serif;color:#ffe8b0}
+#xhair{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;pointer-events:none}
+#xhair::before,#xhair::after{content:"";position:absolute;background:rgba(255,255,255,.9);box-shadow:0 0 3px #000}
+#xhair::before{left:10px;top:0;width:2px;height:22px}#xhair::after{top:10px;left:0;height:2px;width:22px}
+#xhair[data-style="dot"]::before{left:8px;top:8px;width:6px;height:6px;border-radius:50%}#xhair[data-style="dot"]::after{display:none}
+#xhair.hitm::before,#xhair.hitm::after{background:#ff4a6a;transform:rotate(45deg)}#xhair.kill::before,#xhair.kill::after{background:#ffd84a;transform:rotate(45deg) scale(1.4)}
+#scope{position:absolute;inset:0;pointer-events:none;display:none;background:radial-gradient(circle at center,transparent 22%,rgba(0,0,0,.92) 23%)}#scope.on{display:block}
+.bottomhud{position:absolute;left:14px;right:14px;bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none;color:#fff;text-shadow:0 2px 6px #000;font:800 14px Lora,serif}
+#hudHp{width:220px;height:12px;border-radius:6px;background:rgba(0,0,0,.5);overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.15);margin-top:4px}#hudHp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#c8102e,#ff6a6a)}
+#hudAmmo{font:800 40px Cinzel,serif;line-height:1}#hudAmmo small{font:800 16px Lora,serif;color:#cdc2a8}#hudGun{font:800 13px Lora,serif;color:#ffe8b0}
+.feed{position:absolute;right:14px;top:62px;display:grid;gap:4px;justify-items:end;pointer-events:none}
+.feed p{margin:0;padding:4px 10px;border-radius:6px;background:rgba(8,4,14,.7);font:800 12.5px Lora,serif;color:#ddd}.feed p b{color:#ffd84a}.feed p.me{box-shadow:0 0 0 1.5px #ffd84a}.feed p.dead{color:#ff8a8a}
+.msg{position:absolute;left:0;right:0;top:34%;text-align:center;font:800 32px Cinzel,serif;color:#ffd27a;text-shadow:0 3px 10px #000;pointer-events:none}
+.sub{position:absolute;left:0;right:0;top:44%;text-align:center;font:800 15px Lora,serif;color:#fff;text-shadow:0 2px 6px #000;pointer-events:none}
+#hurt{position:absolute;inset:0;pointer-events:none}#hurt.on{animation:hurt .35s ease-out}@keyframes hurt{0%{box-shadow:inset 0 0 90px rgba(255,40,80,.75)}100%{box-shadow:inset 0 0 80px rgba(255,40,80,0)}}
+#lockHint{position:absolute;left:50%;top:60%;transform:translateX(-50%);padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.6);color:#ffe27a;font:800 13px Lora,serif;pointer-events:none}
+.board{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);min-width:380px;padding:14px 18px;border-radius:12px;background:rgba(8,4,14,.88);box-shadow:0 0 0 2px #5a3a1a;pointer-events:none}
+.board[hidden]{display:none}.board b{display:block;font:800 18px Cinzel,serif;color:#ffd27a;margin-bottom:6px}
+.board table{width:100%;border-collapse:collapse;font:700 13px Lora,serif}.board td{padding:3px 8px}.board tr.me td{color:#ffd27a}.board td:nth-child(3),.board td:nth-child(4){text-align:right}
+.over{position:absolute;inset:0;display:grid;grid-template-rows:auto 1fr;background:rgba(10,6,14,.8);overflow:auto}
+.over[hidden]{display:none}
+.tabs{display:flex;gap:6px;padding:12px 14px 0;align-items:center}.tabs button{padding:8px 16px;border:0;border-radius:8px 8px 0 0;background:#1a1226;color:#cdc2a8;font:800 13px Lora,serif;cursor:pointer}.tabs button.on{background:#2a1a36;color:#ffd27a}.tabs .lv{margin-left:auto;font:700 12.5px Lora,serif;color:#b8a888}
+.panel{margin:0 14px 14px;padding:16px 18px;border-radius:0 10px 10px 10px;background:#15101c;box-shadow:0 0 0 1.5px #3a2a44;overflow:auto}
+.panel>b{display:block;font:800 26px Cinzel,serif;color:#ffd27a;margin-bottom:4px}.panel p{margin:4px 0 8px;font:600 13.5px/1.55 Lora,serif;color:#e0d6c0;max-width:760px}.panel p b{color:#fff0cc}
+.eyebrow{margin:12px 0 6px!important;font:800 11.5px Lora,serif!important;letter-spacing:1px;text-transform:uppercase;color:#9a8ab8!important}
+.maps,.guns{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;max-width:760px}
+.mapc,.gun{display:grid;gap:4px;padding:12px;border-radius:10px;background:#1a1226;box-shadow:0 0 0 1.5px #4a3a5a;text-align:left;cursor:pointer;color:#e8e0cc;font:600 12.5px/1.45 Lora,serif;border:0}
+.mapc:hover,.gun:hover,.mapc.on,.gun.on{box-shadow:0 0 0 2px #ffd27a}.mapc b,.gun b{font:800 15px Cinzel,serif;color:#ffd27a;display:block}
+.go{margin-top:14px;padding:12px 28px;border:0;border-radius:8px;background:#ffd84a;color:#1a1006;font:800 16px Lora,serif;cursor:pointer}
+.xp{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:760px;margin:8px 0}@media (max-width:640px){.xp{grid-template-columns:1fr}}
+.xpl{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font:600 13px Lora,serif;color:#cdc2a8}.xpl b{color:#8ae07a}.xpl span:last-of-type,.xpl b:last-of-type{margin-top:4px;padding-top:4px;border-top:1px solid #3a2a44;color:#fff0cc}
+.lvl b{font:800 18px Cinzel,serif;color:#ffd27a}.lvl small{font:700 12px Lora,serif;color:#b8a888;margin-left:6px}.lvl .bar{height:10px;border-radius:5px;background:#0a0812;overflow:hidden;margin:6px 0 4px;box-shadow:0 0 0 1px #3a2a44}.lvl .bar i{display:block;height:100%;background:linear-gradient(90deg,#4ad0ff,#a0f0ff);transition:width .6s}
+.up{grid-column:1/-1;padding:8px 12px;border-radius:8px;background:rgba(255,216,74,.12);box-shadow:0 0 0 1.5px #ffd84a;font:800 14px Cinzel,serif;color:#ffd84a}
+.locker{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:start}@media (max-width:640px){.locker{grid-template-columns:1fr}}
+#pv{border-radius:10px;background:radial-gradient(circle at 50% 30%,#2a2440,#0e0a16)}
+.sws{display:flex;flex-wrap:wrap;gap:6px}.sw{display:grid;justify-items:center;gap:3px;padding:6px;border:0;border-radius:8px;background:#1a1226;box-shadow:0 0 0 1.5px #3a2a44;cursor:pointer;color:#cdc2a8;font:700 11px Lora,serif;min-width:62px}
+.sw.on{box-shadow:0 0 0 2px #ffd27a;color:#ffd27a}.sw.lock{opacity:.5}.sw i{display:block;width:32px;height:32px;border-radius:50%;background:var(--c)}
+.sw i.p-stripes{background:repeating-linear-gradient(180deg,var(--c) 0 6px,#000a 6px 9px)}.sw i.p-camo{background:radial-gradient(circle at 30% 30%,#0006 20%,transparent 21%),radial-gradient(circle at 70% 60%,#fff5 18%,transparent 19%),var(--c)}
+.sw i.p-hex{background:radial-gradient(circle,var(--c) 40%,#0008 42%)}.sw i.p-carbon{background:repeating-conic-gradient(#222 0 25%,#151518 0 50%) 0 0/8px 8px}.sw i.p-gold{background:linear-gradient(135deg,#ffe27a,#c89a1a,#ffd84a)}.sw i.p-galaxy{background:radial-gradient(circle at 30% 30%,var(--c),#0a0618 70%)}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;max-width:760px}@media (max-width:640px){.grid4{grid-template-columns:repeat(2,1fr)}}
+.grid4 div{padding:10px;border-radius:8px;background:#1a1226;text-align:center}.grid4 b{display:block;font:800 22px Cinzel,serif;color:#ffd27a}.grid4 span{font:700 11.5px Lora,serif;color:#9a8ab8;text-transform:uppercase;letter-spacing:.5px}
+.set{display:grid;grid-template-columns:180px 1fr 60px;gap:10px;align-items:center;margin:8px 0;font:700 13.5px Lora,serif;color:#e0d6c0;max-width:560px}.set output{text-align:right;color:#ffd27a}
+.note{color:#9a8ab8!important;font-size:12.5px!important}
+.sb{font:700 13px Lora,serif;border-collapse:collapse;width:100%;max-width:420px}.sb td{padding:2px 6px}.sb tr.me td{color:#ffd27a}.sb td:last-child,.sb td:nth-child(2){text-align:right}
+.keys{font:600 12.5px/1.7 Lora,serif;color:#b8a888;margin-top:8px}.keys kbd{font:800 11.5px Lora,serif;padding:1px 6px;border-radius:4px;background:#24142a;box-shadow:0 0 0 1px #5a2a5a;color:#ffe8b0}
+.side{display:grid;gap:12px}.log{font:600 12.5px/1.5 Lora,serif;max-height:260px;overflow:auto}.log p{margin:0}.log .good{color:var(--k-good)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:10px;margin-top:12px}.card{background:#15101c;border-radius:10px;padding:12px 14px;box-shadow:0 0 0 1.5px #2e1e34}
+.card b{display:block;font:800 15px Cinzel,serif;color:#ffd27a;margin-bottom:4px}.card span{font:600 13.5px/1.55 Lora,serif;color:#cdc2a8}.card span b{display:inline;font:inherit;color:#fff0cc}
+/* framed on the site: only the game */
+html.embed body{background:#0e1a24}html.embed main{max-width:none;padding:0}html.embed h1,html.embed .lede,html.embed .side,html.embed .keys,html.embed .sec+.sec{display:none}
+html.embed .play{display:block;margin:0}html.embed .stage{height:100vh;height:100dvh;min-height:0;border-radius:0;box-shadow:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>Blockshot</h1>
+  <p class="lede"><b>A Krunker-style free-for-all on big open maps built for slide-hopping.</b> Three guns, five-minute rounds, levels that unlock skins, lifetime stats. This version is you against eleven bots, all in this page; the next puts the same game on the arcade server with real people in the other eleven slots.</p>
+  <section class="sec" style="margin-top:18px;border-top:0;padding-top:0">
+    <div class="play">
+      <div>
+        <div class="stage">
+          <canvas id="cv" tabindex="0" aria-label="The map, first person. Click to aim with the mouse."></canvas>
+          <div id="hurt"></div><div id="scope"></div><div id="xhair"></div>
+          <div class="hud"><div><b>Blockshot</b> <small id="hudLevel"></small><br><span id="hudPlace"></span> <small id="hudMap"></small></div><div class="mid"><b id="hudT">5:00</b></div><div style="text-align:right"><b id="hudK">0</b><br><span id="hudKD">kills</span></div></div>
+          <div class="feed" id="feed"></div>
+          <div class="msg" id="hudMsg"></div><div class="sub" id="hudSub"></div>
+          <div id="lockHint" hidden>Click to aim with the mouse</div>
+          <div class="bottomhud"><div><span id="hudHpN">100</span> hp<div id="hudHp"><i></i></div></div><div style="text-align:right"><div id="hudAmmo">30 <small>/ 30</small></div><div id="hudGun">Assault rifle</div></div></div>
+          <div class="board" id="board" hidden></div>
+          <div class="over" id="over"><div class="tabs"><button data-tab="play">Play</button><button data-tab="locker">Locker</button><button data-tab="stats">Stats</button><button data-tab="settings">Settings</button><span class="lv" id="menuLevel"></span></div><div class="panel" id="panel"></div></div>
+        </div>
+        <p class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move · <kbd>Space</kbd> jump · <kbd>Shift</kbd> slide · click fires · right click scopes · <kbd>R</kbd> reload · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> gun next spawn · hold <kbd>Tab</kbd> scoreboard · <span id="loadStat"></span></p>
+      </div>
+      <div class="side">
+        <div class="k-win k-paper"><div class="k-head"><b>Scoreboard</b></div><div class="k-body"><table class="sb" id="sb"></table></div></div>
+        <div class="k-win k-paper"><div class="k-head"><b>Log</b></div><div class="k-body"><div class="log" id="log"></div></div></div>
+      </div>
+    </div>
+  </section>
+  <section class="sec">
+    <h2>What's in it</h2>
+    <div class="cards">
+      <div class="card"><b>Maps for sliding</b><span><b>The Lot</b> (an open plaza, a raised centre with a ramp on every side, four roofs with long ramps and bridges) and <b>The Docks</b> (three long lanes, two warehouses with ramps at both ends, a catwalk, piers). Ramps instead of stairs, big cover you go round, low ledges you step onto without breaking a slide, and <b>jump pads</b> that fly you to the roofs. Each map is a list of boxes, one merged mesh per texture.</span></div>
+      <div class="card"><b>Levels and skins</b><span>A kill is 10 XP (a headshot 15), a win 100, a round 40, every streak of three 20. Level n needs 100×n^1.5 more; level 10 is a few evenings. Levels unlock <b>body colours, patterns, visors and gun finishes</b> in the Locker (Solid Gold at 25, a gold gun at 30) and a title (Recruit → Immortal). Nothing is bought.</span></div>
+      <div class="card"><b>Stats</b><span>Lifetime kills, deaths, K/D, accuracy, headshots and headshot rate, wins and win rate, rounds, best streak, time played, and the same by gun and by map. In this browser for now; on the server, the server counts every kill and they follow your Twitch account.</span></div>
+      <div class="card"><b>Sounds and textures</b><span>All drawn and synthesised in code: concrete, brick, metal, grass, crate, hazard stripes and the skin patterns; gunshots, hits, headshots, kills, streaks, reloads, pads, the countdown, level-ups. No files to download, nothing to license. A real pack can replace any of them one at a time.</span></div>
+      <div class="card"><b>Settings</b><span>Mouse sensitivity, field of view, volume, invert Y, crosshair style. Saved in the browser.</span></div>
+      <div class="card"><b>Next: the server</b><span>Positions 20 times a second, every shot judged by the server against where people were a moment ago, server-owned respawns, clock and scoreboard, XP paid by the server. Then a card in the Games section at <b>/blockshot</b>, and a daily board.</span></div>
+    </div>
+  </section>
+</main>
+<script type="module" src="blockshot.js?v=1"></script>
+</body>
+</html>
