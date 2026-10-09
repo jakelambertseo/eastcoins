@@ -167,8 +167,28 @@ function roofs() {
   M.name = "The Rooftops"; M.blurb = "Five roofs over a street grid: bridges to the tower in the middle, ramps and pads up from the street, long lines for the sniper."; M.sky = 0xb0a0d8; M.fog = [70, 170];
   return M;
 }
-export const MAPS = { lot, docks, roofs };
-export const MAP_LIST = Object.keys(MAPS);
+/* The Compound (2026-10-09): the bomb map. Attackers start at the south end, defenders at the north behind the two sites. A is a raised
+   platform on the west with crates, B a yard on the east inside low walls. A central block splits mid into two lanes; each side has an
+   outer lane along the wall. No pickups, no pads: a plant-the-bomb map is about lines and timing, not speed. */
+function compound() {
+  const M = mapBuilder(40), { box, ramp, walls } = M;
+  box([0, -0.5, 0], [41, 0.5, 41], "concrete", C.STONE); walls(40, 7);
+  box([0, 2.5, 0], [7, 2.5, 4], "brick", C.BRICK); ramp(0, -12, 0, 0, -4, 5, 5, "concrete", C.SAND);                      // mid block, with a ramp onto it from the attackers' side
+  for (const s of [-1, 1]) { box([s * 22, 2.5, -6], [2, 2.5, 8], "concrete", C.WHITE); box([s * 30, 1.2, 10], [3, 1.2, 0.6], "crate", C.CRATE); }   // lane walls and a crate line
+  box([-20, 0.75, 20], [8, 0.75, 7], "concrete", C.SAND); ramp(-20, 7, 0, -20, 13, 1.5, 6, "concrete", C.SAND); ramp(-36, 20, 0, -28, 20, 1.5, 6, "concrete", C.SAND); box([-26, 2.2, 24], [1.2, 0.7, 1.2], "crate", C.CRATE); box([-14, 2.2, 16], [1.2, 0.7, 1.2], "crate", C.CRATE);   // site A, raised
+  for (const [x, z, hx, hz] of [[12, 27, 0.6, 7], [28, 27, 0.6, 7], [20, 13, 8, 0.6]]) box([x, 1.3, z], [hx, 1.3, hz], "metal", C.RUST);   // site B, walled
+  box([20, 0.6, 20], [1.2, 0.6, 1.2], "crate", C.CRATE);
+  box([0, 1.5, 30], [10, 1.5, 0.6], "concrete", C.WHITE); box([0, 1.2, 14], [3, 1.2, 0.6], "concrete", C.WHITE);           // the defenders' wall, cover in front of mid
+  for (const s of [-1, 1]) box([s * 9, 1.2, -22], [0.6, 1.2, 4], "concrete", C.WHITE);                                      // cover leaving the attackers' end
+  M.bomb = { sites: [{ k: "A", x: -20, z: 20, y: 1.5 }, { k: "B", x: 20, z: 20, y: 0 }], atk: [[-8, 1, -34], [0, 1, -36], [8, 1, -34]], def: [[-14, 1, 34], [0, 1, 36], [14, 1, 34]] };
+  M.spawns = [...M.bomb.atk, ...M.bomb.def]; M.pickups = [];
+  M.waypoints = [[-20, 20], [20, 20], [0, 0], [-30, 0], [30, 0], [0, -20], [-20, -10], [20, -10], [-12, 26], [12, 26], [0, 22], [-30, 28], [30, 28]];
+  M.name = "The Compound"; M.blurb = "Two sites behind a central block: A raised on the west, B walled on the east. Attackers come from the south."; M.sky = 0xd8c8a8; M.fog = [70, 170];
+  return M;
+}
+export const MAPS = { lot, docks, roofs, compound };
+export const BOMB_MAP = "compound";
+export const MAP_LIST = ["lot", "docks", "roofs"];   // the free-for-all rotation; the bomb map is its own mode
 
 /** A map, built: the boxes as physics, the pads, the spawns. */
 export class World {
@@ -193,8 +213,8 @@ export function spawnFor(world, beans, b, rand = Math.random) {
   const pool = scored.slice(0, 3).filter((x, k) => k === 0 || x.d >= scored[0].d * 0.6);
   const pick = pool[Math.floor(rand() * pool.length)]; b.lastSpawn = pick.i; return pick.s;
 }
-export function respawnBean(world, beans, b, gun, rand = Math.random, events) {
-  const s = spawnFor(world, beans, b, rand);
+export function respawnBean(world, beans, b, gun, rand = Math.random, events) { placeBean(b, spawnFor(world, beans, b, rand), gun, events); }
+export function placeBean(b, s, gun, events) {
   b.dead = false; b.hp = RULES.MAX_HP; b.hurtT = -99; b.gun = GUNS[gun] ? gun : "ar"; b.ammo = GUNS[b.gun].mag; b.mags = {}; b.reloading = 0; b.cd = 0.3; b.slide = false; b.streak = 0;
   b.p.set(s[0], s[1] + 0.2, s[2]); b.v.set(0, 0, 0); b.facing = Math.atan2(-s[0], -s[2]) + Math.PI;   // facing the middle of the map (the page looks along -sin/-cos of the facing; without the +π everyone spawned looking at the wall behind them, 2026-10-09)
   events?.push({ type: "spawn", b });
@@ -204,7 +224,7 @@ export function respawnBean(world, beans, b, gun, rand = Math.random, events) {
 export function cast(world, beans, o, d, shooter, range = 80) {
   let best = range, bean = null, head = false;
   for (const b of world.boxes) { const tt = rayBox(o, d, b); if (tt < best) { best = tt; bean = null; } }
-  for (const b of beans) { if (b === shooter || b.dead) continue; const th = raySphere(o, d, b.p.x, b.p.y + PHYS.HEAD_Y, b.p.z, 0.4); if (th < best) { best = th; bean = b; head = true; } const tb = raySphere(o, d, b.p.x, b.p.y + 0.1, b.p.z, 0.55); if (tb < best) { best = tb; bean = b; head = false; } }
+  for (const b of beans) { if (b === shooter || b.dead || (shooter?.team !== undefined && b.team === shooter.team)) continue; const th = raySphere(o, d, b.p.x, b.p.y + PHYS.HEAD_Y, b.p.z, 0.4); if (th < best) { best = th; bean = b; head = true; } const tb = raySphere(o, d, b.p.x, b.p.y + 0.1, b.p.z, 0.55); if (tb < best) { best = tb; bean = b; head = false; } }
   return { t: best, bean, head, point: o.clone().addScaled(d, best) };
 }
 export function damage(target, dmg, from, head, now, events) {
@@ -303,19 +323,92 @@ export function stepWorld(world, beans, dt, now, inputFor, rand, events, gunFor 
   for (let i = 0; i < beans.length; i++) for (let j = i + 1; j < beans.length; j++) { const a = beans[i], c = beans[j]; if (a.dead || c.dead) continue; _d.copy(c.p).sub(a.p); const d = _d.len(); if (d < PHYS.R * 2 && d > 1e-4) { _d.scale(1 / d); const push = (PHYS.R * 2 - d) / 2; a.p.addScaled(_d, -push); c.p.addScaled(_d, push); } }
 }
 
+/* ------------------------------------------------------------------ the bomb mode (2026-10-09, the owner: "a very primitive 3v3 version of Counterstrike plant the bomb")
+   Two teams of three. One team attacks: one of them carries the bomb and must plant it at a site (hold E inside the site for PLANT_S) and
+   keep it alive for FUSE_S; the defenders stop that by killing the attackers before a plant, by defusing (hold E at the bomb for
+   DEFUSE_S), or by running out the clock. Nobody respawns inside a round. First to WIN rounds; sides swap after SWAP_AT. No money, no
+   buying: everyone picks a primary as in free-for-all. One carrier; the bomb drops where they die and any attacker walks over it.
+   `b.team` is the group (0 or 1) and `bomb.atk` says which group attacks now. This file runs the round for the server and for practice. */
+export const BOMB = { TEAM: 3, ROUND_S: 90, FREEZE_S: 3, POST_S: 4, PLANT_S: 4, FUSE_S: 35, DEFUSE_S: 6, WIN: 6, SWAP_AT: 5, SITE_R: 4.5, PICK_R: 1.4, DEFUSE_R: 2.4, BLAST_R: 14 };
+export function newBomb() { return { phase: "freeze", t: BOMB.FREEZE_S, round: 1, score: [0, 0], atk: 0, carrier: -1, drop: null, planted: null, act: null, lastWin: null, over: false, done: false, siteFor: 0 }; }
+export const isAtk = (b, bomb) => b.team === bomb.atk;
+/** Seats both teams and starts a round: freeze, then live. `gunFor(b)` names each bean's primary. */
+export function bombStartRound(world, beans, bomb, gunFor, rand = Math.random, events) {
+  const seats = { [bomb.atk]: world.map.bomb.atk, [1 - bomb.atk]: world.map.bomb.def }, used = { 0: 0, 1: 0 };
+  for (const b of beans) { if (b.team === undefined) continue; const list = seats[b.team], s = list[Math.min(used[b.team]++, list.length - 1)]; placeBean(b, s, gunFor(b), events); b.facing = b.team === bomb.atk ? Math.PI : 0; b.use = false; }
+  const atk = beans.filter((b) => b.team === bomb.atk);
+  bomb.phase = "freeze"; bomb.t = BOMB.FREEZE_S; bomb.carrier = atk.length ? atk[Math.floor(rand() * atk.length)].i : -1; bomb.drop = null; bomb.planted = null; bomb.act = null; bomb.siteFor = Math.floor(rand() * world.map.bomb.sites.length);
+  events?.push({ type: "bomb", what: "round", round: bomb.round, score: bomb.score.slice(), atk: bomb.atk, carrier: bomb.carrier });
+}
+const nearXZ = (b, p, r, dy = 2.5) => Math.abs(b.p.x - p.x) < r && Math.abs(b.p.z - p.z) < r && Math.abs(b.p.y - p.y) < dy;
+export function siteAt(world, b) { const sites = world.map.bomb?.sites || []; for (let i = 0; i < sites.length; i++) if (nearXZ(b, sites[i], BOMB.SITE_R, 3.5)) return i; return -1; }
+function roundWin(bomb, team, why, events) {
+  bomb.score[team]++; bomb.phase = "post"; bomb.t = BOMB.POST_S; bomb.lastWin = { team, why }; bomb.act = null;
+  if (bomb.score[team] >= BOMB.WIN) bomb.over = true;
+  events?.push({ type: "bomb", what: "win", team, why, score: bomb.score.slice(), over: bomb.over });
+}
+/** One tick of the round. `useOf(b)` says whether that bean is holding E. Movement is stepped by the caller (frozen in the freeze). */
+export function bombStep(world, beans, bomb, dt, now, useOf, gunFor, rand, events) {
+  if (bomb.done) return;
+  if (bomb.phase === "freeze") { bomb.t -= dt; if (bomb.t <= 0) { bomb.phase = "live"; bomb.t = BOMB.ROUND_S; events?.push({ type: "bomb", what: "go" }); } return; }
+  if (bomb.phase === "post") {
+    bomb.t -= dt; if (bomb.t > 0) return;
+    if (bomb.over) { bomb.done = true; events?.push({ type: "bomb", what: "match", team: bomb.lastWin.team, score: bomb.score.slice() }); return; }
+    bomb.round++; if (bomb.round === BOMB.SWAP_AT + 1) bomb.atk = 1 - bomb.atk;
+    bombStartRound(world, beans, bomb, gunFor, rand, events); return;
+  }
+  const team = (t) => beans.filter((b) => b.team === t), atk = team(bomb.atk), def = team(1 - bomb.atk), alive = (b) => !b.dead;
+  if (bomb.carrier >= 0 && beans[bomb.carrier].dead) { const c = beans[bomb.carrier]; bomb.drop = { x: c.p.x, y: Math.max(c.p.y, world.groundAt(c.p.x, c.p.z)), z: c.p.z }; bomb.carrier = -1; if (bomb.act?.kind === "plant") bomb.act = null; events?.push({ type: "bomb", what: "drop", s: c.i }); }
+  if (bomb.carrier < 0 && bomb.drop && !bomb.planted) for (const b of atk) if (alive(b) && nearXZ(b, bomb.drop, BOMB.PICK_R)) { bomb.carrier = b.i; bomb.drop = null; events?.push({ type: "bomb", what: "pick", s: b.i }); break; }
+  if (!bomb.planted && bomb.carrier >= 0) {
+    const c = beans[bomb.carrier], site = siteAt(world, c);
+    if (site >= 0 && useOf(c) && c.grounded && !c.dead) {
+      if (!bomb.act || bomb.act.kind !== "plant") { bomb.act = { kind: "plant", s: c.i, t: 0, site }; events?.push({ type: "bomb", what: "planting", s: c.i, site }); }
+      bomb.act.t += dt;
+      if (bomb.act.t >= BOMB.PLANT_S) { bomb.planted = { site, t: BOMB.FUSE_S, x: c.p.x, y: c.p.y, z: c.p.z }; bomb.carrier = -1; bomb.act = null; events?.push({ type: "bomb", what: "planted", s: c.i, site }); }
+    } else if (bomb.act?.kind === "plant") bomb.act = null;
+  }
+  if (bomb.planted) {
+    bomb.planted.t -= dt;
+    let d = null; for (const b of def) if (alive(b) && useOf(b) && nearXZ(b, bomb.planted, BOMB.DEFUSE_R)) { d = b; break; }
+    if (d) { if (!bomb.act || bomb.act.kind !== "defuse" || bomb.act.s !== d.i) { bomb.act = { kind: "defuse", s: d.i, t: 0 }; events?.push({ type: "bomb", what: "defusing", s: d.i }); } bomb.act.t += dt; if (bomb.act.t >= BOMB.DEFUSE_S) { events?.push({ type: "bomb", what: "defused", s: d.i }); return roundWin(bomb, 1 - bomb.atk, "defused", events); } }
+    else if (bomb.act?.kind === "defuse") bomb.act = null;
+    if (bomb.planted.t <= 0) { for (const b of beans) if (alive(b) && nearXZ(b, bomb.planted, BOMB.BLAST_R, 6)) kill(b, null, false, now, events); events?.push({ type: "bomb", what: "boom", site: bomb.planted.site }); return roundWin(bomb, bomb.atk, "boom", events); }
+  }
+  if (!def.some(alive)) return roundWin(bomb, bomb.atk, "wipe", events);
+  if (!atk.some(alive) && !bomb.planted) return roundWin(bomb, 1 - bomb.atk, "wipe", events);
+  bomb.t -= dt; if (bomb.t <= 0 && !bomb.planted) return roundWin(bomb, 1 - bomb.atk, "time", events);
+}
+/** Where a bot should go in the bomb mode, and whether to hold E there. Attackers: the carrier goes to plant, the others follow the
+    carrier or the dropped bomb, then guard the plant. Defenders split across the sites and go to defuse a planted bomb. */
+export function bombGoal(world, beans, b, bomb) {
+  if (b.team === undefined || bomb.phase !== "live") return null;
+  const sites = world.map.bomb.sites;
+  if (isAtk(b, bomb)) {
+    if (bomb.planted) { const p = bomb.planted; return { x: p.x + ((b.i % 3) - 1) * 3, z: p.z - 3, r: 2.5 }; }
+    if (bomb.carrier === b.i) { const s = sites[bomb.siteFor]; return { x: s.x, z: s.z, r: 2, use: true }; }
+    if (bomb.carrier < 0 && bomb.drop) return { x: bomb.drop.x, z: bomb.drop.z, r: 0.8 };
+    if (bomb.carrier >= 0) { const c = beans[bomb.carrier]; return { x: c.p.x + ((b.i % 3) - 1) * 2.5, z: c.p.z - 2, r: 3 }; }
+    const s = sites[bomb.siteFor]; return { x: s.x, z: s.z, r: 3 };
+  }
+  if (bomb.planted) { const p = bomb.planted; return { x: p.x, z: p.z, r: 1.6, use: true }; }
+  const s = sites[b.i % sites.length]; return { x: s.x + ((b.i % 2) ? 3 : -3), z: s.z + 4, r: 3 };
+}
+
 /* ------------------------------------------------------------------ bots: the stand-ins for people, and the fillers for empty slots */
 export function canSee(world, beans, b, o) { const eye = b.p.clone(); eye.y += PHYS.EYE; const d = new V(o.p.x - b.p.x, o.p.y + 0.3 - eye.y, o.p.z - b.p.z); const dist = d.len(); d.scale(1 / dist); return cast(world, beans, eye, d, b, dist + 1).bean === o; }
-export function botInput(world, beans, b, dt, rand = Math.random) {
+export function botInput(world, beans, b, dt, rand = Math.random, goal = null) {
   const rr = (a, c) => a + rand() * (c - a), pick = (a) => a[Math.floor(rand() * a.length)];
   b.think -= dt; b.strafeT -= dt; b.look -= dt;
   if (b.look <= 0) {
     b.look = rr(0.25, 0.5); let best = null, bs = 1e9;
-    for (const o of beans) { if (o === b || o.dead) continue; const d = o.p.dist(b.p); if (d < bs && d < 50 && canSee(world, beans, b, o)) { bs = d; best = o; } }
+    for (const o of beans) { if (o === b || o.dead || (b.team !== undefined && o.team === b.team)) continue; const d = o.p.dist(b.p); if (d < bs && d < 50 && canSee(world, beans, b, o)) { bs = d; best = o; } }
     if (best) { b.target = best; b.lostT = 0; } else if (b.target) { b.lostT += 0.4; if (b.lostT > 2.5 || b.target.dead) b.target = null; }
   }
   if (b.strafeT <= 0) { b.strafe = rand() < 0.5 ? -1 : 1; b.strafeT = rr(0.5, 1.4); }
   let mx = 0, mz = 0, fireNow = false, jump = false;
-  const tg = b.target && !b.target.dead ? b.target : null;
+  if (goal?.use && Math.hypot(goal.x - b.p.x, goal.z - b.p.z) < (goal.r || 1.5)) { b.stuck = 0; return { x: 0, z: 0, jump: false, fire: false, fireTap: false, slide: false, reload: b.ammo === 0 && !b.reloading, use: true }; }   // on the job: plant or defuse, whatever is shooting
+  const tg = b.target && !b.target.dead && !(goal?.use && b.target.p.dist(b.p) > 14) ? b.target : null;   // a carrier or a defuser is not pulled off the job by someone far away
   if (tg) {
     const dx = tg.p.x - b.p.x, dz = tg.p.z - b.p.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d;
     const want = b.gun === "shotgun" ? 4 : b.gun === "sniper" ? 18 : 10, along = d > want + 3 ? 1 : d < want - 3 ? -0.7 : 0;
@@ -327,7 +420,8 @@ export function botInput(world, beans, b, dt, rand = Math.random) {
       b.aim.copy(aim); fireNow = true; b.react = (GUNS[b.gun].auto ? rr(0.06, 0.22) : rr(0.35, 0.9) * (1.3 - b.skill)) * BOTS.react;
     }
   } else {
-    if (!b.wp || Math.hypot(b.wp[0] - b.p.x, b.wp[1] - b.p.z) < 1.5 || b.think <= 0) { b.wp = pick(world.waypoints); b.think = rr(4, 8); }
+    if (goal) { b.wp = [goal.x, goal.z]; if (Math.hypot(goal.x - b.p.x, goal.z - b.p.z) < (goal.r || 1.5)) { b.stuck = 0; return { x: 0, z: 0, jump: false, fire: false, fireTap: false, slide: false, reload: b.ammo === 0 && !b.reloading, use: Boolean(goal.use) }; } }
+    else if (!b.wp || Math.hypot(b.wp[0] - b.p.x, b.wp[1] - b.p.z) < 1.5 || b.think <= 0) { b.wp = pick(world.waypoints); b.think = rr(4, 8); }
     const dx = b.wp[0] - b.p.x, dz = b.wp[1] - b.p.z, d = Math.hypot(dx, dz) || 1; mx = dx / d; mz = dz / d; b.facing = Math.atan2(mx, mz) + Math.PI;
   }
   b.react = Math.max(0, b.react - dt);

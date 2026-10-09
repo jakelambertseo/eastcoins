@@ -27,6 +27,10 @@ function noise({ dur = 0.1, gain = 0.2, lp = 2000, hp = 0, decay = 2, delay = 0,
   node.connect(g); out(a, g, pan); s.start(t0);
 }
 const SOUNDS = {
+  planted: () => { for (let i = 0; i < 3; i++) tone({ f: 1200, dur: 0.08, type: "square", gain: 0.09, delay: i * 0.16 }); },
+  defused: () => { [880, 1175, 1568].forEach((f, i) => tone({ f, dur: 0.18, type: "triangle", gain: 0.1, delay: i * 0.1 })); },
+  boom: () => { noise({ dur: 1.2, gain: 0.9, lp: 300, decay: 1.5 }); tone({ f: 70, to: 25, dur: 1.0, type: "sine", gain: 0.3 }); noise({ dur: 0.5, gain: 0.4, lp: 2000, decay: 3 }); },
+  tick: () => tone({ f: 1500, dur: 0.03, type: "square", gain: 0.05 }),
   ar: (k, pan) => { noise({ dur: 0.09, gain: 0.5 * k, lp: 2600, decay: 3, pan }); tone({ f: 180, to: 60, dur: 0.07, type: "square", gain: 0.12 * k, pan }); },
   sniper: (k, pan) => { noise({ dur: 0.35, gain: 0.7 * k, lp: 1800, decay: 2.5, pan }); tone({ f: 900, to: 90, dur: 0.25, type: "sawtooth", gain: 0.14 * k, pan }); noise({ dur: 0.5, gain: 0.12 * k, lp: 600, decay: 1.5, delay: 0.05, pan }); },
   shotgun: (k, pan) => { noise({ dur: 0.28, gain: 0.8 * k, lp: 1400, decay: 2, pan }); tone({ f: 120, to: 40, dur: 0.22, type: "square", gain: 0.2 * k, pan }); },

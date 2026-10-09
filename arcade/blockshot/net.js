@@ -9,7 +9,7 @@
 
    Shots are never predicted: the page draws its own tracer and plays the bang at once, and the server's events decide the rest.
    createNet(hooks) -> { connect(opts), close(), on, slot, tick(dt), events(): [...] , roster, round, ping } */
-import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=12";
+import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=13";
 
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
 const INTERP = 0.1, SEND_EVERY = 2;
@@ -20,16 +20,16 @@ export function createNet(hooks) {
   N.worstGap = 0;   // the longest wait between two snapshots lately (decays): the HUD shows it past 150 ms
   const now = () => performance.now() / 1000;
 
-  N.connect = async ({ gun, name }) => {
-    let url;
-    if (DEV) { const as = new URLSearchParams(location.search).get("as") || name || "you"; url = `ws://${location.hostname}:8788/bs?dev=1&login=${encodeURIComponent(as)}&gun=${gun}`; }
+  N.connect = async ({ gun, name, mode = "ffa" }) => {
+    let url; const path = mode === "bomb" ? "/bomb" : "/bs";
+    if (DEV) { const as = new URLSearchParams(location.search).get("as") || name || "you"; url = `ws://${location.hostname}:8788${path}?dev=1&login=${encodeURIComponent(as)}&gun=${gun}`; }
     else {
       try {
         const r = await fetch("/api/arcade/ticket", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: "{}" });
         const j = await r.json().catch(() => ({}));
-        if (j.ok) { N.you = { name: j.name, guest: false }; url = `${j.ws.replace(/\/ws$/, "/bs")}?ticket=${j.ticket}&gun=${gun}`; }
-        else url = `wss://arcade.eastcoin.vip/bs?guest=${encodeURIComponent(name || "Guest")}&gun=${gun}`;
-      } catch { url = `wss://arcade.eastcoin.vip/bs?guest=${encodeURIComponent(name || "Guest")}&gun=${gun}`; }
+        if (j.ok) { N.you = { name: j.name, guest: false }; url = `${j.ws.replace(/\/ws$/, path)}?ticket=${j.ticket}&gun=${gun}`; }
+        else url = `wss://arcade.eastcoin.vip${path}?guest=${encodeURIComponent(name || "Guest")}&gun=${gun}`;
+      } catch { url = `wss://arcade.eastcoin.vip${path}?guest=${encodeURIComponent(name || "Guest")}&gun=${gun}`; }
     }
     return new Promise((resolve) => {
       let settled = false; const done = (v, why) => { if (!settled) { settled = true; N.why = why || ""; resolve(v); } };
@@ -50,7 +50,7 @@ export function createNet(hooks) {
       case "hello": N.on = true; N.slot = m.slot; N.you = m.you; N.roster = m.roster; N.round = m.round; N.map = m.map; clockOff = m.now - now(); hooks.onHello?.(m); return;
       case "roster": N.roster = m; hooks.onRoster?.(m); return;
       case "round": N.map = m.map; N.round = { no: m.no, t: 0, state: "play" }; N.roster = m.roster; snaps = []; pending = []; hooks.onRound?.(m); return;
-      case "s": { if (m.e) hooks.onEvents?.(m.e); if (m.pk) { const w = hooks.state().world; if (w?.pickups) m.pk.forEach((t, i) => { if (w.pickups[i]) w.pickups[i].t = t; }); } const s = { ...m, at: now() }; snaps.push(s); { const g = lastSnapAt ? s.at - lastSnapAt : 0; lastSnapAt = s.at; if (g > N.worstGap) N.worstGap = g; } if (snaps.length > 6) snaps.shift(); clockOff = clockOff * 0.9 + (m.now - now()) * 0.1; ack = m.ack; N.round = { ...(N.round || {}), t: m.rt, state: m.st }; applySelf(s); return; }
+      case "s": { if (m.bm) hooks.onBomb?.(m.bm); if (m.e) hooks.onEvents?.(m.e); if (m.pk) { const w = hooks.state().world; if (w?.pickups) m.pk.forEach((t, i) => { if (w.pickups[i]) w.pickups[i].t = t; }); } const s = { ...m, at: now() }; snaps.push(s); { const g = lastSnapAt ? s.at - lastSnapAt : 0; lastSnapAt = s.at; if (g > N.worstGap) N.worstGap = g; } if (snaps.length > 6) snaps.shift(); clockOff = clockOff * 0.9 + (m.now - now()) * 0.1; ack = m.ack; N.round = { ...(N.round || {}), t: m.rt, state: m.st }; applySelf(s); return; }
       case "ev": hooks.onEvents?.(m.e); return;
       case "end": hooks.onEnd?.(m); return;
       case "votes": hooks.onVotes?.(m.n); return;
@@ -66,7 +66,7 @@ export function createNet(hooks) {
     const b = s.b[N.slot]; if (!b) return;
     unpack(me, b, now() - swapT < 0.5);
     pending = pending.filter((i) => i.seq > s.ack);
-    for (const i of pending) stepBean(world, beans, me, { ...i, fire: false, fireTap: false }, PHYS.STEP60, s.now, Math.random, null);
+    for (const i of pending) { const q = { ...i, fire: false, fireTap: false }; stepBean(world, beans, me, q, PHYS.STEP, s.now, Math.random, null); stepBean(world, beans, me, q, PHYS.STEP, s.now, Math.random, null); }   // two 1/120 sub-steps, as the server
   }
   function unpack(bean, b, keepGun) {
     bean.p.set(b[0], b[1], b[2]); bean.v.set(b[3], b[4], b[5]); bean.facing = b[6]; bean.hp = b[7]; bean.dead = Boolean(b[8]); bean.slide = Boolean(b[11]); bean.grounded = Boolean(b[12]);
@@ -86,9 +86,9 @@ export function createNet(hooks) {
     if (seq - ack > 240 && snaps.length && (++holdN & 1)) { drawOthers(beans); return; }
     seq++; const rt = N.serverTime() - INTERP; const i = { ...inp, seq, rt };
     pending.push(i); if (pending.length > 120) pending.shift();
-    toSend.push([seq, +i.x.toFixed(3), +i.z.toFixed(3), i.jump ? 1 : 0, i.fire ? 1 : 0, i.fireTap ? 1 : 0, i.slide ? 1 : 0, i.reload ? 1 : 0, +i.aim.x.toFixed(4), +i.aim.y.toFixed(4), +i.aim.z.toFixed(4), i.scope ? 1 : 0, +rt.toFixed(3)]);
+    toSend.push([seq, +i.x.toFixed(3), +i.z.toFixed(3), i.jump ? 1 : 0, i.fire ? 1 : 0, i.fireTap ? 1 : 0, i.slide ? 1 : 0, i.reload ? 1 : 0, +i.aim.x.toFixed(4), +i.aim.y.toFixed(4), +i.aim.z.toFixed(4), i.scope ? 1 : 0, +rt.toFixed(3), i.use ? 1 : 0]);
     if (++sendN % SEND_EVERY === 0) { send({ t: "in", s: seq, i: toSend }); toSend = []; }
-    if (!me.dead) stepBean(world, beans, me, { ...i, fire: false, fireTap: false }, PHYS.STEP60, t, Math.random, null);   // prediction: movement only
+    if (!me.dead) { const local = [], q = { ...i, fire: false, fireTap: false }; stepBean(world, beans, me, q, PHYS.STEP, t, Math.random, local); stepBean(world, beans, me, q, PHYS.STEP, t + PHYS.STEP, Math.random, local); if (local.length) hooks.onLocal?.(local); }   // prediction: movement only; its events (a jump, a slide, a reload) are the page's to sound at once
     pingT += PHYS.STEP60; if (pingT > 2) { pingT = 0; send({ t: "ping", t0: now() }); }
     drawOthers(beans);
   };
