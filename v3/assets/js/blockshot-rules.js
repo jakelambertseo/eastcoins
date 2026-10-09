@@ -28,6 +28,15 @@ export const GUNS = {
 };
 export const GUN_KEYS = Object.keys(GUNS);
 export const HEADSHOT = 1.5;
+// the bots (2026-10-09, the owner: "make the bots worse so i can test better"): skill in [lo, hi] (aim and reaction), `react` scales how long they take to shoot
+export const BOTS = { skill: [0.1, 0.4], react: 2.2, headChance: 0.15 };
+/* XP and levels, shared by the page, the match server and the site's stats: a kill is 10 (a headshot 15), a win 100, finishing a round
+   40, every streak of three 20. Level n needs 100 x n^1.5 more than the last. */
+export const XP = { kill: 10, headshot: 15, win: 100, round: 40, streak3: 20 };
+export const need = (lvl) => Math.round(100 * Math.pow(lvl, 1.5));
+/** Level and the XP into it, from lifetime XP. */
+export function levelOf(total) { let lvl = 1, xp = Math.max(0, Math.floor(total)); while (xp >= need(lvl)) { xp -= need(lvl); lvl++; } return { level: lvl, xp, next: need(lvl) }; }
+export function xpForRound({ kills = 0, headshots = 0, streaks = 0, won = false }) { return kills * XP.kill + headshots * (XP.headshot - XP.kill) + streaks * XP.streak3 + XP.round + (won ? XP.win : 0); }
 export const BOT_NAMES = ["bootypaper", "heartlarva", "andyreidisapawg", "zwades", "cenozoicmegafauna", "drhealsgud", "psilocyboone", "fasteddie", "aallldeeeez", "charleskellybirdlaw", "therealb4nksy", "kellzifer", "bigrig", "allyrose7774"];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -253,10 +262,10 @@ export function botInput(world, beans, b, dt, rand = Math.random) {
     const want = b.gun === "shotgun" ? 4 : b.gun === "sniper" ? 18 : 10, along = d > want + 3 ? 1 : d < want - 3 ? -0.7 : 0;
     mx = ux * along + -uz * b.strafe * 0.9; mz = uz * along + ux * b.strafe * 0.9; b.facing = Math.atan2(ux, uz) + Math.PI;
     if (b.cd <= 0 && !b.reloading && b.react <= 0 && b.ammo > 0) {
-      const lead = d / 90, aim = new V(tg.p.x + tg.v.x * lead - b.p.x, tg.p.y + (rand() < b.skill * 0.35 ? PHYS.HEAD_Y : 0.1) - (b.p.y + PHYS.EYE), tg.p.z + tg.v.z * lead - b.p.z).normalize();
-      const spread = 0.03 + 0.14 * (1 - b.skill) + (Math.hypot(b.v.x, b.v.z) > 6 ? 0.04 : 0) + (Math.hypot(tg.v.x, tg.v.z) > 8 ? 0.05 : 0);
+      const lead = d / 90, aim = new V(tg.p.x + tg.v.x * lead - b.p.x, tg.p.y + (rand() < b.skill * BOTS.headChance ? PHYS.HEAD_Y : 0.1) - (b.p.y + PHYS.EYE), tg.p.z + tg.v.z * lead - b.p.z).normalize();
+      const spread = 0.04 + 0.18 * (1 - b.skill) + (Math.hypot(b.v.x, b.v.z) > 6 ? 0.05 : 0) + (Math.hypot(tg.v.x, tg.v.z) > 8 ? 0.07 : 0);
       aim.x += rr(-spread, spread); aim.y += rr(-spread, spread) * 0.5; aim.z += rr(-spread, spread); aim.normalize();
-      b.aim.copy(aim); fireNow = true; b.react = GUNS[b.gun].auto ? rr(0.06, 0.22) : rr(0.35, 0.9) * (1.3 - b.skill);
+      b.aim.copy(aim); fireNow = true; b.react = (GUNS[b.gun].auto ? rr(0.06, 0.22) : rr(0.35, 0.9) * (1.3 - b.skill)) * BOTS.react;
     }
   } else {
     if (!b.wp || Math.hypot(b.wp[0] - b.p.x, b.wp[1] - b.p.z) < 1.5 || b.think <= 0) { b.wp = pick(world.waypoints); b.think = rr(4, 8); }

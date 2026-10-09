@@ -9,11 +9,11 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES } from "/v3/assets/js/blockshot-rules.js?v=5";
-import { createNet } from "./net.js?v=4";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS } from "/v3/assets/js/blockshot-rules.js?v=6";
+import { createNet } from "./net.js?v=5";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=1";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save } from "./profile.js?v=1";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween } from "./profile.js?v=2";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -79,7 +79,7 @@ function paintTag(b) {
 }
 const randomSkin = () => ({ body: pick(SKINS.body).k, pattern: pick(["plain", "plain", "stripes", "camo", "hex"]), visor: pick(SKINS.visor).k, gun: pick(["plain", "plain", "stripes", "camo"]) });
 const beans = [];
-for (let i = 0; i < PLAYERS; i++) { const b = newBean(i, i ? BOT_NAMES[i - 1] : "You", i > 0); b.skill = rnd(0.3, 0.85); b.mesh = makeBean(i ? randomSkin() : profile.skin); beans.push(b); }
+for (let i = 0; i < PLAYERS; i++) { const b = newBean(i, i ? BOT_NAMES[i - 1] : "You", i > 0); b.skill = rnd(BOTS.skill[0], BOTS.skill[1]); b.mesh = makeBean(i ? randomSkin() : profile.skin); beans.push(b); }
 let me = beans[0]; me.mesh.g.visible = false;   // first person: you don't see your own bean (online, `me` is whichever slot the server gives)
 function redressMe() { scene.remove(me.mesh.g); me.mesh = makeBean(profile.skin); me.mesh.g.visible = false; viewGunBody.material = skinMat(profile.skin.gun, "black"); }
 
@@ -227,13 +227,17 @@ function endOnline(m) {
   if (!y) { showMenu("result", `<b>${esc(ranks[0]?.name || "")} wins</b><p>You were watching. The next round starts in a few seconds.</p>`); return; }
   play(y.won ? "win" : "lose");
   let xpHtml = "";
+  const xpLines = `<div class="xpl"><span>${y.kills} kills</span><b>+${y.kills * XP.kill}</b><span>${y.headshots} headshots</span><b>+${y.headshots * (XP.headshot - XP.kill)}</b><span>${y.streaks} streaks of three</span><b>+${y.streaks * XP.streak3}</b><span>Finished the round</span><b>+${XP.round}</b>${y.won ? `<span>Won the round</span><b>+${XP.win}</b>` : ""}<span>Total</span><b>+${y.xp} XP</b></div>`;
+  const lvlBlock = (gained, unlocked) => { const pct = Math.round((profile.xp / need(profile.level)) * 100); return `<div class="lvl" id="lvlBlock"><b>Level ${profile.level}</b> <small>${esc(titleFor(profile.level))}</small><div class="bar"><i style="width:${pct}%"></i></div><small>${profile.xp} / ${need(profile.level)} to level ${profile.level + 1}${profile.server ? " · your account" : ""}</small></div>${gained ? `<div class="up">LEVEL UP${gained > 1 ? ` ×${gained}` : ""} · now level ${profile.level}${unlocked.length ? ` · unlocked: ${unlocked.map((u) => esc(u.n)).join(", ")}` : ""}</div>` : ""}`; };
   if (y.guest) xpHtml = `<p class="note">Playing as a guest: XP, skins and stats only follow signed-in players. Log in with Twitch on EastCoin to keep yours.</p>`;
-  else {
+  else if (y.counted && profile.server) {
+    // the site paid it: ask for the new standing once the report has landed
+    recordRound({ map: m.map, gun: nextGun, kills: y.kills, deaths: y.deaths, headshots: y.headshots, shots: meStats.shots, hits: meStats.hits, won: y.won, streak: y.streak, seconds: ROUND_S, byGun: meStats.byGun });
+    const before = profile.level; xpHtml = `<div class="xp">${xpLines}${lvlBlock(0, [])}</div>`;
+    setTimeout(async () => { const me2 = await syncFromServer(); if (!me2) return; const gained = profile.level - before; const el = $("lvlBlock"); if (el) el.outerHTML = lvlBlock(gained, gained > 0 ? unlockedBetween(before, profile.level) : []); if (gained > 0) play("levelup"); drawProfile(); }, 1500);
+  } else {
     const res = award(y.xp); recordRound({ map: m.map, gun: nextGun, kills: y.kills, deaths: y.deaths, headshots: y.headshots, shots: meStats.shots, hits: meStats.hits, won: y.won, streak: y.streak, seconds: ROUND_S, byGun: meStats.byGun });
-    const pct = Math.round((profile.xp / need(profile.level)) * 100);
-    xpHtml = `<div class="xp"><div class="xpl"><span>${y.kills} kills</span><b>+${y.kills * XP.kill}</b><span>${y.headshots} headshots</span><b>+${y.headshots * (XP.headshot - XP.kill)}</b><span>${y.streaks} streaks of three</span><b>+${y.streaks * XP.streak3}</b><span>Finished the round</span><b>+${XP.round}</b>${y.won ? `<span>Won the round</span><b>+${XP.win}</b>` : ""}<span>Total</span><b>+${y.xp} XP</b></div>
-      <div class="lvl"><b>Level ${profile.level}</b> <small>${esc(titleFor(profile.level))}</small><div class="bar"><i style="width:${pct}%"></i></div><small>${profile.xp} / ${need(profile.level)} to level ${profile.level + 1}</small></div>
-      ${res.gained ? `<div class="up">LEVEL UP${res.gained > 1 ? ` ×${res.gained}` : ""} · now level ${profile.level}${res.unlocked.length ? ` · unlocked: ${res.unlocked.map((u) => esc(u.n)).join(", ")}` : ""}</div>` : ""}</div>`;
+    xpHtml = `<div class="xp">${xpLines}${lvlBlock(res.gained, res.unlocked)}</div>${y.counted ? "" : `<p class="note">${profile.server ? "This round wasn't reported to your account (the server has no key); XP stays as it was." : "XP kept in this browser."}</p>`}`;
     if (res.gained) setTimeout(() => play("levelup"), 700); drawProfile();
   }
   showMenu("result", `<b>${y.won ? "You win!" : `${esc(ranks[0].name)} wins`}</b><p>You came <b>${ord(y.place)}</b> of ${PLAYERS} on ${esc(world.map.name)} · <b>${y.kills}</b> kills, <b>${y.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${y.streak}.</p>${xpHtml}
@@ -274,12 +278,12 @@ function endRound() {
   if (won) lines.push(["Won the round", XP.win]);
   const total = lines.reduce((n, l) => n + l[1], 0), res = award(total);
   recordRound({ map: mapKey, gun: nextGun, kills: me.kills, deaths: me.deaths, headshots: meStats.headshots, shots: meStats.shots, hits: meStats.hits, won, streak: me.bestStreak, seconds: roundT, byGun: meStats.byGun });
-  const pct = Math.round((profile.xp / need(profile.level)) * 100);
+  const pct = Math.round((profile.xp / need(profile.level)) * 100), practiceNote = profile.server ? `<p class="note">Practice: nothing here counts toward your account. Play online for XP and the board.</p>` : "";
   showMenu("result", `<b>${won ? "You win!" : `${esc(ranks[0].name)} wins`}</b>
     <p>You came <b>${ord(place)}</b> of ${PLAYERS} on ${esc(world.map.name)} · <b>${me.kills}</b> kills, <b>${me.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${me.bestStreak}.</p>
-    <div class="xp"><div class="xpl">${lines.map(([n, v]) => `<span>${esc(n)}</span><b>+${v}</b>`).join("")}<span>Total</span><b>+${total} XP</b></div>
+    ${profile.server ? practiceNote : `<div class="xp"><div class="xpl">${lines.map(([n, v]) => `<span>${esc(n)}</span><b>+${v}</b>`).join("")}<span>Total</span><b>+${total} XP</b></div>
       <div class="lvl"><b>Level ${profile.level}</b> <small>${esc(titleFor(profile.level))}</small><div class="bar"><i style="width:${pct}%"></i></div><small>${profile.xp} / ${need(profile.level)} to level ${profile.level + 1}</small></div>
-      ${res.gained ? `<div class="up">LEVEL UP${res.gained > 1 ? ` ×${res.gained}` : ""} · now level ${profile.level}${res.unlocked.length ? ` · unlocked: ${res.unlocked.map((u) => esc(u.n)).join(", ")}` : ""}</div>` : ""}</div>
+      ${res.gained ? `<div class="up">LEVEL UP${res.gained > 1 ? ` ×${res.gained}` : ""} · now level ${profile.level}${res.unlocked.length ? ` · unlocked: ${res.unlocked.map((u) => esc(u.n)).join(", ")}` : ""}</div>` : ""}</div>`}
     <table class="sb" style="min-width:300px">${ranks.map((b, k) => `<tr class="${b.bot ? "" : "me"}"><td>${ord(k + 1)}</td><td>${esc(b.name)}</td><td>${b.kills} / ${b.deaths}</td></tr>`).join("")}</table>`);
   if (res.gained) setTimeout(() => play("levelup"), 700);
   $("over").hidden = true; overTimer = setTimeout(() => { $("over").hidden = false; }, 900);
@@ -287,7 +291,17 @@ function endRound() {
 }
 
 /* ------------------------------------------------------------------ the menu: Play, Locker, Stats, Settings */
-let tab = "play";
+let tab = "play", boardBy = "kills", boardRange = "all";
+async function loadBoard() {
+  const el = $("boardBody"); if (!el) return;
+  try {
+    const j = await fetch(`/api/blockshot/board?by=${boardBy}&range=${boardRange}`).then((r) => r.json());
+    if (!j.ok) throw new Error();
+    if (!j.rows.length) { el.innerHTML = `<p class="note">Nobody on the board yet${boardRange !== "all" ? " for this range" : ""}. Play a round online.</p>`; return; }
+    const fmtV = (r) => boardBy === "kd" ? r.kd : boardBy === "level" ? `Lv ${r.level}` : boardBy === "accuracy" ? (r.value < 0 ? "–" : `${r.accuracy}%`) : r.value;
+    el.innerHTML = `<table class="sb board-t"><tr><th></th><th>Player</th><th>${esc(({ kills: "Kills", kd: "K/D", wins: "Wins", headshots: "Headshots", level: "Level", accuracy: "Accuracy" })[boardBy])}</th><th>K</th><th>D</th><th>Rounds</th></tr>${j.rows.map((r, k) => `<tr class="${r.login === profile.login ? "me" : ""}"><td>${k + 1}</td><td>${esc(r.name)} <small>Lv ${r.level}</small></td><td><b>${fmtV(r)}</b></td><td>${r.kills}</td><td>${r.deaths}</td><td>${r.rounds}</td></tr>`).join("")}</table>`;
+  } catch { el.innerHTML = `<p class="note">The board isn't answering (it lives on eastcoin.vip).</p>`; }
+}
 const gunCard = (k, i) => { const g = GUNS[k], dps = (g.dmg * g.pellets) / g.cd, bar = (v, max) => `${Math.round(clamp(v / max, 0.05, 1) * 100)}%`;
   return `<button class="gun${k === nextGun ? " on" : ""}" data-gun="${k}"><b>${i + 1} · ${esc(g.n)}</b>${esc(g.text)}<div class="bars"><div>Damage<i style="--v:${bar(g.dmg * g.pellets, 250)}"></i></div><div>Fire rate<i style="--v:${bar(1 / g.cd, 8)}"></i></div><div>Range<i style="--v:${bar(g.range, 160)}"></i></div><div>Magazine<i style="--v:${bar(g.mag, 28)}"></i></div><div>DPS<i style="--v:${bar(dps, 560)}"></i></div></div></button>`; };
 function showMenu(which, html) { tab = which; if (locked) document.exitPointerLock?.(); for (const b of document.querySelectorAll("[data-tab]")) b.classList.toggle("on", b.dataset.tab === which); if (html !== undefined) $("panel").innerHTML = html; else drawMenu(); $("over").hidden = false; }
@@ -312,7 +326,13 @@ function drawMenu() {
       <div><b>${Math.round(s.seconds / 60)}m</b><span>played</span></div><div><b>${s.rounds ? (s.kills / s.rounds).toFixed(1) : 0}</b><span>kills a round</span></div><div><b>${s.rounds ? Math.round((s.wins / s.rounds) * 100) : 0}%</b><span>win rate</span></div><div><b>${s.kills ? Math.round((s.headshots / s.kills) * 100) : 0}%</b><span>headshot rate</span></div></div>
       ${guns.length ? `<p class="eyebrow">By gun</p><table class="sb">${guns.map(([g, v]) => `<tr><td>${esc(GUNS[g]?.n || g)}</td><td>${v.kills} kills</td><td>${v.shots ? Math.round((v.hits / v.shots) * 100) : 0}%</td></tr>`).join("")}</table>` : ""}
       ${maps.length ? `<p class="eyebrow">By map</p><table class="sb">${maps.map(([k, v]) => `<tr><td>${esc(MAPS[k] ? MAPS[k]().name : k)}</td><td>${v.rounds} rounds</td><td>${v.wins} wins</td></tr>`).join("")}</table>` : ""}
-      <p class="note">Kept in this browser for now. When the game runs on the arcade server, the server counts every kill and these follow your Twitch account.</p>`;
+      <p class="note">${profile.server ? `Your account's numbers (online rounds). The by-gun and by-map lines are this browser's.` : "Kept in this browser: sign in on EastCoin and play online for stats that follow your account and count on the board."}</p>`;
+  } else if (tab === "board") {
+    $("panel").innerHTML = `<b>Leaderboard</b><p>Online rounds only, signed-in players only. Accuracy needs fifty shots to rank.</p>
+      <div class="chips" id="boardBy">${[["kills", "Kills"], ["kd", "K/D"], ["wins", "Wins"], ["headshots", "Headshots"], ["level", "Level"], ["accuracy", "Accuracy"]].map(([k, n]) => `<button class="chip-b${boardBy === k ? " on" : ""}" data-by="${k}">${n}</button>`).join("")}</div>
+      <div class="chips" id="boardRange">${[["all", "All time"], ["week", "This week"], ["today", "Today"]].map(([k, n]) => `<button class="chip-b${boardRange === k ? " on" : ""}" data-range="${k}">${n}</button>`).join("")}</div>
+      <div id="boardBody"><p class="note">Loading…</p></div>`;
+    loadBoard();
   } else if (tab === "settings") {
     const st = profile.settings;
     $("panel").innerHTML = `<b>Settings</b>
@@ -327,6 +347,8 @@ function drawMenu() {
 $("over").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return; play("click");
   if (b.dataset.tab) return showMenu(b.dataset.tab);
+  if (b.dataset.by) { boardBy = b.dataset.by; return drawMenu(); }
+  if (b.dataset.range) { boardRange = b.dataset.range; return drawMenu(); }
   if (b.dataset.map) { mapKey = b.dataset.map; return drawMenu(); }
   if (b.dataset.gun) { nextGun = b.dataset.gun; return drawMenu(); }
   if (b.dataset.go) { if (online) { net.close(); online = false; } return start(); }
@@ -346,7 +368,7 @@ function drawPreview() {
   sc.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.4)); const l = new THREE.DirectionalLight(0xffffff, 1.2); l.position.set(2, 4, 3); sc.add(l);
   beanMesh(profile.skin, sc).rotation.y = Math.PI + 0.5; pvR.setSize(c.width, c.height, false); pvR.render(sc, cam);
 }
-function drawProfile() { $("hudLevel").textContent = `LV ${profile.level}`; $("menuLevel").textContent = `Level ${profile.level} · ${titleFor(profile.level)} · ${profile.stats.kills} kills · K/D ${kd()}`; }
+function drawProfile() { $("hudLevel").textContent = `LV ${profile.level}`; $("menuLevel").textContent = `${profile.server ? `${profile.name || "You"} · ` : ""}Level ${profile.level} · ${titleFor(profile.level)} · ${profile.stats.kills} kills · K/D ${kd()}${profile.server ? "" : " · this browser"}`; }
 
 /* ------------------------------------------------------------------ drawing */
 function drawSb() { $("sb").innerHTML = ranked().map((b, k) => `<tr class="${b === me ? "me" : ""}"><td>${k + 1}. ${esc(b.name)}${b.bot ? " <small>bot</small>" : ""}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join(""); }
@@ -406,6 +428,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 buildMap(mapKey); reset(); state = "menu"; $("hudGun").textContent = GUNS.ar.n; $("hudMag").textContent = `/ ${GUNS.ar.mag}`; drawProfile(); showMenu("play");
+syncFromServer().then((me2) => { if (me2) { redressMe(); drawProfile(); if (!$("over").hidden) drawMenu(); } });
 window.__bs = { beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
   sim(seconds) { for (let k = 0; k < seconds * 60; k++) advance(1 / 60); draw(1 / 60); hud(1 / 60); } };
 requestAnimationFrame(frame);
