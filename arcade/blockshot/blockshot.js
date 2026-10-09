@@ -297,7 +297,7 @@ let t = 0, roundT = 0, state = "menu", countdown = 0, countBeep = 0, mapKey = MA
    in practice the rules' own object, stepped here; online a copy decoded from the snapshot's `bm` block. Six beans play; the other six
    of the twelve are parked dead and hidden. The dead watch a living teammate (`spec`). E is "use": plant or defuse. */
 let mode = ["bomb", "park", "gg"].includes(new URLSearchParams(location.search).get("mode")) ? new URLSearchParams(location.search).get("mode") : "ffa", bomb = null, spec = null;
-const MAP_IMG = { lot: "ffa", docks: "docks", roofs: "roofs" };
+const MAP_IMG = { lot: "ffa", docks: "docks", roofs: "roofs" }, IMG_V = 2;   // bump IMG_V when a card picture changes: the real URL is cached for a year
 /* GUN GAME on the page (2026-10-11): the rules move the gun on every kill (`b.gg`); the page only shows the step and never swaps by hand. */
 const gunPick = (b) => (mode === "gg" ? ggGun(b) : b.bot ? pick(["ar", "ar", "sniper", "shotgun"]) : nextGun);
 /* PARKOUR on the page (2026-10-10). `courseKey` is the practice course; online the room says. `me.park` is the run (practice: the rules'
@@ -461,7 +461,7 @@ function endOnline(m) {
   }
   showMenu("result", resultHtml({ headline: mode === "bomb" && m.score ? `${y.won ? "Your team wins" : "Your team loses"} ${m.score[myTeam()]}–${m.score[1 - myTeam()]}` : y.won ? "You win!" : `${esc(ranks[0].name)} wins`, sub: `${mode === "bomb" ? "Bomb · 3v3 · " : ""}${esc(world.map.name)}`, meSlot: me.i, ranks,
     line: `You came <b>${ord(y.place)}</b> of ${PLAYERS} · <b>${y.kills}</b> kills, <b>${y.deaths}</b> deaths · ${meStats.shots ? Math.round((meStats.hits / meStats.shots) * 100) : 0}% accuracy · best streak ${y.streak}`,
-    xpHtml: xpHtml + (brassNow ? `<p class="note brassline">+${brassNow} Brass for this round${online ? " · +100 more if it was your first of the day" : ""}</p>` : ""), foot: "", top: mode === "bomb" ? `<span class="next" id="nextIn"></span>` : `<div class="vote"><span class="eyebrow inl">Vote the next map</span>${MAP_LIST.map((k) => `<button class="vote-card" data-vote="${k}" style="--img:url(${IMG_BASE}${MAP_IMG[k] || "ffa"}.webp?v=1)"><b>${esc(MAPS[k]().name)}</b><i>0</i></button>`).join("")}<span class="next" id="nextIn"></span></div>` }));
+    xpHtml: xpHtml + (brassNow ? `<p class="note brassline">+${brassNow} Brass for this round${online ? " · +100 more if it was your first of the day" : ""}</p>` : ""), foot: "", top: mode === "bomb" ? `<span class="next" id="nextIn"></span>` : `<div class="vote"><span class="eyebrow inl">Vote the next map</span>${MAP_LIST.map((k) => `<button class="vote-card" data-vote="${k}" style="--img:url(${IMG_BASE}${MAP_IMG[k] || "ffa"}.webp?v=${IMG_V})"><b>${esc(MAPS[k]().name)}</b><i>0</i></button>`).join("")}<span class="next" id="nextIn"></span></div>` }));
   drawPodium(ranks.slice(0, 3).map((r) => r.s)); fillBars(); nextCountdown(m.gap || 18);
 }
 async function playOnline() {
@@ -485,14 +485,14 @@ async function pollServers() {
     const el = $(`srv-${sv.key}`); if (!el) return;
     if (!j || !j.ok) { el.innerHTML = `<b>offline</b>`; return; }
     const n = j.playing || 0, names = (j.names || []).slice(0, 6), extra = `${sv.key === "ffa" || sv.key === "gg" ? `${MAPS[j.map] ? MAPS[j.map]().name : ""}${sv.key === "gg" && j.top ? ` · leader on gun ${j.top + 1}` : ""}` : sv.key === "bomb" ? (j.round ? `round ${j.round} · ${j.score?.[0] ?? 0}–${j.score?.[1] ?? 0}` : "") : (PARK_MAPS.includes(j.course) ? MAPS[j.course]().name : "")}`;
-    el.innerHTML = `<b>${n ? `${n} playing now` : sv.key === "park" ? "nobody on" : "nobody on · bots only"}</b>${names.length ? `<span>${names.map(esc).join(", ")}${(j.names || []).length > 6 ? ` +${j.names.length - 6}` : ""}</span>` : ""}${extra ? `<i>${esc(extra)}</i>` : ""}`;
+    el.innerHTML = `<b>${n ? `${n} playing now` : sv.key === "park" ? "nobody on" : "nobody on · bots only"}</b>${extra ? `<i>${esc(extra)}</i>` : ""}${names.length ? `<span>${names.map(esc).join(", ")}${(j.names || []).length > 6 ? ` +${j.names.length - 6}` : ""}</span>` : ""}`;
   }));
 }
 /* DAILY CHALLENGES (2026-10-11): three a day from the site, progress from the day's reported rounds; a met one is paid on the next read. */
 async function challenges() {
   const el = $("chal"); if (!el) return;
   try { const j = await fetch("/api/blockshot/challenges", { credentials: "same-origin", cache: "no-store" }).then((r) => r.json()); if (!j.ok || !$("chal")) return;
-    $("chal").innerHTML = `<span class="eyebrow inl">Today</span>${j.list.map((c) => `<div class="chal-c${c.claimed ? " done" : ""}"><b>${esc(c.text)}</b><i><s style="width:${Math.round((c.have / c.target) * 100)}%"></s></i><small>${c.claimed ? `done · +${c.brass} Brass` : `${c.have} / ${c.target} · ${c.brass} Brass`}</small></div>`).join("")}${j.me ? "" : `<small class="note">sign in to earn them</small>`}`;
+    $("chal").innerHTML = `${j.list.map((c) => `<div class="chal-c${c.claimed ? " done" : ""}"><b>${esc(c.text)}</b><small>${c.claimed ? `✓ +${c.brass} Brass` : `${c.have} / ${c.target} · ${c.brass} Brass`}</small><i><s style="width:${Math.round((c.have / c.target) * 100)}%"></s></i></div>`).join("")}${j.me ? "" : `<p class="note chal-note">Sign in with Twitch to earn them.</p>`}`;
     if (j.paid) { hint(`Challenge done · +${j.paid} Brass`); if (armory.data?.me) armory.data.me.brass = j.brass; } } catch {}
 }
 function serversTick() { clearInterval(serversT); pollServers(); serversT = setInterval(() => { if ($("over").hidden || tab !== "play") { clearInterval(serversT); return; } pollServers(); }, 10000); }
@@ -592,17 +592,17 @@ function showMenu(which, html) { tab = which; if (locked) document.exitPointerLo
 function drawMenu() {
   /* THE PLAY TAB (2026-10-11, the owner: "move practice options, and parkour, to their own tab and remove them from start page"): the
      three online rooms as cards, the button, today's challenges, the gun chips, one line of keys. Practice and Parkour are tabs of their own. */
-  const keysLine = (park) => `<p class="pm-keys">${park ? `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> back to the checkpoint · <b>Esc</b> menu` : `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>4</b> pistol · <b>5</b> knife · <b>Q</b> cycle · <b>Tab</b> scores · <b>Esc</b> menu`}${site.on && !profile.server ? ` · <a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats` : profile.server ? ` · signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button>` : ""}</p>`;
+  const keysLine = (park) => `<p class="pm-keys">${park ? `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> back to the checkpoint · <b>Esc</b> menu` : `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>4</b> pistol · <b>5</b> knife · <b>Q</b> cycle · <b>Tab</b> scores · <b>Esc</b> menu`}</p><p class="pm-acct">${site.on && !profile.server ? `<a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats` : profile.server ? `Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button>` : ""}</p>`;
   const ROLE = { ar: "All-rounder", sniper: "One shot, one kill", shotgun: "Close range" };
   const gunChips = () => (mode === "gg" ? `<p class="note" style="margin:0">Gun Game hands you the gun: every kill is the next one on the ladder.</p>` : `<div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div>`);
-  const srvCard = (sv) => `<button class="srv-card${mode === sv.key ? " on" : ""}" data-mode="${sv.key}" title="${esc(MODE_BLURB[sv.key])}" style="--img:url(${IMG_BASE}${sv.img}.webp?v=1)"><span class="srv-top"><b>${sv.n}</b><small>${sv.sub}</small></span><span class="srv-live" id="srv-${sv.key}"><b>…</b></span></button>`;
+  const srvCard = (sv) => `<button class="srv-card${mode === sv.key ? " on" : ""}" data-mode="${sv.key}" title="${esc(MODE_BLURB[sv.key])}"><span class="srv-img" style="--img:url(${IMG_BASE}${sv.img}.webp?v=${IMG_V})"></span><span class="srv-body"><span class="srv-top"><b>${sv.n}</b><small>${sv.sub}</small></span><span class="srv-live" id="srv-${sv.key}"><b>…</b></span></span></button>`;
   if (tab === "play") {
     if (mode === "park") mode = "ffa";   // the Play tab is the shooters; Parkour has its own tab
     $("panel").innerHTML = `<div class="pm">
     <div class="srv">${SERVERS.filter((sv) => sv.key !== "park").map(srvCard).join("")}</div>
-    <div class="pm-top"><button class="go big" data-online="1">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
-    <div class="chal" id="chal"></div>
-    <div class="pm-cols"><div class="pm-col"><p class="eyebrow">Gun</p>${gunChips()}</div></div>
+    <div class="pm-go"><button class="go big" data-online="1">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
+    <section class="pm-sec"><p class="eyebrow">Today's challenges</p><div class="chal" id="chal"></div></section>
+    <section class="pm-sec"><p class="eyebrow">Your gun</p>${gunChips()}</section>
     ${keysLine(false)}
     </div>`; whoIsOn(); serversTick(); challenges(); }
   else if (tab === "practice") {   // you and eleven bots; nothing counts
