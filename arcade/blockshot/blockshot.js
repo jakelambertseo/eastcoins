@@ -9,12 +9,12 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk, PARK, PARK_MAPS, newRun, parkPlace, parkStep, parkReset, medalFor } from "/v3/assets/js/blockshot-rules.js?v=17";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk, PARK, PARK_MAPS, newRun, parkPlace, parkStep, parkReset, medalFor } from "/v3/assets/js/blockshot-rules.js?v=18";
 import { finMat, finCss, finOf, knifeOf } from "./armory-fin.js?v=1";
-import { createNet } from "./net.js?v=18";
+import { createNet } from "./net.js?v=19";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=10";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=13";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=14";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -59,6 +59,9 @@ function buildMap(key) {
     else { g.add(new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.55, 0.6), pickMats.yellow)); const band = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.16, 0.64), pickMats.dark); g.add(band); }
     g.position.set(p.x, p.y + 0.55, p.z); scene.add(g); mapMeshes.push(g); return g;
   });
+  // a course: a label over each checkpoint and the finish
+  if (map.park) { const label = (text, x, y, z, col) => { const c = document.createElement("canvas"); c.width = 256; c.height = 128; const g2 = c.getContext("2d"); g2.textAlign = "center"; g2.font = "800 72px Rajdhani, sans-serif"; g2.lineWidth = 8; g2.strokeStyle = "#000"; g2.strokeText(text, 128, 88); g2.fillStyle = col; g2.fillText(text, 128, 88); const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true, opacity: 0.9 })); sp.scale.set(3.2, 1.6, 1); sp.position.set(x, y + 3.2, z); scene.add(sp); mapMeshes.push(sp); };
+    map.park.cps.forEach((c, i) => label(c.k || `CP ${i + 1}`, c.x, c.y, c.z, "#6ad0ff")); label("FINISH", map.park.finish.x, map.park.finish.y, map.park.finish.z, "#ffd84a"); }
   // the bomb map: a letter over each site, and the bomb itself (hidden until it is on the ground or planted)
   bombMesh = null;
   if (map.bomb) {
@@ -316,7 +319,7 @@ function onParkEvent(e) {
   if (!e.b && e.s >= 0 && beans[e.s]) e.b = beans[e.s]; const mine = e.b === me; if (!mine) return;
   switch (e.what) {
     case "start": play("go"); ghosts.t0 = performance.now() / 1000; parkDone = null; return;
-    case "cp": play("pad", 0.5); say(`CHECKPOINT ${e.i + 1}`, fmtMs(e.t)); clearTimeout(say.t); say.t = setTimeout(() => say(""), 1200); return;
+    case "cp": play("pad", 0.5); say(world?.map.park?.cps[e.i]?.k ? `LEVEL ${e.i + 1} CLEAR` : `CHECKPOINT ${e.i + 1}`, fmtMs(e.t)); clearTimeout(say.t); say.t = setTimeout(() => say(""), 1200); return;
     case "fall": play("hurt"); flashDamage(); feed("fell · back to the checkpoint", "dead"); return;
     case "finish": parkDone = e; play(e.pb ? "levelup" : "win"); say(`FINISH ${fmtMs(e.ms)}`, e.pb && !online ? "personal best · R to run again" : "R to run again"); return;
     case "reset": ghosts.t0 = -1; parkDone = null; say(""); yaw = world.map.park.facing; pitch = 0; return;
@@ -786,7 +789,7 @@ function hud(dt) {
   $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0); $("xhair").classList.toggle("hs", hsTimer > 0);
   if (mode === "park" && state === "play") {
     const r = me.park || newRun(), P = world?.map.park; $("hudT").textContent = fmtMs(Math.round(r.t * 1000)); $("hudT").classList.toggle("fuse", false);
-    $("hudPlace").textContent = P ? `checkpoint ${Math.max(0, r.cp + 1)} / ${P.cps.length}${r.best ? ` · best ${fmtMs(r.best)}` : ""}` : "";
+    $("hudPlace").textContent = P ? `${P.cps[0]?.k ? "level" : "checkpoint"} ${Math.max(0, r.cp + 1)} / ${P.cps.length + (P.cps[0]?.k ? 1 : 0)}${r.best ? ` · best ${fmtMs(r.best)}` : ""}` : "";
     const bl = $("bombLine"), line = r.done ? `Finished in ${fmtMs(Math.round(r.t * 1000))} · R to run again` : !r.running ? "Step off the start to begin · R resets · a fall goes back to the checkpoint" : ""; if (bl.textContent !== line) bl.textContent = line; bl.hidden = !line;
     $("scoreUs").hidden = true; $("scoreThem").hidden = true; for (const id of ["ammoBox", "hudWeps", "hpBox"]) $(id).style.display = "none";
   } else for (const id of ["ammoBox", "hudWeps", "hpBox"]) $(id).style.display = "";

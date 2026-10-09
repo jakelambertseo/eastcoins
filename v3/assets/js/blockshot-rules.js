@@ -10,7 +10,7 @@
 export const VERSION = 1;
 
 /* ------------------------------------------------------------------ constants */
-export const PHYS = { G: -26, JUMP: 9.4, RUN: 7.2, ACC_GROUND: 42, ACC_AIR: 13, R: 0.5, STEP: 1 / 120, STEP60: 1 / 60, EYE: 0.85, HEAD_Y: 0.62, STEP_UP: 0.62 };   // STEP60: the server's tick, and the page's when online
+export const PHYS = { G: -26, JUMP: 9.4, RUN: 7.2, ACC_GROUND: 42, ACC_AIR: 16, R: 0.5, STEP: 1 / 120, STEP60: 1 / 60, EYE: 0.85, HEAD_Y: 0.62, STEP_UP: 0.62, MANTLE: 0.9, JUMP_BUF: 0.12 };   // (2026-10-10, parkour polish: ACC_AIR 13 -> 16, MANTLE: a ledge up to this far above the feet is climbed when met in the air, JUMP_BUF: a jump pressed this long before landing still fires)   // STEP60: the server's tick, and the page's when online
 // slide-hop, the lounge's numbers: a slide keeps your speed, a hop out keeps it plus a kick, slide again as you land for more
 export const SL = { min: 3, start: 0.9, perfect: 1.1, window: 0.3, decay: 0.35, long: 1.4, hop: 0.4, max: 15, drain: 5, cd: 0.5 };
 export const RULES = { PLAYERS: 12, ROUND_S: 240, MAX_HP: 100, REGEN_AFTER: 5, REGEN_RATE: 12, RESPAWN_S: 3, FALL_Y: -10 };
@@ -216,24 +216,41 @@ function courseBuilder(size) {
   M.plat = plat; M.walls = () => {}; return M;
 }
 function finishCourse(M, name, blurb, start, cps, finish, medals, sky) {
-  M.park = { start, cps, finish, medals, facing: Math.PI };   // facing π: along +z, the way every course runs
+  const lowest = Math.min(...M.boxes.map((b) => b.c[1] + b.h[1]));
+  M.park = { start, cps, finish, medals, facing: Math.PI, floor: lowest - 8 };   // facing π: along +z, the way every course runs; floor: eight below the lowest platform (The Long Way dips below the old fixed floor)
   M.spawns = [start]; M.waypoints = [[start[0], start[2]]]; M.pickups = []; M.name = name; M.blurb = blurb; M.sky = sky; M.fog = [90, 220]; M.course = true;
   return M;
 }
-/* First Steps: platforms over the drop with small gaps, a couple of step-ups, a ramp and one pad. About 30 seconds. */
+/* The Long Way (2026-10-10, the owner: "significantly longer, with level checkpoints, slowly making it more difficult"): eight levels,
+   each ending on a checkpoint platform, from plain hops to long slide-hop gaps over tiny tiles. A fall costs the level, never more. */
 function course1() {
-  const M = courseBuilder(60), { plat, ramp, pad } = M;
-  plat(0, 0, 0, 8, 8, "concrete", C.SAND);                                                   // the start (z -4..4)
-  let z = 9; const cps = [];                                                                 // first platform 7..11: a 3 m gap (a 1 m gap is one a bean straddles)
-  for (let i = 0; i < 6; i++) { plat(0, 0, z, 4, 4); z += 7; }                               // six hops of 3 m
-  plat(0, 0, z, 6, 6, "concrete", C.TEAL); cps.push({ x: 0, z, y: 0, r: 3 }); z += 7;      // checkpoint 1
-  for (let i = 0; i < 4; i++) { plat((i % 2 ? 3 : -3), 1.2 * (i + 1), z, 4, 4); z += 6; }   // zig-zag, stepping up
-  plat(0, 4.8, z, 6, 6, "concrete", C.TEAL); cps.push({ x: 0, z, y: 4.8, r: 3 }); z += 6;   // checkpoint 2, high
-  ramp(0, z - 3, 4.8, 0, z + 9, 0, 5, "concrete", C.STONE); z += 12; plat(0, 0, z, 6, 6); z += 4;   // down the ramp
-  pad(0, z - 1, 17, { x: 0, z: 9 }); z += 16; plat(0, 0, z, 8, 8, "concrete", C.TEAL); cps.push({ x: 0, z, y: 0, r: 4 }); z += 8;   // a pad over a big gap, checkpoint 3
-  for (let i = 0; i < 5; i++) { plat(Math.sin(i) * 3, 0, z, 3, 3); z += 6; }                 // five small ones that drift
-  plat(0, 0, z + 2, 8, 8, "metal", C.DARK);
-  return finishCourse(M, "First Steps", "Platforms over the drop, a few step-ups, a ramp and a pad. The gentle one.", [0, 1, 0], cps, { x: 0, z: z + 2, y: 0, r: 3.5 }, [26, 34, 48], 0x8fc4ef);
+  const M = courseBuilder(120), { plat, ramp, pad, box } = M; const cps = []; let z = 0;
+  const level = (k, x, y, zz, w = 7) => { plat(x, y, zz, w, w, "concrete", C.TEAL); cps.push({ x, z: zz, y, r: w / 2 - 0.5, k: `L${k}` }); };
+  plat(0, 0, 0, 8, 8, "concrete", C.SAND); z = 9;
+  // L1 hops: eight tiles, the gaps growing from 3 to 4
+  for (let i = 0; i < 8; i++) { plat(0, 0, z, 4, 4); z += 7 + Math.floor(i / 3); } level(1, 0, 0, z); z += 8;
+  // L2 steps: a zig-zag up, a bridge, a long ramp down
+  let y = 0; for (let i = 0; i < 7; i++) { y += 1.2; plat(i % 2 ? 3.5 : -3.5, y, z, 4, 4); z += 5.5; }
+  plat(0, y, z + 2, 3, 10, "metal", C.DARK); z += 8; ramp(0, z, y, 0, z + 14, 0, 5, "concrete", C.STONE); z += 17; level(2, 0, 0, z); z += 8;
+  // L3 lanes: runways with gaps of 5, 6 and 7, each landing a little lower
+  y = 0; for (const [len, gap] of [[12, 5], [12, 6], [12, 7]]) { plat(0, y, z + len / 2, 6, len, "metal", C.DARK); z += len + gap; y -= 1; } level(3, 0, y, z + 2); z += 10;
+  // L4 beams: narrow and turning, with two-metre gaps
+  let x = 0; for (let i = 0; i < 6; i++) { x += i % 2 ? -4 : 4; plat(x, y, z + 4, 1.4, 8, "metal", C.RUST); z += 10; } level(4, x, y, z + 2); z += 9;
+  // L5 pads: three throws over big gaps, the last onto a high landing
+  for (let i = 0; i < 2; i++) { pad(x, z, 17, { x: 0, z: 10 }); z += 18; plat(x, y, z, 5, 5); z += 4; }
+  pad(x, z, 24, { x: 0, z: 9 }); z += 20; plat(x, y + 7, z, 8, 8, "concrete", C.SAND); level(5, x, y + 7, z + 3, 6); y += 7; z += 10;
+  // L6 stairs and drops: a staircase of kerbs, then drops of four onto small tiles
+  for (let i = 0; i < 6; i++) { box([x, y + 0.5 * (i + 1) - 0.3, z + i * 1.6], [2, 0.3, 0.8], "concrete", C.WHITE); } y += 3; z += 10; plat(x, y, z, 5, 5); z += 5;
+  for (let i = 0; i < 4; i++) { y -= 4; z += 6; plat(x, y, z, 3, 3); } level(6, x, y, z + 6); z += 14;
+  // L7 the climb: a spiral up around a column
+  const cx = x, cz = z + 10; let yy = y; for (let i = 0; i < 12; i++) { const a = -Math.PI / 2 + i * 0.52, r = 8; yy += 1.3; plat(cx + Math.cos(a) * r, yy, cz + Math.sin(a) * r, 3, 3, "metal", C.DARK); }
+  box([cx, (y + yy - 0.2) / 2, cz], [3.5, (yy - 0.2 - y) / 2, 3.5], "brick", C.BRICK);   // the column, from the level's floor to just under the top platform (a column through the platform swallowed it)
+  level(7, cx, yy + 0.5, cz, 5); y = yy + 0.5; z = cz + 12;
+  // L8 the gauntlet: a drop to a lane, then gaps of 8, 9 and 9 over tiny tiles, and a last leap to the finish
+  plat(cx, y - 9, z + 6, 6, 12, "metal", C.DARK); y -= 9; z += 14;
+  for (const gap of [8, 9, 9]) { z += gap; plat(cx, y, z, 2.6, 2.6, "metal", C.RUST); z += 2; }
+  z += 9; plat(cx, y - 2, z + 4, 9, 9, "metal", C.DARK); level(8, cx, y - 2, z + 4, 9); cps.pop();   // the finish is the eighth level itself
+  return finishCourse(M, "The Long Way", "Eight levels, each a little harder: hops, steps, lanes, beams, pads, drops, a climb, a gauntlet. A fall costs the level.", [0, 1, 0], cps, { x: cx, z: z + 4, y: y - 2, r: 4 }, [150, 200, 300], 0x8fc4ef);
 }
 /* Hop Line: long runways with gaps that need slide-hop speed, a pad chain in the middle. About 40 seconds for someone who can. */
 function course2() {
@@ -269,7 +286,7 @@ export function parkStep(world, b, dt, events) {
   if (r.done) return;
   if (!r.running) { if (Math.hypot(b.p.x - P.start[0], b.p.z - P.start[2]) > 4.5 || b.p.y < P.start[1] - 1) { r.running = true; r.t = 0; r.trail = []; r.sampleT = 0; events?.push({ type: "park", what: "start", s: b.i }); } else return; }
   r.t += dt; r.sampleT += dt; if (r.sampleT >= 0.1) { r.sampleT -= 0.1; if (r.trail.length < 1800) r.trail.push([Math.round(b.p.x * 20) / 20, Math.round(b.p.y * 20) / 20, Math.round(b.p.z * 20) / 20]); }
-  if (b.p.y < PARK.floor) { r.falls++; const cp = r.cp >= 0 ? P.cps[r.cp] : null; parkPlace(world, b, cp ? [cp.x, cp.y, cp.z] : null); events?.push({ type: "park", what: "fall", s: b.i, cp: r.cp }); return; }
+  if (b.p.y < (P.floor ?? PARK.floor)) { r.falls++; const cp = r.cp >= 0 ? P.cps[r.cp] : null; parkPlace(world, b, cp ? [cp.x, cp.y, cp.z] : null); events?.push({ type: "park", what: "fall", s: b.i, cp: r.cp }); return; }
   const next = P.cps[r.cp + 1];
   if (next && Math.hypot(b.p.x - next.x, b.p.z - next.z) < next.r && Math.abs(b.p.y - next.y) < 3) { r.cp++; events?.push({ type: "park", what: "cp", s: b.i, i: r.cp, t: Math.round(r.t * 1000) }); }
   if (r.cp === P.cps.length - 1 && Math.hypot(b.p.x - P.finish.x, b.p.z - P.finish.z) < P.finish.r && Math.abs(b.p.y - P.finish.y) < 3 && b.grounded) {
@@ -371,7 +388,9 @@ export function stepBean(world, beans, b, inp, dt, now, rand, events, opts = {})
   const setSpeed = (v) => { if (hs > 1e-3) { b.v.x *= v / hs; b.v.z *= v / hs; } hs = v; };
   b.landT += dt; b.slideCd = Math.max(0, b.slideCd - dt); b.coyote = b.grounded ? 0.1 : Math.max(0, b.coyote - dt);
   if (!b.slide && b.grounded && inp.slide && hs > SL.min) { b.slide = true; b.slideT = 0; const kick = (b.slideCd > 0 ? 0 : SL.start) + (b.landT < SL.window ? SL.perfect : 0); if (kick) setSpeed(Math.min(SL.max, hs + kick)); events?.push({ type: "slide", b }); }
-  const jumped = inp.jump && b.coyote > 0 && b.v.y < 3;
+  if (inp.jump && !b.grounded && b.coyote <= 0) b.jumpBuf = P.JUMP_BUF; else if (b.jumpBuf > 0) b.jumpBuf = Math.max(0, b.jumpBuf - dt);   // a press just before the landing is kept for it
+  const jumped = (inp.jump || b.jumpBuf > 0) && b.coyote > 0 && b.v.y < 3;
+  if (jumped) b.jumpBuf = 0;
   if (b.slide) { b.slideT += dt; steer(1.8); setSpeed(hs * Math.exp(-(b.slideT > SL.long ? 3 : SL.decay) * dt)); if (jumped) setSpeed(Math.min(SL.max, hs + SL.hop)); if (jumped || !inp.slide || !b.grounded || hs < SL.min * 0.7) { b.slide = false; b.slideCd = SL.cd; } }
   else if (hs > P.RUN + 0.2) { if (b.grounded) { steer(4); setSpeed(Math.max(P.RUN, hs - SL.drain * dt)); } else steer(2.6); }
   else { const acc = b.grounded ? P.ACC_GROUND : P.ACC_AIR, run = P.RUN * (inp.scope ? G.adsMove ?? 1 : 1) * (G.speed ?? 1); b.v.x += clamp(inp.x * run - b.v.x, -acc * dt, acc * dt); b.v.z += clamp(inp.z * run - b.v.z, -acc * dt, acc * dt); }
@@ -385,7 +404,7 @@ export function stepBean(world, beans, b, inp, dt, now, rand, events, opts = {})
   for (const box of world.boxes) {
     if (!sphereBox(b.p, P.R, box, hit)) continue;
     // a low ledge (a rail, a crate, a kerb) is stepped onto rather than run into: that's what keeps a slide alive
-    if (box.flat && Math.abs(hit.n.y) < 0.3 && box.top - (b.p.y - P.R) < P.STEP_UP && box.top > b.p.y - P.R) { b.p.y = box.top + P.R + 0.01; b.grounded = true; continue; }
+    if (box.flat && Math.abs(hit.n.y) < 0.3 && box.top - (b.p.y - P.R) < (wasGrounded ? P.STEP_UP : P.MANTLE) && box.top > b.p.y - P.R && (wasGrounded || b.v.dot(hit.n) < 0)) { b.p.y = box.top + P.R + 0.01; b.grounded = true; if (b.v.y < 0) b.v.y = 0; continue; }   // a ledge met in the air, moving into it, is climbed (the mantle); on the ground a kerb is stepped
     b.p.addScaled(hit.n, hit.pen); const vn = b.v.dot(hit.n); if (vn < 0) b.v.addScaled(hit.n, -vn); if (hit.n.y > 0.6) b.grounded = true;
   }
   if (b.grounded && !wasGrounded) b.landT = 0;
