@@ -9,8 +9,8 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES } from "/v3/assets/js/blockshot-rules.js?v=2";
-import { createNet } from "./net.js?v=1";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, V, PHYS, RULES, GUNS, GUN_KEYS, MAPS, MAP_LIST, BOT_NAMES } from "/v3/assets/js/blockshot-rules.js?v=3";
+import { createNet } from "./net.js?v=2";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=1";
 import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save } from "./profile.js?v=1";
@@ -100,6 +100,7 @@ const sens = () => 0.0022 * profile.settings.sens * (scoping ? 0.35 : 1), inv = 
 addEventListener("keydown", (e) => {
   if (!locked && document.activeElement !== canvas) return; keys[e.code] = true;
   if (e.code === "Tab") { $("board").hidden = false; drawBoard(); e.preventDefault(); }
+  if (e.code === "Escape" && state === "play" && $("over").hidden) { showMenu("play"); if (online) { /* still in the match; Play again rejoins */ } }
   if (e.code === "Digit1") nextGun = "ar"; if (e.code === "Digit2") nextGun = "sniper"; if (e.code === "Digit3") nextGun = "shotgun";
   if (/^Digit[123]$/.test(e.code) && online) net.setGun(nextGun);
   if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.code)) e.preventDefault();
@@ -134,7 +135,8 @@ function tracer(from, to, mine) {
 }
 function floatText(p, text, col) { if (floats.length > 30) return; const c = document.createElement("canvas"); c.width = 128; c.height = 64; const x = c.getContext("2d"); x.textAlign = "center"; x.font = "800 36px Lora, serif"; x.lineWidth = 6; x.strokeStyle = "#000"; x.strokeText(text, 64, 44); x.fillStyle = col; x.fillText(text, 64, 44);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); s.scale.set(1.1, 0.55, 1); s.position.set(p.x + rnd(-0.3, 0.3), p.y + 1.3, p.z); scene.add(s); floats.push({ s, life: 0.7 }); }
-let hitTimer = 0, killTimer = 0;
+let hitTimer = 0, killTimer = 0, dmgT = 0, dmgAngle = 0;
+function dmgFrom(by) { dmgAngle = Math.atan2(by.p.x - me.p.x, by.p.z - me.p.z); dmgT = 0.7; }
 function flashDamage() { const el = $("hurt"); el.classList.remove("on"); void el.offsetWidth; el.classList.add("on"); }
 const meStats = { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 };
 const gunStat = (g) => (meStats.byGun[g] ||= { kills: 0, shots: 0, hits: 0 });
@@ -150,18 +152,18 @@ function onEvent(e) {
     }
     case "hit": paintTag(e.target);
       if (e.by === me) { hitTimer = 0.14; meStats.hits++; gunStat(me.gun).hits++; if (e.head) meStats.headshots++; play(e.head ? "headshot" : "hit"); floatText(e.target.p, e.head ? `${Math.round(e.dmg)} HS` : `${Math.round(e.dmg)}`, e.head ? "#ffd84a" : "#fff"); }
-      if (e.target === me) { flashDamage(); play("hurt"); }
+      if (e.target === me) { flashDamage(); play("hurt"); if (e.by && e.by !== me) dmgFrom(e.by); }
       return;
     case "kill": {
       const { target, by, head } = e; target.mesh.g.visible = false; paintTag(target);
       const who = (b) => (b.bot ? esc(b.name) : "<b>you</b>");
-      feed(!by ? `${who(target)} fell` : `${who(by)} ${head ? "🎯" : "▸"} ${who(target)}`, by === me ? "me" : target === me ? "dead" : "");
+      feed(!by ? `${who(target)} fell` : `${who(by)} ${head ? '<span class="hs">⌖</span>' : "▸"} ${who(target)}`, by === me ? "me" : target === me ? "dead" : "");
       log(!by ? `${target.bot ? target.name : "You"} fell.` : `${by.bot ? by.name : "You"} killed ${target.bot ? target.name : "you"}${head ? " (headshot)" : ""}.`, by === me);
       if (by === me) { killTimer = 0.4; gunStat(me.gun).kills++; play("kill"); if (me.streak % 3 === 0) meStats.streaks++; if (me.streak === 3) { say("TRIPLE KILL"); play("streak"); } else if (me.streak === 5) { say("RAMPAGE"); play("streak"); } else if (me.streak >= 8 && me.streak % 4 === 0) { say("UNSTOPPABLE"); play("streak"); } }
-      if (target === me) { me.lastBy = by; me.respawn = RESPAWN_S; say("YOU DIED", `${by ? `${by.name} got you` : "You fell"} · back in ${RESPAWN_S}s`); play("die"); document.exitPointerLock?.(); }
+      if (target === me) { me.lastBy = by; me.respawn = RESPAWN_S; $("deathBy").textContent = by ? by.name : "the fall"; $("death").hidden = false; play("die"); }   // (the mouse stays grabbed: every grab shows the browser's pointer notice, so it's once per Play, not once per death)
       drawSb(); return;
     }
-    case "spawn": if (e.b !== me) e.b.mesh.g.visible = true; paintTag(e.b); if (e.b === me) { const face = () => { yaw = me.facing; pitch = -0.05; }; if (online) setTimeout(face, 150); else face(); $("hudGun").textContent = GUNS[me.gun].n; say(""); play("spawn"); if (state === "play") grabMouse(); } return;
+    case "spawn": if (e.b !== me) e.b.mesh.g.visible = true; paintTag(e.b); if (e.b === me) { const face = () => { yaw = me.facing; pitch = -0.05; }; if (online) setTimeout(face, 150); else face(); $("hudGun").textContent = GUNS[me.gun].n; $("death").hidden = true; say(""); play("spawn"); if (state === "play" && !locked) grabMouse(); } return;
     case "jump": if (mine) play("jump"); return;
     case "slide": if (mine) play("slide"); return;
     case "pad": play("pad", mine ? 1 : 0.2); return;
@@ -286,10 +288,12 @@ function endRound() {
 
 /* ------------------------------------------------------------------ the menu: Play, Locker, Stats, Settings */
 let tab = "play";
-function showMenu(which, html) { tab = which; for (const b of document.querySelectorAll("[data-tab]")) b.classList.toggle("on", b.dataset.tab === which); if (html !== undefined) $("panel").innerHTML = html; else drawMenu(); $("over").hidden = false; }
+const gunCard = (k, i) => { const g = GUNS[k], dps = (g.dmg * g.pellets) / g.cd, bar = (v, max) => `${Math.round(clamp(v / max, 0.05, 1) * 100)}%`;
+  return `<button class="gun${k === nextGun ? " on" : ""}" data-gun="${k}"><b>${i + 1} · ${esc(g.n)}</b>${esc(g.text)}<div class="bars"><div>Damage<i style="--v:${bar(g.dmg * g.pellets, 250)}"></i></div><div>Fire rate<i style="--v:${bar(1 / g.cd, 8)}"></i></div><div>Range<i style="--v:${bar(g.range, 160)}"></i></div><div>Magazine<i style="--v:${bar(g.mag, 28)}"></i></div><div>DPS<i style="--v:${bar(dps, 560)}"></i></div></div></button>`; };
+function showMenu(which, html) { tab = which; if (locked) document.exitPointerLock?.(); for (const b of document.querySelectorAll("[data-tab]")) b.classList.toggle("on", b.dataset.tab === which); if (html !== undefined) $("panel").innerHTML = html; else drawMenu(); $("over").hidden = false; }
 function drawMenu() {
   if (tab === "play") { $("panel").innerHTML = `<b>Free-for-all</b><p>Five minutes, most kills wins. <b>Shift</b> slides, <b>Space</b> hops out of a slide and keeps the speed; chain them. Jump pads fly you onto the roofs.</p>
-    <p class="eyebrow">Gun</p><div class="guns">${GUN_KEYS.map((k, i) => `<button class="gun${k === nextGun ? " on" : ""}" data-gun="${k}"><b>${i + 1} · ${esc(GUNS[k].n)}</b>${esc(GUNS[k].text)}</button>`).join("")}</div>
+    <p class="eyebrow">Gun</p><div class="guns">${GUN_KEYS.map((k, i) => gunCard(k, i)).join("")}</div>
     <p class="eyebrow">The match</p><p id="whoOn" class="note">Looking…</p>
     <div class="row"><button class="go" data-online="1">Play online</button><span class="note">One match, always on: you drop into the round in progress and bots fill the empty slots.</span></div>
     <p class="eyebrow">Practice vs bots</p><div class="maps">${MAP_LIST.map((k) => { const m = MAPS[k](); return `<button class="mapc${k === mapKey ? " on" : ""}" data-map="${k}"><b>${esc(m.name)}</b>${esc(m.blurb)}</button>`; }).join("")}</div>
@@ -342,34 +346,43 @@ function drawPreview() {
   sc.add(new THREE.HemisphereLight(0xffffff, 0x334455, 1.4)); const l = new THREE.DirectionalLight(0xffffff, 1.2); l.position.set(2, 4, 3); sc.add(l);
   beanMesh(profile.skin, sc).rotation.y = Math.PI + 0.5; pvR.setSize(c.width, c.height, false); pvR.render(sc, cam);
 }
-function drawProfile() { $("hudLevel").textContent = `Lv ${profile.level} · ${titleFor(profile.level)}`; $("menuLevel").textContent = `Level ${profile.level} · ${titleFor(profile.level)} · ${profile.stats.kills} kills · K/D ${kd()}`; }
+function drawProfile() { $("hudLevel").textContent = `LV ${profile.level}`; $("menuLevel").textContent = `Level ${profile.level} · ${titleFor(profile.level)} · ${profile.stats.kills} kills · K/D ${kd()}`; }
 
 /* ------------------------------------------------------------------ drawing */
-function drawSb() { $("sb").innerHTML = ranked().map((b, k) => `<tr class="${b.bot ? "" : "me"}"><td>${k + 1}. ${esc(b.name)}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join(""); }
-function drawBoard() { $("board").innerHTML = `<b>Free-for-all · ${esc(world?.map.name || "")} · ${fmtT(roundLeft())} left</b><table><tr><td></td><td></td><td>K</td><td>D</td></tr>${ranked().map((b, k) => `<tr class="${b.bot ? "" : "me"}"><td>${k + 1}</td><td>${esc(b.name)}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join("")}</table>`; }
+function drawSb() { $("sb").innerHTML = ranked().map((b, k) => `<tr class="${b === me ? "me" : ""}"><td>${k + 1}. ${esc(b.name)}${b.bot ? " <small>bot</small>" : ""}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join(""); }
+function drawBoard() { $("board").innerHTML = `<b>Free-for-all · ${esc(world?.map.name || "")} · ${fmtT(roundLeft())} left</b><table><tr><td></td><td></td><td>K</td><td>D</td></tr>${ranked().map((b, k) => `<tr class="${b === me ? "me" : ""}"><td>${k + 1}</td><td>${esc(b.name)}${b.bot ? "<small>bot</small>" : ""}</td><td>${b.kills}</td><td>${b.deaths}</td></tr>`).join("")}</table>`; }
 function draw(dt) {
   for (const b of beans) { if (b === me || !b.mesh.g.visible) continue; const g = b.mesh.g; g.position.set(b.p.x, b.p.y - R, b.p.z); let dy = b.facing - g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); g.rotation.y += dy * 0.3; g.scale.y += ((b.slide ? 0.55 : 1) - g.scale.y) * 0.3; }
   if (me.dead && me.lastBy && !me.lastBy.dead) { const k = me.lastBy; camera.position.lerp(new V3(k.p.x + 3, k.p.y + 3, k.p.z + 3), 0.1); camera.lookAt(k.p.x, k.p.y + 0.5, k.p.z); viewGun.visible = false; }
   else if (me.dead || state === "menu") { const a = t * 0.1; camera.position.set(Math.sin(a) * 40, 22, Math.cos(a) * 40); camera.lookAt(0, 2, 0); viewGun.visible = false; }
   else { camera.position.set(me.p.x, me.p.y + EYE * (me.slide ? 0.6 : 1), me.p.z); camera.rotation.set(pitch, yaw, 0); viewGun.visible = !scoping; viewGun.position.z += (-0.42 - viewGun.position.z) * 0.25; const bob = Math.hypot(me.v.x, me.v.z) > 1 && me.grounded && !me.slide ? Math.sin(t * 12) * 0.012 : 0; viewGun.position.y = -0.17 + bob; }
-  const fov = scoping ? 24 : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 9, 0, 1) * 10; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
+  const fov = scoping ? profile.settings.fov / (GUNS[me.gun].zoom || 2.7) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 9, 0, 1) * 10; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
   $("scope").classList.toggle("on", scoping && !me.dead && state === "play");
   for (let k = fx.length - 1; k >= 0; k--) { const f = fx[k]; f.life -= dt; const a = Math.max(0, f.life / f.max); f.o.material.opacity = a; if (f.grow) f.o.scale.setScalar(1 + (1 - a) * f.grow); if (f.life <= 0) { scene.remove(f.o); f.o.geometry.dispose(); fx.splice(k, 1); } }
   for (let i = floats.length - 1; i >= 0; i--) { const f = floats[i]; f.life -= dt; f.s.position.y += dt * 1.2; f.s.material.opacity = Math.min(1, f.life * 2); if (f.life <= 0) { scene.remove(f.s); f.s.material.map.dispose(); floats.splice(i, 1); } }
   sun.position.set(camera.position.x + 20, 50, camera.position.z + 14); sun.target.position.set(camera.position.x, 0, camera.position.z);
   renderer.render(scene, camera);
 }
+const hpSeg = $("hudHpSeg"); for (let k = 0; k < 10; k++) hpSeg.append(document.createElement("i"));
 function hud(dt) {
-  hitTimer = Math.max(0, hitTimer - dt); killTimer = Math.max(0, killTimer - dt);
+  hitTimer = Math.max(0, hitTimer - dt); killTimer = Math.max(0, killTimer - dt); dmgT = Math.max(0, dmgT - dt);
+  // the crosshair opens with speed, in the air and when hit; it closes scoped
+  { const sp = Math.hypot(me.v.x, me.v.z), gap = scoping ? 2 : 5 + Math.min(14, sp * 0.9) + (me.grounded ? 0 : 10) + (hitTimer > 0 ? 2 : 0); $("xhair").style.setProperty("--gap", `${gap.toFixed(1)}px`); }
+  { const el = $("dmgDir"); el.classList.toggle("on", dmgT > 0); if (dmgT > 0) { let a = dmgAngle - yaw; el.firstElementChild.style.transform = `rotate(${(-a * 180) / Math.PI}deg)`; } }
+  $("hpBox").classList.toggle("low", me.hp <= 30 && !me.dead); document.body.classList.toggle("lowhp", me.hp <= 30 && !me.dead && state === "play");
+  { const on = Math.ceil(clamp(me.hp / MAX_HP, 0, 1) * 10); hpSeg.childNodes.forEach((i, k) => i.classList.toggle("on", k < on)); }
+  { const g = GUNS[me.gun]; $("ammoBox").classList.toggle("empty", me.ammo === 0 && !me.reloading); $("hudReload").firstElementChild.style.width = me.reloading ? `${(1 - me.reloading / g.reload) * 100}%` : "0"; }
+  if (me.dead && state === "play") { $("deathBar").style.width = `${clamp(me.respawn / RESPAWN_S, 0, 1) * 100}%`; $("deathSub").textContent = `respawning in ${Math.ceil(me.respawn)}`; }
+  $("hudWeps").innerHTML = GUN_KEYS.map((k, i) => `<span class="${k === nextGun ? "on" : ""}">${i + 1} ${GUNS[k].n.split(" ")[0]}</span>`).join("");
   $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0);
   $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft());
   $("hudPing").textContent = online ? `${net.ping} ms` : "";
   const place = ranked().indexOf(me) + 1; $("hudPlace").textContent = state === "play" ? `${ord(place)} of ${PLAYERS}` : "";
-  $("hudK").textContent = me.kills; $("hudKD").textContent = `kills · ${me.deaths} deaths${me.streak >= 2 ? ` · streak ${me.streak}` : ""}`;
-  $("hudHpN").textContent = Math.round(Math.max(0, me.hp)); $("hudHp").firstElementChild.style.width = `${clamp(me.hp / MAX_HP, 0, 1) * 100}%`;
-  const g = GUNS[me.gun]; $("hudAmmo").innerHTML = me.reloading ? `<small>reloading…</small>` : `${me.ammo} <small>/ ${g.mag}</small>`;
+  $("hudK").textContent = me.kills; $("hudKD").textContent = `K · ${me.deaths} D${me.streak >= 2 ? ` · ×${me.streak}` : ""}`; $("hudName").textContent = me.name;
+  $("hudHpN").textContent = Math.round(Math.max(0, me.hp));
+  const g = GUNS[me.gun]; $("hudAmmo").textContent = me.reloading ? "··" : me.ammo; $("hudMag").textContent = `/ ${g.mag}`;
   $("lockHint").hidden = locked || state !== "play" || me.dead;
-  if (me.dead && state === "play") $("hudSub").textContent = `${me.lastBy ? `${me.lastBy.name} got you` : "You fell"} · back in ${Math.ceil(me.respawn)}s`;
+  if (!me.dead && !$("death").hidden) $("death").hidden = true;   // (online, the snapshot that says you're alive lands a frame or two after the spawn event)
 }
 function resize() { const w = canvas.clientWidth, h = canvas.clientHeight; if (canvas.width !== Math.round(w * renderer.getPixelRatio()) || canvas.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); } }
 let last = performance.now(), acc = 0, fpsN = 0, fpsT = 0;
@@ -385,7 +398,7 @@ function frame(now) {
   fpsN++; fpsT += dt; if (fpsT >= 1) { $("loadStat").textContent = `${fpsN} fps`; fpsN = 0; fpsT = 0; }
   requestAnimationFrame(frame);
 }
-buildMap(mapKey); reset(); state = "menu"; $("hudGun").textContent = GUNS.ar.n; drawProfile(); showMenu("play");
+buildMap(mapKey); reset(); state = "menu"; $("hudGun").textContent = GUNS.ar.n; $("hudMag").textContent = `/ ${GUNS.ar.mag}`; drawProfile(); showMenu("play");
 window.__bs = { beans, get me() { return me; }, get world() { return world; }, get state() { return state; }, get roundT() { return roundT; }, get online() { return online; }, net, playOnline, start, GUNS, profile, setMap: (k) => { mapKey = k; }, aim(y, p) { yaw = y; pitch = p; }, set fire(v) { mouseFire = v; }, set keys(k) { Object.assign(keys, k); }, endRound, showMenu,
   sim(seconds) { for (let k = 0; k < seconds * 60; k++) advance(1 / 60); draw(1 / 60); hud(1 / 60); } };
 requestAnimationFrame(frame);

@@ -14,13 +14,17 @@ export const PHYS = { G: -26, JUMP: 9.4, RUN: 7.2, ACC_GROUND: 42, ACC_AIR: 13, 
 // slide-hop, the lounge's numbers: a slide keeps your speed, a hop out keeps it plus a kick, slide again as you land for more
 export const SL = { min: 3, start: 0.9, perfect: 1.1, window: 0.3, decay: 0.35, long: 1.4, hop: 0.4, max: 15, drain: 5, cd: 0.5 };
 export const RULES = { PLAYERS: 12, ROUND_S: 300, MAX_HP: 100, REGEN_AFTER: 5, REGEN_RATE: 12, RESPAWN_S: 3, FALL_Y: -10 };
+/* The guns are Krunker's numbers (the Krunker.io wiki, v6.0.0 / v5.6.9; the owner, 2026-10-08: "the rate of fire seems too high, at least
+   for the AK. can we pick up that data anywhere and replicate?"): the assault rifle 23 a hit every 130 ms, 28 rounds, 1.5 s reload,
+   headshots ×1.5; the sniper 109 (163.5 to the head) once a second, 3 rounds, 1.9 s, scope 2.7×; the shotgun five pellets of 50 every
+   450 ms, 2 shells, 1.1 s, headshots ×1.25. Krunker's ranges are in its own units; ours are metres on our maps. */
 export const GUNS = {
-  ar: { n: "Assault rifle", dmg: 22, cd: 0.11, mag: 30, reload: 1.6, spread: 0.014, pellets: 1, range: 80, auto: true, text: "Fast and forgiving. 22 a hit, 30 rounds." },
-  sniper: { n: "Sniper", dmg: 85, cd: 1.1, mag: 5, reload: 2.2, spread: 0.0, pellets: 1, range: 160, auto: false, scope: true, text: "One body shot nearly kills; a headshot does. Right click to scope. 5 rounds." },
-  shotgun: { n: "Shotgun", dmg: 12, cd: 0.75, mag: 6, reload: 2.0, spread: 0.06, pellets: 8, range: 26, auto: false, text: "Eight pellets, brutal up close, nothing at range. 6 shells." }
+  ar: { n: "Assault rifle", dmg: 23, head: 1.5, cd: 0.13, mag: 28, reload: 1.5, spread: 0.014, pellets: 1, range: 80, auto: true, text: "23 a hit, 460 a minute, 28 rounds. The all-rounder." },
+  sniper: { n: "Sniper", dmg: 109, head: 1.5, cd: 1.0, mag: 3, reload: 1.9, spread: 0.0, pellets: 1, range: 160, auto: false, scope: true, zoom: 2.7, text: "One shot, one kill, once a second. Right click to scope. 3 rounds." },
+  shotgun: { n: "Shotgun", dmg: 50, head: 1.25, cd: 0.45, mag: 2, reload: 1.1, spread: 0.06, pellets: 5, range: 20, auto: false, text: "Five pellets of 50 up close, nothing at range. 2 shells." }
 };
 export const GUN_KEYS = Object.keys(GUNS);
-export const HEADSHOT = 1.6;
+export const HEADSHOT = 1.5;
 export const BOT_NAMES = ["bootypaper", "heartlarva", "andyreidisapawg", "zwades", "cenozoicmegafauna", "drhealsgud", "psilocyboone", "fasteddie", "aallldeeeez", "charleskellybirdlaw", "therealb4nksy", "kellzifer", "bigrig", "allyrose7774"];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -178,7 +182,7 @@ export function fire(world, beans, b, dir, now, rand, events, spreadK = 1) {
     const d = dir.clone(); const sp = g.spread * spreadK; d.x += (rand() * 2 - 1) * sp; d.y += (rand() * 2 - 1) * sp; d.z += (rand() * 2 - 1) * sp; d.normalize();
     const r = cast(world, beans, eye, d, b, g.range);
     pellets.push({ from: eye, to: r.point, bean: r.bean, head: r.head });
-    if (r.bean) damage(r.bean, g.dmg * (r.head ? HEADSHOT : 1) * (g.pellets > 1 ? clamp(1.4 - r.t / g.range, 0.3, 1) : 1), b, r.head, now, events);
+    if (r.bean) damage(r.bean, g.dmg * (r.head ? g.head ?? HEADSHOT : 1) * (g.pellets > 1 ? clamp(1.4 - r.t / g.range, 0.3, 1) : 1), b, r.head, now, events);
   }
   events?.push({ type: "shot", b, gun: b.gun, pellets });
   return pellets;
