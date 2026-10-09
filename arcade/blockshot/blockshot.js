@@ -9,12 +9,12 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk } from "/v3/assets/js/blockshot-rules.js?v=16";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk, PARK, PARK_MAPS, newRun, parkPlace, parkStep, parkReset, medalFor } from "/v3/assets/js/blockshot-rules.js?v=17";
 import { finMat, finCss, finOf, knifeOf } from "./armory-fin.js?v=1";
-import { createNet } from "./net.js?v=17";
+import { createNet } from "./net.js?v=18";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=10";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=12";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=13";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -267,6 +267,7 @@ function onEvent(e) {
     case "reload": if (mine) { if (performance.now() - lastReloadAt < 400) return; lastReloadAt = performance.now(); play("reload", GUNS[e.b.gun].reload / 1.5); } return;   // once, whichever of the prediction and the snapshot says it first
     case "swap": if (mine) { play("swap"); swapAt = performance.now() / 1000; } return;
     case "bomb": onBombEvent(e); return;
+    case "park": onParkEvent(e); return;
     case "pickup": if (mine) { play(e.kind); floatText(me.p, e.kind === "health" ? "+50 HP" : "AMMO", e.kind === "health" ? "#ff6a6a" : "#ffd84a"); } else play(e.kind, clamp(0.4 - e.b.p.dist(me.p) / 40, 0, 0.4), panTo(e.b.p)); return;
     case "empty": if (mine) play("empty"); return;
   }
@@ -277,7 +278,12 @@ let t = 0, roundT = 0, state = "menu", countdown = 0, countBeep = 0, mapKey = MA
 /* THE BOMB MODE on the page (2026-10-09). `mode` is "ffa" or "bomb" (the Play tab's switch, or ?mode=bomb). `bomb` is the round state:
    in practice the rules' own object, stepped here; online a copy decoded from the snapshot's `bm` block. Six beans play; the other six
    of the twelve are parked dead and hidden. The dead watch a living teammate (`spec`). E is "use": plant or defuse. */
-let mode = new URLSearchParams(location.search).get("mode") === "bomb" ? "bomb" : "ffa", bomb = null, spec = null;
+let mode = ["bomb", "park"].includes(new URLSearchParams(location.search).get("mode")) ? new URLSearchParams(location.search).get("mode") : "ffa", bomb = null, spec = null;
+/* PARKOUR on the page (2026-10-10). `courseKey` is the practice course; online the room says. `me.park` is the run (practice: the rules'
+   object stepped here; online: decoded from the snapshot's `pr`). Ghosts: the course record's trail and your own best, fetched when the
+   course loads and replayed from the moment your run starts, as see-through beans. */
+let courseKey = PARK_MAPS[0], parkDone = null; const ghosts = { record: null, me: null, t0: -1 };
+const fmtMs = (ms) => { if (ms === null || ms === undefined) return "—"; const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}.${String(Math.floor((ms % 1000) / 100))}`; };
 const inPlay = () => (mode === "bomb" ? beans.filter((b) => b.team !== undefined) : beans);
 const myTeam = () => (bomb && me && me.team !== undefined ? me.team : 0);
 const teamName = (team) => (bomb ? (team === bomb.atk ? "Attackers" : "Defenders") : "");
@@ -306,6 +312,28 @@ function decodeBomb(bm) {
 }
 const roundLeft = () => Math.max(0, ROUND_S - (online ? net.round?.t || 0 : roundT));
 const fmtT = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+function onParkEvent(e) {
+  if (!e.b && e.s >= 0 && beans[e.s]) e.b = beans[e.s]; const mine = e.b === me; if (!mine) return;
+  switch (e.what) {
+    case "start": play("go"); ghosts.t0 = performance.now() / 1000; parkDone = null; return;
+    case "cp": play("pad", 0.5); say(`CHECKPOINT ${e.i + 1}`, fmtMs(e.t)); clearTimeout(say.t); say.t = setTimeout(() => say(""), 1200); return;
+    case "fall": play("hurt"); flashDamage(); feed("fell · back to the checkpoint", "dead"); return;
+    case "finish": parkDone = e; play(e.pb ? "levelup" : "win"); say(`FINISH ${fmtMs(e.ms)}`, e.pb && !online ? "personal best · R to run again" : "R to run again"); return;
+    case "reset": ghosts.t0 = -1; parkDone = null; say(""); yaw = world.map.park.facing; pitch = 0; return;
+  }
+}
+/* ghosts: see-through beans that replay a trail from the moment your run starts */
+function ghostMesh(tint) { const g = beanMesh(profile.skin); g.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.32; o.material.depthWrite = false; if (tint && o.material.emissive) o.material.emissive.setHex(tint); } }); g.visible = false; return g; }
+async function ghostFetch(who) {
+  const key = online ? world?.key : courseKey; if (!key || !PARK_MAPS.includes(key)) return;
+  try { const j = await fetch(`/api/blockshot/park/ghost?course=${key}&who=${who}`, { credentials: "same-origin", cache: "no-store" }).then((r) => r.json()); if (!j.ok) return;
+    const old = ghosts[who]; if (old) { scene.remove(old.mesh); } ghosts[who] = j.ghost && j.ghost.trail.length ? { ...j.ghost, mesh: ghostMesh(who === "record" ? 0x7a5a00 : 0x0a3a6a), key } : null; if (ghosts[who]) { scene.add(ghosts[who].mesh); ghosts[who].mesh.scale.setScalar(0.98); } } catch {}
+}
+function drawGhosts() {
+  const t = ghosts.t0 >= 0 && me.park?.running ? performance.now() / 1000 - ghosts.t0 : -1;
+  for (const who of ["record", "me"]) { const g = ghosts[who]; if (!g) continue; const show = t >= 0 && t * 10 < g.trail.length; g.mesh.visible = show; if (!show) continue;
+    const k = Math.min(g.trail.length - 1, Math.floor(t * 10)), a = g.trail[k], b = g.trail[Math.min(g.trail.length - 1, k + 1)], u = t * 10 - k; g.mesh.position.set(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u - R, a[2] + (b[2] - a[2]) * u); g.mesh.rotation.y = Math.atan2(b[0] - a[0], b[2] - a[2]) + Math.PI; }
+}
 function onBombEvent(e) {
   if (!e.b && e.s >= 0 && beans[e.s]) e.b = beans[e.s];   // practice events name a slot, not a bean
   const who = (b) => (b ? (b === me ? "<b>you</b>" : esc(b.name)) : "someone"), mine = e.b === me, us = (team) => team === myTeam();
@@ -334,13 +362,16 @@ const net = createNet({
   onHello: (m) => { joinMatch(m.map, m.slot, m.roster); say("JOINED", `${m.roster.humans.filter(Boolean).length - 1 || "no"} other ${m.roster.humans.filter(Boolean).length === 2 ? "person" : "people"} here`); },
   onRoster: (m) => applyRoster(m),
   onBomb: (bm) => decodeBomb(bm),
-  onRound: (m) => { buildMap(m.map); applyRoster(m.roster); for (const b of beans) { b.kills = 0; b.deaths = 0; b.streak = 0; } Object.assign(meStats, { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 }); $("feed").innerHTML = ""; $("hudMap").textContent = world.map.name; state = "play"; $("over").hidden = true; say("NEW ROUND", world.map.name); play("go"); if (document.activeElement === canvas) grabMouse(); },
+  onPark: (pr) => { pr.forEach((p, i) => { const b = beans[i]; if (!b) return; if (!p) { b.park = null; return; } const r = b.park || (b.park = newRun()); r.cp = p[0]; r.t = p[1]; r.done = Boolean(p[2]); r.running = Boolean(p[3]); }); },
+  onParkMsg: (m) => { if (m.what !== "saved") return; const bits = []; if (m.record?.yours) bits.push("course record"); else if (m.pb) bits.push("personal best"); if (m.newTiers?.length) bits.push(`${m.newTiers[0]} medal · +${m.brass} Brass`); if (bits.length) { say(bits[0].toUpperCase(), bits.slice(1).join(" · ")); clearTimeout(say.t); say.t = setTimeout(() => say(""), 3200); } if (m.pb) ghostFetch("me"); },
+  onRound: (m) => { if (mode === "park") { ghosts.t0 = -1; parkDone = null; } buildMap(m.map); if (mode === "park") { ghostFetch("record"); ghostFetch("me"); setTimeout(() => { yaw = world.map.park?.facing ?? yaw; pitch = 0; }, 150); } applyRoster(m.roster); for (const b of beans) { b.kills = 0; b.deaths = 0; b.streak = 0; } Object.assign(meStats, { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 }); $("feed").innerHTML = ""; $("hudMap").textContent = world.map.name; state = "play"; $("over").hidden = true; say("NEW ROUND", world.map.name); play("go"); if (document.activeElement === canvas) grabMouse(); },
   onEvents: (list) => { for (const e of list) {
     if (e.k === "shot") { const b = byslot(e.s); if (b) onEvent({ type: "shot", b, gun: e.g, pellets: e.p.map((q) => ({ from: new V(q[0], q[1], q[2]), to: new V(q[3], q[4], q[5]) })) }); }
     else if (e.k === "hit") { const target = byslot(e.s), by = byslot(e.by); if (target) onEvent({ type: "hit", target, by, dmg: e.d, head: Boolean(e.h) }); }
     else if (e.k === "kill") { const target = byslot(e.s), by = byslot(e.by); if (target) onEvent({ type: "kill", target, by, head: Boolean(e.h) }); }
     else if (e.k === "pickup") { const b = byslot(e.s); if (b) onEvent({ type: "pickup", b, kind: e.kind, i: e.i }); }
     else if (e.k === "bomb") onEvent({ type: "bomb", ...e, b: e.s >= 0 ? byslot(e.s) : null });
+    else if (e.k === "park") onEvent({ type: "park", ...e, b: e.s >= 0 ? byslot(e.s) : null });
     else { const b = byslot(e.s); if (b) onEvent({ type: e.k, b }); }
   } },
   onLocal: (list) => { for (const e of list) if (LOCAL_SOUNDS.has(e.type)) onEvent({ ...e, local: true }); },
@@ -358,7 +389,7 @@ function applyRoster(r) {
   drawSb();
 }
 function joinMatch(map, slot, roster) {
-  online = true; if (mode !== "bomb") { bomb = null; spec = null; roundCard(null); } buildMap(map); roundT = 0;
+  online = true; if (mode !== "bomb") { bomb = null; spec = null; roundCard(null); } buildMap(map); roundT = 0; if (mode === "park") { ghosts.t0 = -1; parkDone = null; ghostFetch("record"); ghostFetch("me"); setTimeout(() => { yaw = world.map.park?.facing ?? yaw; pitch = 0; }, 150); }
   for (const b of beans) { const keep = { mesh: b.mesh, skill: b.skill }; Object.assign(b, newBean(b.i, b.name, b.bot), keep); b.p.set(0, -50, 0); b.mesh.g.visible = false; }
   if (me) me.mesh.g.visible = false; me = beans[slot]; me.mesh.g.visible = false;
   applyRoster(roster); state = "play"; $("over").hidden = true; $("hudMap").textContent = world.map.name; $("log").innerHTML = ""; $("feed").innerHTML = ""; Object.assign(meStats, { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 });
@@ -381,6 +412,11 @@ function onlineTick(dt) {
 }
 function endOnline(m) {
   state = "done"; document.exitPointerLock?.(); say(""); $("killcard").hidden = true;
+  if (m.mode === "park") {
+    const mine = me.i; showMenu("result", `<div class="res"><b class="res-h">${esc(world.map.name)}</b><p class="res-sub">Parkour · the course changes</p>
+      ${m.times.length ? `<table class="sb res-t">${m.times.map((x, k) => `<tr class="${x.s === mine ? "me" : ""}"><td>${ord(k + 1)}</td><td>${esc(x.name)}</td><td>${fmtMs(x.ms)}</td></tr>`).join("")}</table>` : `<p class="note">Nobody finished this one.</p>`}
+      ${m.you?.guest ? `<p class="note">Guests' times are not kept. Sign in with Twitch to keep yours, earn medals and race your ghost.</p>` : ""}<div class="res-foot"><span class="next" id="nextIn"></span></div></div>`); nextCountdown(m.gap || 10); return;
+  }
   const ranks = m.ranks, y = m.you;
   if (!y) { showMenu("result", `<b>${esc(ranks[0]?.name || "")} wins</b><p>You were watching. The next round starts in a few seconds.</p>`); return; }
   play(y.won ? "win" : "lose");
@@ -409,11 +445,19 @@ async function playOnline() {
   if (!okc) { feedNote(net.why === "timeout" ? "The match server didn't answer; playing against bots instead." : "Couldn't reach the match server; playing against bots instead."); start(); }
 }
 const STATE_URL = ["localhost", "127.0.0.1"].includes(location.hostname) ? `http://${location.hostname}:8788/bs/state` : "https://arcade.eastcoin.vip/bs/state";
-const stateUrl = () => (mode === "bomb" ? STATE_URL.replace("/bs/state", "/bomb/state") : STATE_URL);
+const stateUrl = () => (mode === "bomb" ? STATE_URL.replace("/bs/state", "/bomb/state") : mode === "park" ? STATE_URL.replace("/bs/state", "/park/state") : STATE_URL);
+async function parkBoard() { const el = $("parkBoard"); if (!el) return; try { const j = await fetch(`/api/blockshot/park/board?course=${courseKey}`, { credentials: "same-origin", cache: "no-store" }).then((r) => r.json()); if (!j.ok || !$("parkBoard")) return; const mine = j.mine?.[courseKey];
+  $("parkBoard").innerHTML = `<b>${esc(MAPS[courseKey]().name)}</b> · best times: ${j.rows.length ? j.rows.slice(0, 5).map((r) => `${esc(r.name)} <b>${fmtMs(r.ms)}</b>${r.medal ? ` <i class="md ${r.medal}"></i>` : ""}`).join(" · ") : "nobody yet"}${mine ? ` · you <b>${fmtMs(mine.ms)}</b> in ${mine.runs} run${mine.runs === 1 ? "" : "s"}${mine.medals.length ? ` · ${mine.medals.join(", ")}` : ""}` : ""}`; } catch {} }
 async function whoIsOn() { try { const j = await fetch(stateUrl(), { cache: "no-store" }).then((r) => r.json()); const el = $("whoOn"); if (!el || !j.ok) return; const mapName = MAPS[j.map] ? MAPS[j.map]().name : j.map, left = `${Math.floor(j.left / 60)}:${String(j.left % 60).padStart(2, "0")} left`; el.innerHTML = j.playing ? `<b>${j.playing} playing</b> · ${esc(mapName)} · ${left}<br><small>${esc(j.names.join(", "))}</small>` : `<b>Bots only right now</b> · ${esc(mapName)} · ${left}`; } catch { const el = $("whoOn"); if (el) el.textContent = "The match server isn't answering. Practice still works."; } }
 
 function tick(dt) {
   t += dt; if (state === "play") roundT += dt;
+  if (mode === "park" && !online) {
+    const inputFor = (b) => (b !== me || state !== "play" ? { x: 0, z: 0 } : { ...playerInput(), fire: false, fireTap: false, scope: false });
+    stepWorld(world, beans, dt, t, inputFor, Math.random, events);
+    if (state === "play") { if (keys.KeyR && me.park && (me.park.running || me.park.done)) { keys.KeyR = false; parkReset(world, me, events); } parkStep(world, me, dt, events); }
+    for (const e of events) onEvent(e); events.length = 0; return;
+  }
   if (mode === "bomb" && bomb) {
     const frozen = bomb.phase === "freeze" || state !== "play";
     const inputFor = (b) => { if (frozen) { b.use = false; return { x: 0, z: 0 }; } const i = b.bot ? botInput(world, beans, b, dt, Math.random, bombGoal(world, beans, b, bomb)) : playerInput(); b.use = Boolean(i.use); return i; };
@@ -427,6 +471,13 @@ function tick(dt) {
   const inputFor = (b) => (state !== "play" ? { x: 0, z: 0 } : b.bot ? botInput(world, beans, b, dt) : playerInput());
   stepWorld(world, beans, dt, t, inputFor, Math.random, events, (b) => (b.bot ? pick(["ar", "ar", "sniper", "shotgun"]) : nextGun));
   for (const e of events) onEvent(e); events.length = 0;
+}
+function resetPark() {
+  roundT = 0; $("log").innerHTML = ""; $("feed").innerHTML = ""; bomb = null; parkDone = null; ghosts.t0 = -1;
+  for (const L of POOL.lines) { L.life = 0; L.o.visible = false; } for (const P of POOL.puffs) { P.life = 0; P.o.visible = false; } for (const F of POOL.floats) { F.life = 0; F.s.visible = false; }
+  if (me !== beans[0]) { me.mesh.g.visible = false; me = beans[0]; }
+  for (const b of beans) { const keep = { mesh: b.mesh, skill: b.skill, look: b.look }; Object.assign(b, newBean(b.i, b.name, b.bot), keep); b.p.set(0, -50, 0); b.dead = true; b.respawn = 9e9; b.wantsRespawn = false; b.mesh.g.visible = false; b.team = undefined; b.park = null; }
+  parkPlace(world, me, null); me.park = newRun(); me.mesh.g.visible = false; drawSb(); yaw = world.map.park.facing; pitch = 0;
 }
 function resetBomb() {
   roundT = 0; $("log").innerHTML = ""; $("feed").innerHTML = ""; Object.assign(meStats, { shots: 0, hits: 0, headshots: 0, byGun: {}, streaks: 0 });
@@ -448,6 +499,7 @@ function reset() {
 }
 let overTimer = 0;
 function start() {
+  if (mode === "park") { clearTimeout(overTimer); buildMap(courseKey); resetPark(); state = "play"; $("over").hidden = true; canvas.focus(); grabMouse(); audioOn(); $("hudMap").textContent = world.map.name; ghostFetch("record"); ghostFetch("me"); return; }
   if (mode === "bomb") { clearTimeout(overTimer); buildMap(BOMB_MAP); resetBomb(); state = "play"; $("over").hidden = true; canvas.focus(); grabMouse(); audioOn(); $("hudMap").textContent = world.map.name; lastPlace = 0; return; }
   clearTimeout(overTimer); buildMap(mapKey); reset(); state = "count"; countdown = 3; countBeep = 3; $("over").hidden = true; canvas.focus(); grabMouse(); audioOn(); $("hudMap").textContent = world.map.name; }
 const ord = (n) => n + (n % 10 === 1 && n !== 11 ? "st" : n % 10 === 2 && n !== 12 ? "nd" : n % 10 === 3 && n !== 13 ? "rd" : "th");
@@ -489,16 +541,17 @@ function drawMenu() {
   if (tab === "play") {   // the Play tab, cut down (2026-10-09, the owner: "a ton of text and overwhelming"): the button, the match, three gun chips, practice, one line of keys
     const ROLE = { ar: "All-rounder", sniper: "One shot, one kill", shotgun: "Close range" };
     $("panel").innerHTML = `<div class="pm">
-    <div class="seg modes"><button class="${mode === "ffa" ? "on" : ""}" data-mode="ffa">Free-for-all</button><button class="${mode === "bomb" ? "on" : ""}" data-mode="bomb">Bomb · 3v3</button></div>
-    <p class="pm-mode">${mode === "bomb" ? "Two teams of three. Attackers carry a bomb: plant it at a site (hold <b>E</b>) and keep it alive 35 seconds. Defenders stop them, or defuse (hold <b>E</b>). No respawns in a round, first to 6 rounds, sides swap after 5." : "Everyone against everyone, four minutes, most kills wins. Bots fill the empty slots."}</p>
+    <div class="seg modes"><button class="${mode === "ffa" ? "on" : ""}" data-mode="ffa">Free-for-all</button><button class="${mode === "bomb" ? "on" : ""}" data-mode="bomb">Bomb · 3v3</button><button class="${mode === "park" ? "on" : ""}" data-mode="park">Parkour</button></div>
+    <p class="pm-mode">${mode === "bomb" ? "Two teams of three. Attackers carry a bomb: plant it at a site (hold <b>E</b>) and keep it alive 35 seconds. Defenders stop them, or defuse (hold <b>E</b>). No respawns in a round, first to 6 rounds, sides swap after 5." : mode === "park" ? "A course over the drop, start to finish against the clock. Checkpoints on the way; a fall puts you back on the last one with the clock running. <b>R</b> resets. Medals pay Brass once per course; your best run becomes a ghost to race." : "Everyone against everyone, four minutes, most kills wins. Bots fill the empty slots."}</p>
     <div class="pm-top"><button class="go big" data-online="1">Play online</button><p id="whoOn" class="pm-who">Looking…</p></div>
-    <p class="eyebrow">Gun</p>
-    <div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div>
-    <p class="pm-pistol">Everyone also carries a <b>Pistol</b> (4) and a <b>Knife</b> (5) · <b>Q</b> or the wheel cycles through them</p>
-    <div class="pm-row"><span class="eyebrow inl">Practice</span>${mode === "bomb" ? `<span class="note" style="margin:0">${esc(MAPS[BOMB_MAP]().name)} · you and two bots against three</span>` : `<div class="seg">${MAP_LIST.map((k) => `<button class="${k === mapKey ? "on" : ""}" data-map="${k}" title="${esc(MAPS[k]().blurb)}">${esc(MAPS[k]().name)}</button>`).join("")}</div>`}<button class="go ghost sm" data-go="1">vs bots</button></div>
+    ${mode === "park" ? "" : `<p class="eyebrow">Gun</p>`}
+    ${mode === "park" ? "" : `<div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div>`}
+    ${mode === "park" ? "" : `<p class="pm-pistol">Everyone also carries a <b>Pistol</b> (4) and a <b>Knife</b> (5) · <b>Q</b> or the wheel cycles through them</p>`}
+    <div class="pm-row"><span class="eyebrow inl">Practice</span>${mode === "park" ? `<div class="seg">${PARK_MAPS.map((k) => { const m = MAPS[k](); return `<button class="${k === courseKey ? "on" : ""}" data-course="${k}" title="${esc(m.blurb)}">${esc(m.name)} <small>${m.park.medals.join("/")}s</small></button>`; }).join("")}</div>` : mode === "bomb" ? `<span class="note" style="margin:0">${esc(MAPS[BOMB_MAP]().name)} · you and two bots against three</span>` : `<div class="seg">${MAP_LIST.map((k) => `<button class="${k === mapKey ? "on" : ""}" data-map="${k}" title="${esc(MAPS[k]().blurb)}">${esc(MAPS[k]().name)}</button>`).join("")}</div>`}<button class="go ghost sm" data-go="1">${mode === "park" ? "Run it" : "vs bots"}</button></div>
+    ${mode === "park" ? `<div id="parkBoard" class="note">Best times…</div>` : ""}
     <p class="pm-keys"><b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>Tab</b> scores · <b>Esc</b> menu</p>
     ${site.on && !profile.server ? `<p class="note acct"><a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats.</p>` : profile.server ? `<p class="note acct">Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button></p>` : ""}
-    </div>`; whoIsOn(); }
+    </div>`; whoIsOn(); if (mode === "park") parkBoard(); }
   else if (tab === "locker") {
     const sw = (slot, s) => { const col = slot === "body" || slot === "visor" ? COLORS[s.k] : COLORS[profile.skin.body] || 0xffd84a, on = profile.skin[slot] === s.k, have = owns(slot, s.k);
       return `<button class="sw${on ? " on" : ""}${have ? "" : " lock"}" data-slot="${slot}" data-k="${s.k}" title="${have ? esc(s.n) : `${esc(s.n)} · level ${s.lvl}`}"><i class="p-${slot === "body" || slot === "visor" ? "plain" : s.k}" style="--c:#${col.toString(16).padStart(6, "0")}"></i><span>${have ? esc(s.n) : `🔒 ${s.lvl}`}</span></button>`; };
@@ -547,6 +600,7 @@ $("over").addEventListener("click", (e) => {
   if (b.dataset.by) { boardBy = b.dataset.by; return drawMenu(); }
   if (b.dataset.range) { boardRange = b.dataset.range; return drawMenu(); }
   if (b.dataset.map) { mapKey = b.dataset.map; return drawMenu(); }
+  if (b.dataset.course) { courseKey = b.dataset.course; return drawMenu(); }
   if (b.dataset.mode) { mode = b.dataset.mode; return drawMenu(); }
   if (b.dataset.gun) { nextGun = b.dataset.gun; return drawMenu(); }
   if (b.dataset.go) { if (online) { net.close(); online = false; } return start(); }
@@ -692,7 +746,7 @@ function draw(dt) {
       if (me.grounded && !wasGrounded && vyPrev < -6) { landDip = clamp(-vyPrev / 70, 0.05, 0.2); play("land", clamp(-vyPrev / 24, 0.3, 1)); } wasGrounded = me.grounded; vyPrev = me.v.y; landDip *= 0.82; }
     camera.position.set(me.p.x, me.p.y + EYE * (me.slide ? 0.6 : 1) - landDip, me.p.z); camera.rotation.set(pitch, yaw, roll);
     // aiming down the sights: the gun slides to the middle of the view (the sniper's scope hides it); the kick settles on z
-    const ads = scoping && !me.dead, g = GUNS[me.gun]; viewGun.visible = !(ads && g.scope);
+    const ads = scoping && !me.dead, g = GUNS[me.gun]; viewGun.visible = !(ads && g.scope) && mode !== "park";
     const tx = ads ? 0 : 0.2, ty = ads ? -0.095 : -0.17, tz = ads ? -0.3 : -0.42, kick = Math.max(0, viewGun.position.z - tz);
     viewGun.position.x += (tx - viewGun.position.x) * 0.25; viewGun.position.z = tz + kick * 0.75;
     const bob = Math.hypot(me.v.x, me.v.z) > 1 && me.grounded && !me.slide && !ads ? Math.sin(t * 12) * 0.012 : 0;
@@ -703,6 +757,7 @@ function draw(dt) {
   }
   const fov = scoping && !me.dead ? profile.settings.fov / (GUNS[me.gun].zoom || 1) : profile.settings.fov + clamp((Math.hypot(me.v.x, me.v.z) - RUN) / 8, 0, 1) * 14; if (Math.abs(camera.fov - fov) > 0.1) { camera.fov += (fov - camera.fov) * 0.3; camera.updateProjectionMatrix(); }
   $("scope").classList.toggle("on", Boolean(scoping && GUNS[me.gun].scope && !me.dead && state === "play"));   // (Boolean: toggle with an undefined second argument FLIPS the class, and the rifle has no scope field)
+  if (mode === "park") drawGhosts();
   if (bombMesh) { const p = bomb && (bomb.planted || bomb.drop); bombMesh.visible = Boolean(p); if (p) { bombMesh.position.set(p.x, (p.y ?? world.groundAt(p.x, p.z)) + 0.18, p.z); const rate = bomb.planted ? (bomb.planted.t < 10 ? 8 : bomb.planted.t < 20 ? 4 : 2) : 1; const on = Math.sin(performance.now() / 1000 * rate * Math.PI) > 0; bombMesh.children[1].material.emissive.setHex(on ? 0xff2020 : 0x300000); if (bomb.planted && on !== bombMesh.userData.on) { bombMesh.userData.on = on; if (on && !me.dead && bombMesh.position.distanceTo(camera.position) < 30) play("tick"); } } }
   { const a = performance.now() / 1000; pickupMeshes.forEach((g, i) => { const p = world.pickups[i]; g.visible = p.t <= 0; if (g.visible) { g.rotation.y = a * 1.6; g.position.y = p.y + 0.55 + Math.sin(a * 2.4 + i) * 0.08; } }); }
   // footsteps (2026-10-09): everyone else's footfalls, timed by their speed, faded by distance and placed left-right, so you hear who's coming
@@ -729,6 +784,12 @@ function hud(dt) {
   fitViewGun(me.gun);
   { const gn = GUNS[me.gun].n; if ($("hudGun").textContent !== gn) $("hudGun").textContent = gn; }
   $("xhair").classList.toggle("hitm", hitTimer > 0 && killTimer <= 0); $("xhair").classList.toggle("kill", killTimer > 0); $("xhair").classList.toggle("hs", hsTimer > 0);
+  if (mode === "park" && state === "play") {
+    const r = me.park || newRun(), P = world?.map.park; $("hudT").textContent = fmtMs(Math.round(r.t * 1000)); $("hudT").classList.toggle("fuse", false);
+    $("hudPlace").textContent = P ? `checkpoint ${Math.max(0, r.cp + 1)} / ${P.cps.length}${r.best ? ` · best ${fmtMs(r.best)}` : ""}` : "";
+    const bl = $("bombLine"), line = r.done ? `Finished in ${fmtMs(Math.round(r.t * 1000))} · R to run again` : !r.running ? "Step off the start to begin · R resets · a fall goes back to the checkpoint" : ""; if (bl.textContent !== line) bl.textContent = line; bl.hidden = !line;
+    $("scoreUs").hidden = true; $("scoreThem").hidden = true; for (const id of ["ammoBox", "hudWeps", "hpBox"]) $(id).style.display = "none";
+  } else for (const id of ["ammoBox", "hudWeps", "hpBox"]) $(id).style.display = "";
   if (mode === "bomb" && bomb && state === "play") {
     const atk = isAtk(me, bomb), fuse = bomb.planted ? bomb.planted.t : null;
     $("hudT").textContent = bomb.phase === "freeze" ? String(Math.ceil(bomb.t)) : fmtT(Math.max(0, fuse ?? bomb.t));
@@ -751,10 +812,10 @@ function hud(dt) {
     const act = bomb.act && bomb.act.s === me.i ? bomb.act : null, rb = $("reloadBar");
     if (act) { rb.hidden = false; rb.firstElementChild.textContent = act.kind === "plant" ? "Planting" : "Defusing"; $("reloadFill").style.width = `${((act.p ?? act.t / (act.kind === "plant" ? BOMB.PLANT_S : BOMB.DEFUSE_S)) * 100).toFixed(1)}%`; }
     else if (rb.firstElementChild.textContent !== "Reloading") { rb.firstElementChild.textContent = "Reloading"; rb.hidden = true; }
-  } else { $("scoreUs").hidden = true; $("scoreThem").hidden = true; $("roundCard").hidden = true; $("bombLine").hidden = true; $("hudT").classList.remove("fuse"); $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft()); }
+  } else if (mode !== "park") { $("scoreUs").hidden = true; $("scoreThem").hidden = true; $("roundCard").hidden = true; $("bombLine").hidden = true; $("hudT").classList.remove("fuse"); $("hudT").textContent = state === "count" ? String(Math.ceil(countdown)) : fmtT(roundLeft()); }
   { const spike = perf.lastAt && performance.now() - perf.lastAt < 3000 ? ` · spike ${perf.lastMs}ms` : "", snap = online && net.worstGap > 0.15 ? ` · snap ${Math.round(net.worstGap * 1000)}ms` : "";
     $("hudPing").textContent = online ? `${net.ping} ms${net.lag() > 12 ? ` · lag ${net.lag()}` : ""}${snap}${spike}` : spike.replace(" · ", ""); }
-  const place = ranked().indexOf(me) + 1; $("hudPlace").textContent = state !== "play" ? "" : mode === "bomb" && bomb ? `Round ${bomb.round} · ${isAtk(me, bomb) ? "attacking" : "defending"}` : `${ord(place)} of ${inPlay().length}`;
+  const place = ranked().indexOf(me) + 1; if (mode !== "park") $("hudPlace").textContent = state !== "play" ? "" : mode === "bomb" && bomb ? `Round ${bomb.round} · ${isAtk(me, bomb) ? "attacking" : "defending"}` : `${ord(place)} of ${inPlay().length}`;
   if (state === "play" && mode !== "bomb") { if (place === 1 && lastPlace > 1 && me.kills > 0) { say("TOP OF THE BOARD"); play("top"); } lastPlace = place; } else lastPlace = 0;
   $("hudK").textContent = me.kills; $("hudKD").textContent = `K · ${me.deaths} D${me.streak >= 2 ? ` · ×${me.streak}` : ""}`; $("hudName").textContent = me.name;
   $("hudHpN").textContent = Math.round(Math.max(0, me.hp));

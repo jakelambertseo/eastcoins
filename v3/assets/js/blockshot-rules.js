@@ -206,7 +206,79 @@ function compound() {
   M.name = "The Compound"; M.blurb = "A small town: three lanes through the buildings, two streets across, and two walled sites with three doors each. Attackers come from the south yard."; M.sky = 0xd8c8a8; M.fog = [70, 170];
   return M;
 }
-export const MAPS = { lot, docks, roofs, compound };
+/* ------------------------------------------------------------------ parkour courses (2026-10-10, the owner: "a simple version of parkour")
+   A course floats over nothing: a start platform, platforms and ramps and pads to a finish platform, checkpoints on the way. Fall below
+   PARK.floor and you are put back on your last checkpoint with the clock running. No guns. The run is timed by whoever simulates it
+   (the server online, the page in practice) in simulated time, so a time can be neither faked nor shortened by a fast clock. */
+export const PARK = { floor: -8, ROTATE_S: 480, medalBrass: { gold: 100, silver: 60, bronze: 30 } };
+function courseBuilder(size) {
+  const M = mapBuilder(size); const plat = (x, top, z, w, d, tex = "concrete", col = C.STONE, h = 0.6) => M.box([x, top - h / 2, z], [w / 2, h / 2, d / 2], tex, col);
+  M.plat = plat; M.walls = () => {}; return M;
+}
+function finishCourse(M, name, blurb, start, cps, finish, medals, sky) {
+  M.park = { start, cps, finish, medals, facing: Math.PI };   // facing π: along +z, the way every course runs
+  M.spawns = [start]; M.waypoints = [[start[0], start[2]]]; M.pickups = []; M.name = name; M.blurb = blurb; M.sky = sky; M.fog = [90, 220]; M.course = true;
+  return M;
+}
+/* First Steps: platforms over the drop with small gaps, a couple of step-ups, a ramp and one pad. About 30 seconds. */
+function course1() {
+  const M = courseBuilder(60), { plat, ramp, pad } = M;
+  plat(0, 0, 0, 8, 8, "concrete", C.SAND);                                                   // the start (z -4..4)
+  let z = 9; const cps = [];                                                                 // first platform 7..11: a 3 m gap (a 1 m gap is one a bean straddles)
+  for (let i = 0; i < 6; i++) { plat(0, 0, z, 4, 4); z += 7; }                               // six hops of 3 m
+  plat(0, 0, z, 6, 6, "concrete", C.TEAL); cps.push({ x: 0, z, y: 0, r: 3 }); z += 7;      // checkpoint 1
+  for (let i = 0; i < 4; i++) { plat((i % 2 ? 3 : -3), 1.2 * (i + 1), z, 4, 4); z += 6; }   // zig-zag, stepping up
+  plat(0, 4.8, z, 6, 6, "concrete", C.TEAL); cps.push({ x: 0, z, y: 4.8, r: 3 }); z += 6;   // checkpoint 2, high
+  ramp(0, z - 3, 4.8, 0, z + 9, 0, 5, "concrete", C.STONE); z += 12; plat(0, 0, z, 6, 6); z += 4;   // down the ramp
+  pad(0, z - 1, 17, { x: 0, z: 9 }); z += 16; plat(0, 0, z, 8, 8, "concrete", C.TEAL); cps.push({ x: 0, z, y: 0, r: 4 }); z += 8;   // a pad over a big gap, checkpoint 3
+  for (let i = 0; i < 5; i++) { plat(Math.sin(i) * 3, 0, z, 3, 3); z += 6; }                 // five small ones that drift
+  plat(0, 0, z + 2, 8, 8, "metal", C.DARK);
+  return finishCourse(M, "First Steps", "Platforms over the drop, a few step-ups, a ramp and a pad. The gentle one.", [0, 1, 0], cps, { x: 0, z: z + 2, y: 0, r: 3.5 }, [26, 34, 48], 0x8fc4ef);
+}
+/* Hop Line: long runways with gaps that need slide-hop speed, a pad chain in the middle. About 40 seconds for someone who can. */
+function course2() {
+  const M = courseBuilder(80), { plat, pad } = M;
+  plat(0, 0, 0, 8, 10, "concrete", C.SAND); let z = 10; const cps = [];   // the start reaches z 5; the first runway begins at 10
+  for (const [len, gap] of [[16, 6], [14, 7], [12, 8], [12, 8]]) { plat(0, 0, z + len / 2, 6, len, "metal", C.DARK); z += len + gap; }   // runways, the gaps widening
+  plat(0, 0, z + 3, 6, 6, "concrete", C.TEAL); cps.push({ x: 0, z: z + 3, y: 0, r: 3 }); z += 10;
+  for (let i = 0; i < 3; i++) { pad(0, z, 16, { x: 0, z: 10 }); z += 18; plat(0, 0, z, 5, 5); z += 4; }   // the pad chain
+  plat(0, 0, z + 2, 6, 6, "concrete", C.TEAL); cps.push({ x: 0, z: z + 2, y: 0, r: 3 }); z += 8;
+  for (const [len, gap, dy] of [[14, 8, -1], [12, 9, -2], [12, 9, -3]]) { plat(0, dy, z + len / 2, 6, len, "metal", C.DARK); z += len + gap; }   // dropping runways, longer gaps
+  plat(0, -3, z + 2, 8, 8, "metal", C.RUST);
+  return finishCourse(M, "Hop Line", "Runways and gaps that only a slide-hop clears, a pad chain, then longer gaps on the way down.", [0, 1, 0], cps, { x: 0, z: z + 2, y: -3, r: 3.5 }, [34, 44, 60], 0xf0c8a0);
+}
+/* The Tower: a spiral of platforms up around a column, then a drop to the finish. A fall costs the most here. About 45 seconds. */
+function course3() {
+  const M = courseBuilder(50), { plat, box } = M;
+  plat(0, 0, -16, 8, 8, "concrete", C.SAND); box([0, 14, 0], [4, 14, 4], "brick", C.BRICK);   // the start, the column
+  const cps = []; let y = 0;
+  for (let i = 0; i < 18; i++) { const a = -Math.PI / 2 + i * 0.5, r = 9; y += 1.3; const x = Math.cos(a) * r, z = Math.sin(a) * r; const cp = i % 6 === 5; plat(x, y, z, cp ? 4 : 3, cp ? 4 : 3, cp ? "concrete" : "metal", cp ? C.TEAL : C.DARK); if (cp) cps.push({ x, z, y, r: 2.5 }); }
+  plat(0, y + 0.5, 0, 6, 6, "metal", C.WHITE);                                                 // the top of the column
+  plat(0, 2, 22, 10, 10, "metal", C.RUST);                                                   // the finish, far below: a jump off the top
+  return finishCourse(M, "The Tower", "Up the spiral, platform by platform, with checkpoints every sixth; a leap off the top to the finish.", [0, 1, -16], cps, { x: 0, z: 22, y: 2, r: 4.5 }, [40, 52, 70], 0xb0a0d8);
+}
+export const MAPS = { lot, docks, roofs, compound, course1, course2, course3 };
+export const PARK_MAPS = ["course1", "course2", "course3"];
+/** A runner's state on a course. cp is the last checkpoint reached (-1: none), t the run clock, trail the positions sampled for a ghost. */
+export function newRun() { return { cp: -1, t: 0, running: false, done: false, sampleT: 0, trail: [], best: null, falls: 0 }; }
+export function parkPlace(world, b, where) { const s = where || world.map.park.start; placeBean(b, [s[0] ?? s.x, (s[1] ?? s.y) + 0.2, s[2] ?? s.z], "ar", null); b.facing = world.map.park.facing; b.v.set(0, 0, 0); }
+/** One step of one runner, after their movement. Starts the clock when they leave the start, counts checkpoints in order, resets a fall
+    to the last checkpoint, stops at the finish. */
+export function parkStep(world, b, dt, events) {
+  const P = world.map.park; if (!P || b.dead) return; const r = b.park || (b.park = newRun());
+  if (r.done) return;
+  if (!r.running) { if (Math.hypot(b.p.x - P.start[0], b.p.z - P.start[2]) > 4.5 || b.p.y < P.start[1] - 1) { r.running = true; r.t = 0; r.trail = []; r.sampleT = 0; events?.push({ type: "park", what: "start", s: b.i }); } else return; }
+  r.t += dt; r.sampleT += dt; if (r.sampleT >= 0.1) { r.sampleT -= 0.1; if (r.trail.length < 1800) r.trail.push([Math.round(b.p.x * 20) / 20, Math.round(b.p.y * 20) / 20, Math.round(b.p.z * 20) / 20]); }
+  if (b.p.y < PARK.floor) { r.falls++; const cp = r.cp >= 0 ? P.cps[r.cp] : null; parkPlace(world, b, cp ? [cp.x, cp.y, cp.z] : null); events?.push({ type: "park", what: "fall", s: b.i, cp: r.cp }); return; }
+  const next = P.cps[r.cp + 1];
+  if (next && Math.hypot(b.p.x - next.x, b.p.z - next.z) < next.r && Math.abs(b.p.y - next.y) < 3) { r.cp++; events?.push({ type: "park", what: "cp", s: b.i, i: r.cp, t: Math.round(r.t * 1000) }); }
+  if (r.cp === P.cps.length - 1 && Math.hypot(b.p.x - P.finish.x, b.p.z - P.finish.z) < P.finish.r && Math.abs(b.p.y - P.finish.y) < 3 && b.grounded) {
+    r.done = true; const ms = Math.round(r.t * 1000), pb = r.best === null || ms < r.best; if (pb) r.best = ms;
+    events?.push({ type: "park", what: "finish", s: b.i, ms, pb, falls: r.falls });
+  }
+}
+export function parkReset(world, b, events) { b.park = { ...newRun(), best: b.park?.best ?? null }; parkPlace(world, b, null); events?.push({ type: "park", what: "reset", s: b.i }); }
+export const medalFor = (ms, medals) => (ms <= medals[0] * 1000 ? "gold" : ms <= medals[1] * 1000 ? "silver" : ms <= medals[2] * 1000 ? "bronze" : null);
 export const BOMB_MAP = "compound";
 export const MAP_LIST = ["lot", "docks", "roofs"];   // the free-for-all rotation; the bomb map is its own mode
 

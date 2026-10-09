@@ -9,7 +9,7 @@
 
    Shots are never predicted: the page draws its own tracer and plays the bang at once, and the server's events decide the rest.
    createNet(hooks) -> { connect(opts), close(), on, slot, tick(dt), events(): [...] , roster, round, ping } */
-import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=16";
+import { World, newBean, stepBean, cast, V, PHYS, GUNS, GUN_KEYS } from "/v3/assets/js/blockshot-rules.js?v=17";
 
 const DEV = ["localhost", "127.0.0.1"].includes(location.hostname);
 const INTERP = 0.1, SEND_EVERY = 2;
@@ -25,7 +25,7 @@ export function createNet(hooks) {
     // its map and positions, so the Compound was rebuilt under a Lot match and the player fell through it
     if (ws) { const old = ws; ws = null; try { old.onmessage = null; old.onclose = null; old.onerror = null; old.close(); } catch {} }
     N.on = false; N.slot = -1; N.roster = null; N.round = null; snaps = []; pending = []; toSend = []; seq = 0; ack = 0; sendN = 0; lastSnapAt = 0; N.worstGap = 0;
-    let url; const path = mode === "bomb" ? "/bomb" : "/bs";
+    let url; const path = mode === "bomb" ? "/bomb" : mode === "park" ? "/park" : "/bs";
     if (DEV) { const as = new URLSearchParams(location.search).get("as") || name || "you"; url = `ws://${location.hostname}:8788${path}?dev=1&login=${encodeURIComponent(as)}&gun=${gun}`; }
     else {
       try {
@@ -54,10 +54,11 @@ export function createNet(hooks) {
       case "hello": N.on = true; N.slot = m.slot; N.you = m.you; N.roster = m.roster; N.round = m.round; N.map = m.map; clockOff = m.now - now(); hooks.onHello?.(m); return;
       case "roster": N.roster = m; hooks.onRoster?.(m); return;
       case "round": N.map = m.map; N.round = { no: m.no, t: 0, state: "play" }; N.roster = m.roster; snaps = []; pending = []; hooks.onRound?.(m); return;
-      case "s": { if (m.bm) hooks.onBomb?.(m.bm); if (m.e) hooks.onEvents?.(m.e); if (m.pk) { const w = hooks.state().world; if (w?.pickups) m.pk.forEach((t, i) => { if (w.pickups[i]) w.pickups[i].t = t; }); } const s = { ...m, at: now() }; snaps.push(s); { const g = lastSnapAt ? s.at - lastSnapAt : 0; lastSnapAt = s.at; if (g > N.worstGap) N.worstGap = g; } if (snaps.length > 6) snaps.shift(); clockOff = clockOff * 0.9 + (m.now - now()) * 0.1; ack = m.ack; N.round = { ...(N.round || {}), t: m.rt, state: m.st }; applySelf(s); return; }
+      case "s": { if (m.bm) hooks.onBomb?.(m.bm); if (m.pr) hooks.onPark?.(m.pr); if (m.e) hooks.onEvents?.(m.e); if (m.pk) { const w = hooks.state().world; if (w?.pickups) m.pk.forEach((t, i) => { if (w.pickups[i]) w.pickups[i].t = t; }); } const s = { ...m, at: now() }; snaps.push(s); { const g = lastSnapAt ? s.at - lastSnapAt : 0; lastSnapAt = s.at; if (g > N.worstGap) N.worstGap = g; } if (snaps.length > 6) snaps.shift(); clockOff = clockOff * 0.9 + (m.now - now()) * 0.1; ack = m.ack; N.round = { ...(N.round || {}), t: m.rt, state: m.st }; applySelf(s); return; }
       case "ev": hooks.onEvents?.(m.e); return;
       case "end": hooks.onEnd?.(m); return;
       case "votes": hooks.onVotes?.(m.n); return;
+      case "park": hooks.onParkMsg?.(m); return;
       case "pong": N.ping = Math.round((now() - m.t0) * 1000); return;
       case "err": N.why = m.text; hooks.onError?.(m.text); return;
     }
