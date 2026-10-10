@@ -118,8 +118,8 @@
   /* Who is in CS67 right now: the four rooms' public /state, added up
      (names from every room, the count from all four). Four small CORS
      reads every 45 s while the page is open; nothing touches a database. */
-  async function pollRooms() {
-    const live = refs.cs67; if (!live || document.hidden) return;
+  async function pollRooms(force = false) {
+    const live = refs.cs67; if (!live || (document.hidden && !force)) return;   // the first read happens even in a background tab (2026-10-12: a page opened in a new tab sat on "Looking for the rooms…" until the next poll)
     const rooms = [["bs", "Free-for-all"], ["gg", "Gun Game"], ["bomb", "Bomb"], ["park", "Parkour"]];
     const got = await Promise.all(rooms.map(async ([p, n]) => { try { const j = await fetch(`${ARCADE}/${p}/state`, { cache: "no-store" }).then((r) => r.json()); return j?.ok ? { n, playing: j.playing || 0, names: j.names || [] } : null; } catch { return null; } }));
     if (refs.cs67 !== live) return;
@@ -137,9 +137,9 @@
   /* EastScape's "N people online now", the casino floor's own code: once a
      minute while the tab is visible, from /api/eastscape/online's 30-second
      edge cache. */
-  let onlineTimer = 0;
-  async function pollOnline() {
-    const o = refs.online; if (!o || document.hidden) return;
+  let onlineTimer = 0, onVis = null;
+  async function pollOnline(force = false) {
+    const o = refs.online; if (!o || (document.hidden && !force)) return;
     try {
       const r = await fetch(o.url, { cache: "no-store" }); if (!r.ok) throw new Error(String(r.status));
       const n = Math.max(0, Number((await r.json()).online) || 0);
@@ -157,16 +157,17 @@
       document.title = "Games — EastCoin";
       window.ECPresence?.beat("games");
       build();
-      pollRooms();
-      pollOnline();
+      pollRooms(true);
+      pollOnline(true);
       timer = window.setInterval(() => { if (!document.hidden) pollRooms(); }, POLL_MS);
-      onlineTimer = window.setInterval(pollOnline, 60000);
-      document.addEventListener("visibilitychange", pollOnline);
+      onlineTimer = window.setInterval(() => pollOnline(), 60000);
+      onVis = () => { if (!document.hidden) { pollRooms(); pollOnline(); } };
+      document.addEventListener("visibilitychange", onVis);
     },
     unmount() {
       window.clearInterval(timer); timer = 0;
       window.clearInterval(onlineTimer); onlineTimer = 0;
-      document.removeEventListener("visibilitychange", pollOnline);
+      document.removeEventListener("visibilitychange", onVis); onVis = null;
       refs = {};
       document.title = "EastCoin";
     }
