@@ -29,9 +29,9 @@
   /* The two big games. CS67's key in /api/games/home is still "blockshot"
      (its files keep that name); the card is CS67 whatever the API calls it. */
   const BIG = {
-    cs67: { title: "CS67", sub: "EastCoin's shooter", icon: "🔫", route: "cs67", art: `/v3/assets/img/games/cs67.webp?v=${ART_V}`, rgb: "26,120,200",
+    cs67: { title: "CS67", sub: "EastCoin's shooter", icon: "🔫", route: "cs67", art: `/v3/assets/img/games/cs67.webp?v=${ART_V}`, rgb: "26,120,200", ribbon: "Now Open",
       blurb: "" },   /* (2026-10-11, the owner) no hover description */
-    eastscape: { title: "EastScape", sub: "EastCoin Casino MMO", icon: "🗺️", href: "/eastscape", art: "/v3/assets/img/casino/eastscape.webp?v=5", rgb: "255,122,26", ribbon: "Now Open",
+    eastscape: { title: "EastScape", sub: "EastCoin Casino MMO", icon: "🗺️", href: "/eastscape", art: "/v3/assets/img/casino/eastscape.webp?v=5", rgb: "255,122,26",
       online: "/api/eastscape/online", spooky: true, blurb: "Every casino game, in a world you walk around. Fight, mine, fish and craft for ZCoins." }
   };
 
