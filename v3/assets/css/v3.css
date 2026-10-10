@@ -121,7 +121,12 @@ img{max-width:100%}
   /* No glow animation: animating box-shadow repaints the sticky nav every
      frame, on every page, and hover on the rest of the page pays for it. */
 }
-.nav-tag.new{background:linear-gradient(120deg,#3ddc84,#1f9d55);box-shadow:0 0 12px rgba(61,220,132,.45)}   /* (2026-10-11) Games is the new thing */
+.nav-tag.new{background:linear-gradient(120deg,#3ddc84,#1f9d55);box-shadow:0 0 12px rgba(61,220,132,.45);animation:navNewPulse 1.5s ease-in-out infinite}   /* (2026-10-11) Games is the new thing; the owner: "a slight flashing effect" */
+/* opacity and transform only: both composite, so the sticky nav is not repainted every frame (the reason the HOT tag never glowed) */
+@keyframes navNewPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.08)}}
+.nav-link.nav-new{border-color:rgba(61,220,132,.35)}
+.nav-link.nav-new:not([aria-current]) span:first-child{color:#8af0b4}
+@media (prefers-reduced-motion:reduce){.nav-tag.new{animation:none}}
 .nav-badge{
   display:inline-flex;align-items:center;justify-content:center;
   min-width:19px;height:19px;padding:0 6px;border-radius:999px;
