@@ -297,6 +297,9 @@ let t = 0, roundT = 0, state = "menu", countdown = 0, countBeep = 0, mapKey = MA
 /* THE BOMB MODE on the page (2026-10-09). `mode` is "ffa" or "bomb" (the Play tab's switch, or ?mode=bomb). `bomb` is the round state:
    in practice the rules' own object, stepped here; online a copy decoded from the snapshot's `bm` block. Six beans play; the other six
    of the twelve are parked dead and hidden. The dead watch a living teammate (`spec`). E is "use": plant or defuse. */
+/* (2026-10-11) Inside the site the game is an iframe (/?view=cs67). Twitch refuses to be framed, so signing in has to leave by the TOP
+   window and come back to the site's page, and signing out reloads the top so the shell's profile pill agrees with the game. */
+const FRAMED = (() => { try { return window.top !== window; } catch { return true; } })();
 let mode = ["bomb", "park", "gg"].includes(new URLSearchParams(location.search).get("mode")) ? new URLSearchParams(location.search).get("mode") : "ffa", bomb = null, spec = null;
 const MAP_IMG = { lot: "ffa", docks: "docks", roofs: "roofs" }, IMG_V = 2;   // bump IMG_V when a card picture changes: the real URL is cached for a year
 /* GUN GAME on the page (2026-10-11): the rules move the gun on every kill (`b.gg`); the page only shows the step and never swaps by hand. */
@@ -593,7 +596,7 @@ function showMenu(which, html) { tab = which; if (locked) document.exitPointerLo
 function drawMenu() {
   /* THE PLAY TAB (2026-10-11, the owner: "move practice options, and parkour, to their own tab and remove them from start page"): the
      three online rooms as cards, the button, today's challenges, the gun chips, one line of keys. Practice and Parkour are tabs of their own. */
-  const keysLine = (park) => `<p class="pm-keys">${park ? `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> back to the checkpoint · <b>Esc</b> menu` : `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>4</b> pistol · <b>5</b> knife · <b>Q</b> cycle · <b>Tab</b> scores · <b>Esc</b> menu`}</p><p class="pm-acct">${site.on && !profile.server ? `<a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(location.pathname + location.search)}">Sign in with Twitch</a> to keep your level, skins and stats` : profile.server ? `Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button>` : ""}</p>`;
+  const keysLine = (park) => `<p class="pm-keys">${park ? `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> back to the checkpoint · <b>Esc</b> menu` : `<b>WASD</b> move · <b>Shift</b> slide · <b>Space</b> jump · <b>R</b> reload · <b>1 2 3</b> guns · <b>4</b> pistol · <b>5</b> knife · <b>Q</b> cycle · <b>Tab</b> scores · <b>Esc</b> menu`}</p><p class="pm-acct">${site.on && !profile.server ? `<a href="/api/picks/auth/twitch/start?returnTo=${encodeURIComponent(FRAMED ? "/cs67" : location.pathname + location.search)}"${FRAMED ? ' target="_top"' : ""}>Sign in with Twitch</a> to keep your level, skins and stats` : profile.server ? `Signed in as <b>${esc(profile.name || profile.login || "you")}</b> · <button class="lnk" data-logout="1">Sign out</button>` : ""}</p>`;
   const ROLE = { ar: "All-rounder", sniper: "One shot, one kill", shotgun: "Close range" };
   const gunChips = () => (mode === "gg" ? `<p class="note" style="margin:0">Gun Game hands you the gun: every kill is the next one on the ladder.</p>` : `<div class="gpick">${PRIMARY_KEYS.map((k, i) => { const g = GUNS[k]; return `<button class="gp${k === nextGun ? " on" : ""}" data-gun="${k}" title="${esc(g.text)}"><b>${i + 1}</b><span>${esc(g.n)}</span><small>${ROLE[k]}</small></button>`; }).join("")}</div>`);
   const srvCard = (sv) => `<button class="srv-card${mode === sv.key ? " on" : ""}" data-mode="${sv.key}" title="${esc(MODE_BLURB[sv.key])}"><span class="srv-img" style="--img:url(${IMG_BASE}${sv.img}.webp?v=${IMG_V})"></span><span class="srv-body"><span class="srv-top"><b>${sv.n}</b><small>${sv.sub}</small></span><span class="srv-live" id="srv-${sv.key}"><b>…</b></span></span></button>`;
@@ -681,7 +684,7 @@ $("over").addEventListener("click", (e) => {
   if (b.dataset.go) { if (online) { net.close(); online = false; } return start(); }
   if (b.dataset.online) return playOnline();
   if (b.dataset.vote) { net.vote(b.dataset.vote); for (const o of document.querySelectorAll("[data-vote]")) o.classList.toggle("on", o === b); return; }
-  if (b.dataset.logout) { b.disabled = true; return fetch("/api/picks/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => {}).then(() => location.reload()); }
+  if (b.dataset.logout) { b.disabled = true; return fetch("/api/picks/auth/logout", { method: "POST", credentials: "same-origin" }).catch(() => {}).then(() => { try { (FRAMED ? window.top : window).location.reload(); } catch { location.reload(); } }); }
   if (b.dataset.slot && wear(b.dataset.slot, b.dataset.k)) { redressMe(); drawMenu(); }
 });
 $("over").addEventListener("input", (e) => {
