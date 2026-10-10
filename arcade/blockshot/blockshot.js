@@ -303,13 +303,14 @@ const FRAMED = (() => { try { return window.top !== window; } catch { return tru
 let mode = ["bomb", "park", "gg"].includes(new URLSearchParams(location.search).get("mode")) ? new URLSearchParams(location.search).get("mode") : "ffa", bomb = null, spec = null;
 const MAP_IMG = { lot: "ffa", docks: "docks", roofs: "roofs" }, IMG_V = 2;   // bump IMG_V when a card picture changes: the real URL is cached for a year
 /* GUN GAME on the page (2026-10-11): the rules move the gun on every kill (`b.gg`); the page only shows the step and never swaps by hand. */
+const MAX_BOTS_FFA = 5;   // (2026-10-11, the owner) free-for-all plays with five bots, online and in practice
 const gunPick = (b) => (mode === "gg" ? ggGun(b) : b.bot ? pick(["ar", "ar", "sniper", "shotgun"]) : nextGun);
 /* PARKOUR on the page (2026-10-10). `courseKey` is the practice course; online the room says. `me.park` is the run (practice: the rules'
    object stepped here; online: decoded from the snapshot's `pr`). Ghosts: the course record's trail and your own best, fetched when the
    course loads and replayed from the moment your run starts, as see-through beans. */
 let courseKey = PARK_MAPS[0], parkDone = null; const ghosts = { record: null, me: null, t0: -1 };
 const fmtMs = (ms) => { if (ms === null || ms === undefined) return "—"; const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}.${String(Math.floor((ms % 1000) / 100))}`; };
-const inPlay = () => (mode === "bomb" ? beans.filter((b) => b.team !== undefined) : beans);
+const inPlay = () => (mode === "bomb" ? beans.filter((b) => b.team !== undefined) : beans.filter((b) => !b.parked));   // a parked seat (free-for-all's unused bot seats) is nobody
 const myTeam = () => (bomb && me && me.team !== undefined ? me.team : 0);
 const teamName = (team) => (bomb ? (team === bomb.atk ? "Attackers" : "Defenders") : "");
 const WHY = { boom: "the bomb went off", defused: "the bomb was defused", wipe: "the other side was wiped out", time: "time ran out" };
@@ -411,7 +412,7 @@ const net = createNet({
 });
 function feedNote(text) { feed(esc(text)); log(text); }
 function applyRoster(r) {
-  r.names.forEach((n, i) => { beans[i].name = n; beans[i].bot = !r.humans[i]; beans[i].team = r.teams ? r.teams[i] : undefined; beans[i].mesh.tagKey = ""; const look = r.looks ? r.looks[i] : null; if (beans[i] !== me && JSON.stringify(look || null) !== JSON.stringify(beans[i].look || null)) redressBean(beans[i], look); paintTag(beans[i]); });
+  r.names.forEach((n, i) => { beans[i].name = n; beans[i].bot = !r.humans[i]; beans[i].parked = Boolean(r.parked && r.parked[i]); if (beans[i].parked && beans[i] !== me) beans[i].mesh.g.visible = false; beans[i].team = r.teams ? r.teams[i] : undefined; beans[i].mesh.tagKey = ""; const look = r.looks ? r.looks[i] : null; if (beans[i] !== me && JSON.stringify(look || null) !== JSON.stringify(beans[i].look || null)) redressBean(beans[i], look); paintTag(beans[i]); });
   for (let i = r.names.length; i < beans.length; i++) { const b = beans[i]; b.team = undefined; b.dead = true; b.respawn = 9e9; b.wantsRespawn = false; b.mesh.g.visible = false; }
   if (r.teams) { if (!bomb) bomb = newBomb(); bomb.atk = r.atk ?? 0; }
   drawSb();
@@ -480,7 +481,7 @@ const stateUrl = () => (mode === "bomb" ? STATE_URL.replace("/bs/state", "/bomb/
    and the names from each room's /state, refreshed every ten seconds while the Play tab is open. Clicking a card picks the mode. */
 const IMG_BASE = new URL("img/", import.meta.url).href;
 const MODE_BLURB = { ffa: "Everyone against everyone, four minutes, most kills wins. Bots fill the empty slots.", bomb: "Two teams of three. Attackers plant a bomb at a site (hold E) and keep it alive 35 seconds; defenders stop them or defuse (hold E). No respawns in a round, first to 6, sides swap after 5.", park: "A course over the drop, start to finish against the clock. Checkpoints on the way, a fall goes back to the last one, R resets. Medals pay Brass once per course; your best run becomes a ghost to race." };   // beside this script: /arcade/blockshot/img/ on the site, /tools/blockshot/img/ on the rig (the page itself sits at /blockshot)
-const SERVERS = [{ key: "ffa", n: "Free-for-all", sub: "12 players · 4 min rounds · three maps", img: "ffa", path: "/bs/state" }, { key: "gg", n: "Gun Game", sub: "every kill, the next gun · knife last", img: "gg", path: "/gg/state" }, { key: "bomb", n: "Bomb · 3v3", sub: "plant or defuse · first to 6", img: "bomb", path: "/bomb/state" }, { key: "park", n: "Parkour", sub: "courses against the clock · ghosts", img: "park", path: "/park/state" }];
+const SERVERS = [{ key: "ffa", n: "Free-for-all", sub: "12 seats, five bots · 4 min rounds · three maps", img: "ffa", path: "/bs/state" }, { key: "gg", n: "Gun Game", sub: "every kill, the next gun · knife last", img: "gg", path: "/gg/state" }, { key: "bomb", n: "Bomb · 3v3", sub: "plant or defuse · first to 6", img: "bomb", path: "/bomb/state" }, { key: "park", n: "Parkour", sub: "courses against the clock · ghosts", img: "park", path: "/park/state" }];
 let serversT = 0;
 async function pollServers() {
   if (!document.querySelector(".srv-live")) return;
@@ -549,7 +550,8 @@ function reset() {
   for (const L of POOL.lines) { L.life = 0; L.o.visible = false; } for (const P of POOL.puffs) { P.life = 0; P.o.visible = false; } for (const F of POOL.floats) { F.life = 0; F.s.visible = false; }
   for (const b of beans) { const keep = { mesh: b.mesh, skill: b.skill }; Object.assign(b, newBean(b.i, b.name, b.bot), keep); b.p.set(0, -50, 0); b.wantsRespawn = true; }
   if (mode === "gg") for (const b of beans) b.gg = 0;
-  for (const b of beans) respawnBean(world, beans, b, gunPick(b), Math.random, events);
+  if (mode === "ffa") for (const b of beans) if (b.bot && b.i > MAX_BOTS_FFA) { b.parked = true; b.dead = true; b.respawn = 9e9; b.wantsRespawn = false; b.p.set(0, -50, 0); b.mesh.g.visible = false; }   // practice matches the room: five bots
+  for (const b of beans) if (!b.parked) respawnBean(world, beans, b, gunPick(b), Math.random, events);
   for (const e of events) onEvent(e); events.length = 0;
   drawSb();
 }
