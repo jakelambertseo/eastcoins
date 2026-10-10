@@ -97,7 +97,8 @@
       : el("span", "av-crest", String(teamName || "?").slice(0, 3).toUpperCase());
   }
 
-  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵", casino: "🎰", score: "📊", pot: "🏆", crate: "🎁" };
+  const kartTime = (ms) => { const s = Math.max(0, Number(ms) || 0) / 1000; return `${Math.floor(s / 60)}:${(s % 60).toFixed(2).padStart(5, "0")}`; };
+  const ICON = { pick: "🪙", won: "✅", lost: "❌", refunded: "↩️", open: "🏟️", final: "🏁", void: "🚫", joined: "👋", song: "🎵", casino: "🎰", score: "📊", pot: "🏆", crate: "🎁", kart: "🏎️" };
   /** "Rangers up 3–1 on the Mariners", "Rangers and Mariners level at 2". */
   function scoreLine(item) {
     const m = item.market;
@@ -184,6 +185,10 @@
       case "crate":
         text.append(name(item.who), document.createTextNode(" pulled a LEGENDARY from the Daily Crate: "), el("b", null, item.prize));
         meta.textContent = "🎁 the 0.64%";
+        break;
+      case "kart":
+        text.append(name(item.who), document.createTextNode(` set the EastKart record on ${item.trackName}: `), el("b", null, kartTime(item.lapMs)));
+        meta.textContent = "🏎️ best lap on the site";
         break;
       case "pot":
         text.append(name(item.who), document.createTextNode(" hit the Daily Jackpot for "), coin(item.amount));
@@ -285,6 +290,7 @@
       case "song": span.append(who(), document.createTextNode(" played "), el("b", null, item.title.length > 40 ? item.title.slice(0, 38) + "…" : item.title)); break;
       case "casino": span.append(who(), document.createTextNode(item.status === "WON" ? ` won ${Math.abs(item.profit)} ZC on the ` : ` lost ${Math.abs(item.profit)} ZC on the `), casinoLink(item)); break;
       case "pot": span.append(document.createTextNode("🏆 "), who(), document.createTextNode(` hit the Daily Jackpot for ${item.amount} ZC`)); break;
+      case "kart": span.append(document.createTextNode("🏎️ "), who(), document.createTextNode(` set the EastKart record on ${item.trackName}: ${kartTime(item.lapMs)}`)); break;
       case "crate": span.append(who(), document.createTextNode(" pulled a LEGENDARY from the Daily Crate: "), el("b", null, item.prize)); break;
       case "score": return null;   // scores stay in the feed and on game pages; off the ticker for now
       default: return null;

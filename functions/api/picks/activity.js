@@ -15,6 +15,7 @@
    ============================================================ */
 
 import { slugFor } from "./_slug.js";
+import { recentRecords } from "../kart/_kart.js";
 import { recentLegendaries } from "../crate/_crate.js";
 import { utc } from "./_game.js";
 
@@ -103,6 +104,9 @@ export async function onRequestGet(context) {
       WHERE p.status = 'PAID' ORDER BY p.day DESC LIMIT 10`
   ).all().catch(() => ({ results: [] }));
   for (const p of pots.results || []) items.push({ type: "pot", at: String(p.paid_at).replace(" ", "T") + "Z", who: { login: String(p.twitch_login || "").toLowerCase(), displayName: String(p.display_name || p.twitch_login || ""), avatar: String(p.avatar_url || "") }, amount: Number(p.amount), day: p.day, total: Number(p.total_stake) });
+
+  // EastKart records — a new best lap on a track (kart_records, written by /api/kart/times).
+  for (const r of await recentRecords(db).catch(() => [])) items.push(r);
 
   // Daily Crate Legendaries — the ticker and the feed, never chat.
   for (const c of await recentLegendaries(db).catch(() => [])) items.push(c);

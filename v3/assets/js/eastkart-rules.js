@@ -8,7 +8,7 @@
    the centreline in a lane of their own, drift the corners, use what they pick up, and rubber-band a little toward the person).
    Nothing here draws or plays a sound. `stepRace(race, inputs, dt, rand)` moves the whole race one step and pushes events. */
 
-export const VERSION = 2;
+export const VERSION = 3;
 export const KART = {
   /* POLISH PASS (2026-10-13, the owner: "cars need to be slightly faster, feel weightier, bounce off each other a bit"): MAX 23 → 26.5,
      the wheel eases in (STEER_RATE), the heading lags the nose more (SLIP 9 → 6), and a corner at full speed turns less (HIGH_SPEED_TURN). */
@@ -81,7 +81,7 @@ export const progressOf = (track, k) => k.lap * track.N + k.i + (k.alongF || 0);
 /* ---------------------------------------------------------------- karts */
 export function newKart(i, name, bot, color) {
   return { i, name, bot, color, p: { x: 0, z: 0 }, yaw: 0, head: 0, speed: 0, steer: 0, drift: 0, driftT: 0, boost: 0, spin: 0, item: null, itemT: 0, i0: 0, lap: 0, sector: 0, cpNext: 1, alongF: 0,
-    lane: 0, laneT: 0, skill: 1, shield: 0, push: { x: 0, z: 0 }, draftT: 0, heldT: 0, burnout: 0, driftTier: 0, lapStart: 0, lapTimes: [], bestLap: 0, total: 0, finished: 0, place: 0, grass: false, lastHit: -9, onItem: -1 };
+    lane: 0, laneT: 0, skill: 1, shield: 0, push: { x: 0, z: 0 }, draftT: 0, heldT: 0, burnout: 0, driftTier: 0, splits: [], prevPlace: 0, lapStart: 0, lapTimes: [], bestLap: 0, total: 0, finished: 0, place: 0, grass: false, lastHit: -9, onItem: -1 };
 }
 /** Put the field on the grid: two abreast, the leader of the grid at the back of the start line, 4 m between rows. */
 export function placeOnGrid(track, karts) {
@@ -124,7 +124,7 @@ export function stepKart(track, k, inp, dt, now, events) {
   k.alongF = clamp(along(track, k.p, k.i), -0.5, 0.5);
   // sectors in order; a lap when the first sector follows the last
   const sec = Math.floor(k.i / track.sector);
-  if (sec === k.cpNext && !k.finished) { k.cpNext = (sec + 1) % track.SECTORS; if (sec === 0 && k.lap === 0 && k.lapStart === 0) k.lapStart = now; else if (sec === 0) { const lt = now - k.lapStart; k.lapTimes.push(lt); if (!k.bestLap || lt < k.bestLap) k.bestLap = lt; k.lap++; k.lapStart = now; events?.push({ type: "lap", k, lap: k.lap, time: lt }); if (k.lap >= track.laps) { k.finished = now; k.total = now - k.raceStart; events?.push({ type: "finish", k }); } } }
+  if (sec === k.cpNext && !k.finished) { k.cpNext = (sec + 1) % track.SECTORS; if (sec === 0 && k.lap === 0 && k.lapStart === 0) k.lapStart = now; else if (sec === 0) { const lt = now - k.lapStart; k.lapTimes.push(lt); if (!k.bestLap || lt < k.bestLap) k.bestLap = lt; k.lap++; const splits = k.splits; k.splits = []; k.lapStart = now; events?.push({ type: "lap", k, lap: k.lap, time: lt, splits }); if (k.lap >= track.laps) { k.finished = now; k.total = now - k.raceStart; events?.push({ type: "finish", k }); } } else if (k.lapStart > 0) { const st = now - k.lapStart; k.splits.push(st); events?.push({ type: "sector", k, sec, t: st }); } }
   k.sector = sec;
 }
 
@@ -211,6 +211,8 @@ export function stepRace(race, inputFor, dt, rand, events) {
   const order = race.karts.slice().sort((a, b) => (b.finished ? 1e9 - b.total : progressOf(t, b)) - (a.finished ? 1e9 - a.total : progressOf(t, a)));
   order.forEach((k, n) => { k.place = n + 1; });
   const human = race.karts.find((k) => !k.bot);
+  if (human && !human.finished && now - race.started > 2) { if (human.prevPlace && human.place < human.prevPlace) events?.push({ type: "pass", k: human, over: order[human.place] || null }); else if (human.prevPlace && human.place > human.prevPlace) events?.push({ type: "passed", k: human, by: order[human.place - 2] || null }); }
+  for (const k of race.karts) k.prevPlace = k.place;
   for (const k of race.karts) {
     let inp;
     if (k.finished) inp = { accel: true, brake: false, steer: clamp(wrapAngle(Math.atan2(t.pts[(k.i + 8) % t.N].x - k.p.x, t.pts[(k.i + 8) % t.N].z - k.p.z) - k.yaw) * 2, -1, 1), drift: false, use: false };
