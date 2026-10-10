@@ -47,7 +47,7 @@ const M = (c, r = 0.75, m = 0.05) => new THREE.MeshStandardMaterial({ color: c, 
 /* REAL TEXTURES, TO TEST (2026-10-12, the owner: "find some free ones … and add them in to test"). CC0 photos from Poly Haven
    (asphalt_02, aerial_grass_rock, concrete_floor_worn_001, asphalt_pit_lane), shrunk to 256 px tiles in tex/. A material starts on
    the drawn texture and swaps to the file when it arrives, so a missing file costs nothing; `?tex=0` keeps the drawn ones to compare. */
-const TEX_V = 2, USE_FILES = new URLSearchParams(location.search).get("tex") !== "0", loader = new THREE.TextureLoader();
+const TEX_V = 3, USE_FILES = new URLSearchParams(location.search).get("tex") !== "0", loader = new THREE.TextureLoader();
 /* (2026-10-12) the owner's own generated set: road, grass, concrete, pit lane, kerb, the ? box, three containers and a tower wall.
    `texNow` hands back a texture at once (three fills it in when the file lands) for materials that are born with it. */
 function texNow(name, repeat = [1, 1]) { const t = loader.load(`tex/${name}.webp?v=${TEX_V}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
@@ -72,19 +72,22 @@ function buildTrackScene(track) {
   const q0 = track.pts[0]; const start = new THREE.Mesh(new THREE.BoxGeometry(track.width, 0.05, 1.6), M(0xf4f4f4, 0.6)); start.position.set(q0.x, 0.02, q0.z); start.rotation.y = Math.atan2(q0.tx, q0.tz); trackGroup.add(start);
   const chk = new THREE.Mesh(new THREE.BoxGeometry(track.width, 0.051, 0.8), M(0x111111, 0.6)); chk.position.set(q0.x, 0.02, q0.z); chk.rotation.y = start.rotation.y; trackGroup.add(chk);
   // a banner over the line
-  for (const s of [-1, 1]) { const post = new THREE.Mesh(new THREE.BoxGeometry(0.4, 7, 0.4), M(0x222630)); post.position.set(q0.x + q0.nx * s * (half + 1.6), 3.5, q0.z + q0.nz * s * (half + 1.6)); trackGroup.add(post); }
-  const banner = new THREE.Mesh(new THREE.BoxGeometry(track.width + 3.6, 1.4, 0.3), M(0xffd23f, 0.6)); banner.position.set(q0.x, 6.6, q0.z); banner.rotation.y = start.rotation.y; trackGroup.add(banner);
+  for (const s of [-1, 1]) { const post = new THREE.Mesh(new THREE.BoxGeometry(0.4, 9.5, 0.4), M(0x222630)); post.position.set(q0.x + q0.nx * s * (half + 1.6), 4.75, q0.z + q0.nz * s * (half + 1.6)); trackGroup.add(post); }
+  const bw = track.width + 3.6, banner = USE_FILES ? new THREE.Mesh(new THREE.PlaneGeometry(bw, bw / 4), new THREE.MeshBasicMaterial({ map: texNow("banner"), side: THREE.DoubleSide })) : new THREE.Mesh(new THREE.BoxGeometry(bw, 1.4, 0.3), M(0xffd23f, 0.6));
+  banner.position.set(q0.x, USE_FILES ? 7.2 : 6.6, q0.z); banner.rotation.y = start.rotation.y + Math.PI; /* the printed side faces the karts coming up to the line */ trackGroup.add(banner);
   // the scenery: blocks and cones off the road, left and right, in the track's palette
   const pal = track.key === "lot" ? [0xc96a4b, 0x3b7fbf, 0x2f9d6a, 0xd8c89a] : track.key === "docks" ? [0xb8412f, 0x3261a8, 0x7a8a99, 0xd9a441] : [0x5e4b8b, 0x8a6bb5, 0x3b3550, 0xc1b7e0];
   let seed = 11; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   const blocks = new THREE.Group();
   const containerMats = USE_FILES && track.key === "docks" ? ["container_blue", "container_red", "container_yellow"].map((n) => new THREE.MeshStandardMaterial({ map: texNow(n), roughness: 0.7 })) : null;
   const towerMat = USE_FILES && track.key === "roofs" ? new THREE.MeshStandardMaterial({ map: texNow("tower"), roughness: 0.85 }) : null;
+  const wallMats = USE_FILES && track.key === "lot" ? ["wall_red", "wall_sand", "wall_teal"].map((n) => new THREE.MeshStandardMaterial({ map: texNow(n), roughness: 0.85 })) : null;
   for (let i = 0; i < N; i += 14) { for (const s of [-1, 1]) { if (rnd() < 0.45) continue; const q = track.pts[i], d = half + KART.WALL + 4 + rnd() * 26, w = containerMats ? 6 : 4 + rnd() * 9, h = containerMats ? 2.6 * (1 + Math.floor(rnd() * 3)) : 3 + rnd() * 12, x = q.x + q.nx * s * d, z = q.z + q.nz * s * d;
     // keep blocks off the road entirely (the loop folds back on itself)
     let clear = true; for (let j = 0; j < N; j += 6) { const p = track.pts[j]; if ((p.x - x) ** 2 + (p.z - z) ** 2 < (half + w / 2 + 3) ** 2) { clear = false; break; } } if (!clear) continue;
     if (containerMats) { for (let lvl = 0; lvl < h / 2.6; lvl++) { const c = new THREE.Mesh(tiledBox(6, 2.6, 6, 6), containerMats[Math.floor(rnd() * 3)]); c.position.set(x, 1.3 + lvl * 2.6, z); c.rotation.y = Math.round(rnd() * 2) * Math.PI / 2 + (rnd() - 0.5) * 0.2; blocks.add(c); } continue; }
-    const b = new THREE.Mesh(towerMat ? tiledBox(w, h, w, 9) : new THREE.BoxGeometry(w, h, w), towerMat || M(pal[Math.floor(rnd() * pal.length)], 0.85)); b.position.set(x, h / 2, z); b.rotation.y = towerMat ? Math.round(rnd() * 4) * Math.PI / 2 : rnd() * Math.PI; blocks.add(b); } }
+    const wallMat = towerMat || (wallMats ? wallMats[Math.floor(rnd() * wallMats.length)] : null);
+    const b = new THREE.Mesh(wallMat ? tiledBox(w, h, w, towerMat ? 9 : 14) : new THREE.BoxGeometry(w, h, w), wallMat || M(pal[Math.floor(rnd() * pal.length)], 0.85)); b.position.set(x, h / 2, z); b.rotation.y = wallMat ? Math.round(rnd() * 4) * Math.PI / 2 : rnd() * Math.PI; blocks.add(b); } }
   trackGroup.add(blocks);
   for (let i = 0; i < N; i += 9) { for (const s of [-1, 1]) { if (rnd() < 0.7) continue; const q = track.pts[i], d = half + 2.2 + rnd() * 3; const c = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.1, 8), M(0xff7a1c, 0.7)); c.position.set(q.x + q.nx * s * d, 0.55, q.z + q.nz * s * d); trackGroup.add(c); } }
   // the item boxes
@@ -117,6 +120,7 @@ addEventListener("keyup", (e) => { keys[e.code] = false; });
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
 const inputFor = () => ({ accel: Boolean(keys.KeyW || keys.ArrowUp), brake: Boolean(keys.KeyS || keys.ArrowDown), steer: (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0), drift: Boolean(keys.Space), use: Boolean(keys.ShiftLeft || keys.ShiftRight || keys.KeyE) });
 const me = () => race?.karts[0];
+let hudItemKey = ""; const itemIcon = (k) => (USE_FILES ? `<img src="tex/icon_${k}.webp?v=${TEX_V}" alt="${esc(ITEMS[k].n)}">` : ITEMS[k].icon);
 function resetKart() { const k = me(); if (!k) return; const q = race.track.pts[k.i]; k.p.x = q.x; k.p.z = q.z; k.yaw = k.head = Math.atan2(q.tx, q.tz); k.speed = 0; k.spin = 0; k.drift = 0; }
 
 function startRace() {
@@ -202,7 +206,7 @@ function draw(dt) {
   camera.fov += ((68 + sp * 10 + (k.boost > 0 ? 8 : 0)) - camera.fov) * Math.min(1, 6 * dt); camera.updateProjectionMatrix();
   // HUD
   $("hudLap").textContent = `LAP ${Math.min(k.lap + 1, t.laps)}/${t.laps}`; $("hudT").textContent = fmtTime(race.state === "count" ? 0 : race.t - race.started); $("hudPos").textContent = mode === "tt" ? (k.lapStart ? fmtTime(race.t - k.lapStart) : "—") : ordinal(k.place || race.karts.length); $("hudPos").classList.toggle("tt", mode === "tt");
-  $("hudItemIc").textContent = k.item ? ITEMS[k.item].icon : ""; $("hudItemN").textContent = k.item ? ITEMS[k.item].n : ""; $("hudSpeedo").style.setProperty("--v", `${Math.round(clamp(Math.abs(k.speed) / (KART.MAX * 1.3), 0, 1) * 100)}%`); $("hudSpeedN").textContent = `${Math.round(Math.abs(k.speed) * 3.6)}`;
+  if (hudItemKey !== (k.item || "")) { hudItemKey = k.item || ""; $("hudItemIc").innerHTML = k.item ? itemIcon(k.item) : ""; } $("hudItemN").textContent = k.item ? ITEMS[k.item].n : ""; $("hudSpeedo").style.setProperty("--v", `${Math.round(clamp(Math.abs(k.speed) / (KART.MAX * 1.3), 0, 1) * 100)}%`); $("hudSpeedN").textContent = `${Math.round(Math.abs(k.speed) * 3.6)}`;
   engine(k.speed, inputFor().accel, true, Boolean(k.drift));
   drawMap();
 }
@@ -230,7 +234,7 @@ function drawMenu() {
     P.innerHTML = `<h1><small>kept in this browser</small>Your times</h1><div class="res"><table>${TRACK_LIST.map((k) => { const b = best[k] || {}; return `<tr><td>${esc(TRACKS[k].name)}</td><td class="n">best lap ${fmtTime(b.lap)}</td><td class="n">best race ${fmtTime(b.total)}</td><td class="n">${b.wins || 0} wins</td></tr>`; }).join("")}</table></div><p>Online races with everyone, boards and Brass come with the room server, the way CS67's did.</p>`;
   } else if (tab === "how") {
     P.innerHTML = `<h1><small>the wheel</small>How to drive</h1><div class="keys"><div><b>W · ↑</b>Accelerate. Hold it; there is no gear to find.</div><div><b>A D · ← →</b>Steer. The faster you go, the more a corner costs — unless you drift.</div><div><b>S · ↓</b>Brake, then reverse.</div><div><b>SPACE</b>Drift: hold it with the wheel turned. The kart slides, turns harder and charges; let go after a second for a boost, longer for a bigger one.</div><div><b>SHIFT · E</b>Use what you picked up from a box.</div><div><b>R</b>Back onto the road, pointing the right way, if you are stuck.</div><div><b>ESC</b>This menu.</div><div><b>The boxes</b>What a box gives depends on where you are: the leader mostly gets the bath, the back gets the drill and the flag.</div></div>
-      <p class="eyebrow">The plays</p><div class="keys">${Object.values(ITEMS).map((it) => `<div><b>${it.icon} ${esc(it.n)}</b>${esc(it.line)}</div>`).join("")}</div>`;
+      <p class="eyebrow">The plays</p><div class="keys">${Object.entries(ITEMS).map(([k, it]) => `<div><b>${itemIcon(k)} ${esc(it.n)}</b>${esc(it.line)}</div>`).join("")}</div>`;
   }
 }
 function showResults() {
