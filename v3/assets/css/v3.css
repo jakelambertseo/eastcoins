@@ -3592,6 +3592,11 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .games-cards.small .cas-card-name b{font-size:.88rem}
 .games-cards.small .cas-card-name small{font-size:.48rem}
 .games-card.cas-card.done .cas-card-art{outline:2px solid rgba(var(--gr-rgb),.55);outline-offset:-2px}
+.games-feats{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:7px}
+.games-feats li{display:flex;gap:10px;align-items:flex-start;font-size:.84rem;line-height:1.35;color:var(--muted)}
+.games-feats li::before{content:"";flex:0 0 auto;width:8px;height:8px;margin-top:6px;border-radius:50%;background:rgb(var(--card-rgb));box-shadow:0 0 9px rgba(var(--card-rgb),.65)}
+.games-feats li>span{min-width:0}
+.games-feats b{color:var(--text);font-weight:800}
 .games-eyebrow{margin:4px 0 10px;font-size:.66rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
 .games-cards .cas-card-live b.nums{color:var(--gold);font-family:var(--display)}
 .games-cards.small .cas-card-live{font-size:.7rem}
