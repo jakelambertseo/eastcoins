@@ -94,19 +94,76 @@ function buildTrackScene(track) {
   for (const it of track.items) { const q = track.pts[it.i]; const m = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.3, 1.3), new THREE.MeshStandardMaterial({ map: USE_FILES ? texNow("box") : TEX.box, emissive: 0x4a3300, roughness: 0.4 })); m.position.set(q.x + q.nx * it.off, 1.1, q.z + q.nz * it.off); trackGroup.add(m); itemMeshes.push({ m, it }); }
   scene.add(trackGroup);
 }
+/* THE KART, DRESSED (2026-10-12, the owner: "they look very plain and boring" → option 1: texture and detail what we have). The body is
+   a box whose faces are mapped to regions of one 512x512 WRAP sheet — right side and left side across the bottom half, the bonnet in
+   the top-left quarter, the nose and the tail in the top-right quarter — so a painted wrap can land later as tex/wrap_<n>.webp; until
+   then the wrap is drawn here in the kart's colour with a stripe, a number plate and a panel. Rear tyres are bigger and treaded, there
+   is a roll hoop, two exhausts, a steering wheel with hands on it, a number on the nose, and the bean has a FACE that changes with the
+   race (calm, drifting, boosting, spun) and a hat that says who it is. */
+const WRAPS = [];   // names of painted wrap sheets in tex/ (wrap_<name>.webp); empty = every kart draws its own
+function wrapBox(w, h, d) {   // BoxGeometry faces: +x right, -x left, +y top, -y bottom, +z nose, -z tail → sheet regions
+  const g = new THREE.BoxGeometry(w, h, d), uv = g.attributes.uv, R = [[0, 0, 0.5, 0.5], [0.5, 0, 1, 0.5], [0, 0.5, 0.5, 1], [0.75, 0.5, 1, 1], [0.5, 0.5, 0.75, 1], [0.75, 0.5, 1, 1]];
+  for (let f = 0; f < 6; f++) { const [u0, v0, u1, v1] = R[f]; for (let k = 0; k < 4; k++) { const n = f * 4 + k; uv.setXY(n, u0 + uv.getX(n) * (u1 - u0), v0 + uv.getY(n) * (v1 - v0)); } } return g;
+}
+const hex = (c) => `#${c.toString(16).padStart(6, "0")}`;
+function drawnWrap(k) {   // the placeholder wrap: colour, a cream stripe down the bonnet, a black panel and the number on the sides, the number on the nose
+  const c = document.createElement("canvas"); c.width = c.height = 512; const g = c.getContext("2d"), col = hex(k.color), no = String(k.i + 1);
+  g.fillStyle = col; g.fillRect(0, 0, 512, 512);
+  const side = (x) => { g.fillStyle = "rgba(0,0,0,.18)"; g.fillRect(x, 0, 256, 256); g.fillStyle = col; g.fillRect(x, 40, 256, 150); g.fillStyle = "#f4efe4"; g.beginPath(); g.ellipse(x + 128, 120, 66, 52, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = "#15161b"; g.font = "900 72px Unbounded, Figtree, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(no, x + 128, 124); g.fillStyle = "#15161b"; g.fillRect(x, 200, 256, 10); };
+  side(0); side(256);
+  // bonnet: a cream stripe with an orange pin line, the plate at the nose end
+  g.fillStyle = col; g.fillRect(0, 256, 256, 256); g.fillStyle = "#f4efe4"; g.fillRect(96, 256, 64, 256); g.fillStyle = "#ff6a2a"; g.fillRect(124, 256, 8, 256);
+  // nose: the number plate; tail: dark with vents
+  g.fillStyle = "#f4efe4"; g.fillRect(256, 256, 128, 256); g.fillStyle = "#15161b"; g.font = "900 110px Unbounded, Figtree, sans-serif"; g.fillText(no, 320, 390);
+  g.fillStyle = "#15161b"; g.fillRect(384, 256, 128, 256); g.fillStyle = "#3a3d44"; for (let y = 290; y < 480; y += 40) g.fillRect(400, y, 96, 16);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+const FACES = {};
+function faceTex(kind) {   // the bean's face: eyes and a mouth on a transparent sheet; four moods
+  if (FACES[kind]) return FACES[kind]; const c = document.createElement("canvas"); c.width = c.height = 128; const g = c.getContext("2d");
+  g.lineWidth = 7; g.lineCap = "round"; g.strokeStyle = "#15161b"; g.fillStyle = "#15161b";
+  const eye = (x, y, r) => { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); g.fillStyle = "#fff"; g.beginPath(); g.arc(x + r * 0.3, y - r * 0.3, r * 0.3, 0, Math.PI * 2); g.fill(); g.fillStyle = "#15161b"; };
+  if (kind === "calm") { eye(44, 50, 11); eye(84, 50, 11); g.beginPath(); g.arc(64, 72, 16, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); }
+  else if (kind === "drift") { eye(44, 48, 9); eye(84, 48, 9); g.fillRect(40, 72, 48, 12); g.strokeStyle = "#fff"; g.lineWidth = 3; for (let x = 48; x < 88; x += 10) { g.beginPath(); g.moveTo(x, 72); g.lineTo(x, 84); g.stroke(); } }
+  else if (kind === "boost") { eye(42, 46, 13); eye(86, 46, 13); g.beginPath(); g.arc(64, 70, 22, 0.1 * Math.PI, 0.9 * Math.PI); g.fill(); g.fillStyle = "#ff6a2a"; g.beginPath(); g.arc(64, 84, 9, 0, Math.PI); g.fill(); }
+  else { g.lineWidth = 6; for (const x of [44, 84]) { g.beginPath(); g.moveTo(x - 9, 41); g.lineTo(x + 9, 59); g.moveTo(x + 9, 41); g.lineTo(x - 9, 59); g.stroke(); } g.beginPath(); g.ellipse(64, 80, 10, 13, 0, 0, Math.PI * 2); g.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; FACES[kind] = t; return t;
+}
+const treadTex = (() => { let t = null; return () => { if (t) return t; const c = document.createElement("canvas"); c.width = 128; c.height = 32; const g = c.getContext("2d"); g.fillStyle = "#15171c"; g.fillRect(0, 0, 128, 32); g.fillStyle = "#2b2e36"; for (let x = 0; x < 128; x += 16) { g.fillRect(x, 0, 7, 12); g.fillRect(x + 8, 20, 7, 12); } t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(6, 1); return t; }; })();
+const HATS = { "Tin Man": "bucket", "Mr Roboto": "antenna", "Clanker": "antenna", "Bot Betty": "bow", "Robo Ray": "cap", "Beep Boop": "headband", "NPC Nate": "cap", "Autobean": "headband", "Bot Dude #1": "cap", "Bot Bro #2": "bucket" };
 function kartMesh(k) {
-  const g = new THREE.Group(); const col = k.color;
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.42, 2.3), M(col, 0.5, 0.2)); body.position.y = 0.5; g.add(body);
+  const g = new THREE.Group(); const col = k.color, wrapName = WRAPS.length ? WRAPS[k.i % WRAPS.length] : null;
+  const bodyMat = new THREE.MeshStandardMaterial({ map: wrapName && USE_FILES ? texNow(`wrap_${wrapName}`) : drawnWrap(k), roughness: 0.45, metalness: 0.15 });
+  const body = new THREE.Mesh(wrapBox(1.5, 0.42, 2.3), bodyMat); body.position.y = 0.5; g.add(body);
   const nose = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.3, 0.6), M(col, 0.5, 0.2)); nose.position.set(0, 0.62, 1.35); g.add(nose);
-  const spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 0.4), M(0x1a1d26, 0.6)); spoiler.position.set(0, 1.0, -1.15); g.add(spoiler);
-  const wheels = []; for (const [x, z] of [[-0.85, 0.75], [0.85, 0.75], [-0.85, -0.8], [0.85, -0.8]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.34, 14), M(0x15171c, 0.9)); w.rotation.z = Math.PI / 2; const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.36, 8), M(0x9aa3b2, 0.4, 0.6)); hub.rotation.z = Math.PI / 2; const wg = new THREE.Group(); wg.add(w, hub); wg.position.set(x, 0.36, z); g.add(wg); wheels.push(wg); }
-  const bean = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 0.45, 6, 12), M(k.bot ? 0xd8dde6 : 0xffd23f, 0.7)); bean.position.set(0, 1.05, -0.15); g.add(bean);
-  for (const x of [-0.13, 0.13]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0x111111 })); e.position.set(x, 1.22, 0.24); g.add(e); }
+  const bumper = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.16, 0.16), M(0x15161b, 0.6, 0.3)); bumper.position.set(0, 0.42, 1.7); g.add(bumper);
+  const spoiler = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.1, 0.42), M(0x15161b, 0.6)); spoiler.position.set(0, 1.02, -1.15); g.add(spoiler);
+  for (const x of [-0.6, 0.6]) { const strut = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.34, 0.08), M(0x15161b, 0.6)); strut.position.set(x, 0.86, -1.15); g.add(strut); }
+  // the roll hoop behind the seat
+  const hoopMat = M(0x9aa3b2, 0.35, 0.7); for (const x of [-0.42, 0.42]) { const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.0, 8), hoopMat); bar.position.set(x, 1.2, -0.62); g.add(bar); }
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.92, 8), hoopMat); top.rotation.z = Math.PI / 2; top.position.set(0, 1.7, -0.62); g.add(top);
+  // two exhausts out of the tail
+  for (const x of [-0.45, 0.45]) { const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.5, 8), hoopMat); pipe.rotation.x = Math.PI / 2; pipe.position.set(x, 0.42, -1.35); g.add(pipe); }
+  // wheels: chunky treaded rears, smaller fronts
+  const wheels = []; const tread = new THREE.MeshStandardMaterial({ map: treadTex(), roughness: 0.95 });
+  for (const [x, z, r] of [[-0.85, 0.75, 0.34], [0.85, 0.75, 0.34], [-0.88, -0.8, 0.42], [0.88, -0.8, 0.42]]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(r, r, r > 0.4 ? 0.44 : 0.3, 16), tread); w.rotation.z = Math.PI / 2; const hub = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.5, r * 0.5, (r > 0.4 ? 0.44 : 0.3) + 0.02, 8), M(0xd8dde6, 0.4, 0.6)); hub.rotation.z = Math.PI / 2; const wg = new THREE.Group(); wg.add(w, hub); wg.position.set(x, r, z); g.add(wg); wheels.push(wg); }
+  // the bean, its face, its hands on the wheel, its hat
+  const beanCol = k.bot ? [0xd8dde6, 0x9fd3ff, 0xffb3c6, 0xb8f0c8, 0xffe0a3][k.i % 5] : 0xffd23f;
+  const bean = new THREE.Mesh(new THREE.CapsuleGeometry(0.4, 0.45, 6, 12), M(beanCol, 0.7)); bean.position.set(0, 1.05, -0.15); g.add(bean);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.62), new THREE.MeshBasicMaterial({ map: faceTex("calm"), transparent: true })); face.position.set(0, 1.18, 0.26); g.add(face);
+  const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.035, 8, 20), M(0x15161b, 0.5)); wheel.position.set(0, 0.95, 0.55); wheel.rotation.x = -0.9; g.add(wheel);
+  for (const x of [-0.17, 0.17]) { const hand = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), M(beanCol, 0.7)); hand.position.set(x, 1.0, 0.5); g.add(hand); }
+  const hat = HATS[k.name] || (k.bot ? "cap" : "cap"); const hatMat = M(k.bot ? 0x15161b : 0xff6a2a, 0.6);
+  if (hat === "cap") { const dome = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), hatMat); dome.position.set(0, 1.4, -0.15); g.add(dome); const brim = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.36), hatMat); brim.position.set(0, 1.42, 0.3); g.add(brim); }
+  else if (hat === "bucket") { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.42, 0.34, 12), M(0x9aa3b2, 0.4, 0.7)); b.position.set(0, 1.66, -0.15); g.add(b); }
+  else if (hat === "antenna") { const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.5, 6), hoopMat); rod.position.set(0, 1.9, -0.15); g.add(rod); const ball = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), M(0xff6a2a, 0.4)); ball.position.set(0, 2.17, -0.15); g.add(ball); }
+  else if (hat === "bow") { for (const x of [-0.14, 0.14]) { const loop = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 6), M(0xff6a2a, 0.5)); loop.position.set(x, 1.62, -0.15); g.add(loop); } }
+  else { const band = new THREE.Mesh(new THREE.TorusGeometry(0.41, 0.05, 8, 20), M(0xff6a2a, 0.5)); band.rotation.x = Math.PI / 2; band.position.set(0, 1.45, -0.15); g.add(band); }
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.2, 8), new THREE.MeshBasicMaterial({ color: 0xff8a1c, transparent: true, opacity: 0.9 })); flame.rotation.x = Math.PI / 2; flame.position.set(0, 0.5, -1.9); flame.visible = false; g.add(flame);
-  const shadow = new THREE.Mesh(new THREE.CircleGeometry(1.3, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.03; g.add(shadow);
-  const c = document.createElement("canvas"); c.width = 256; c.height = 64; const x2 = c.getContext("2d"); x2.textAlign = "center"; x2.font = "900 24px Unbounded, Figtree, sans-serif"; x2.lineWidth = 5; x2.strokeStyle = "#000"; x2.strokeText(k.name, 128, 40); x2.fillStyle = k.bot ? "#cfd5de" : "#ffd23f"; x2.fillText(k.name, 128, 40);
-  const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); tag.scale.set(2.2, 0.55, 1); tag.position.y = 2.2; g.add(tag);
-  scene.add(g); return { g, body, wheels, flame, tag };
+  const shadow = new THREE.Mesh(new THREE.CircleGeometry(1.35, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.03; g.add(shadow);
+  const c = document.createElement("canvas"); c.width = 256; c.height = 64; const x2 = c.getContext("2d"); x2.textAlign = "center"; x2.font = "900 24px Unbounded, Figtree, sans-serif"; x2.lineWidth = 5; x2.strokeStyle = "#000"; x2.strokeText(k.name, 128, 40); x2.fillStyle = k.bot ? "#f4efe4" : "#ff6a2a"; x2.fillText(k.name, 128, 40);
+  const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); tag.scale.set(2.2, 0.55, 1); tag.position.y = 2.35; g.add(tag);
+  scene.add(g); return { g, body, wheels, flame, tag, face, bean, mood: "calm" };
 }
 const ballGeo = new THREE.SphereGeometry(0.5, 12, 10), ballMat = M(0x8a4b22, 0.6), puckGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.18, 14), puckMat = M(0x111318, 0.4, 0.3), puddleGeo = new THREE.CircleGeometry(1.5, 18), puddleMat = new THREE.MeshStandardMaterial({ color: 0xff8a1c, roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.85 }), flagGeo = new THREE.BoxGeometry(0.9, 0.6, 0.06), flagMat = M(0xffd23f, 0.6), shieldGeo = new THREE.SphereGeometry(2.1, 16, 12), shieldMat = new THREE.MeshBasicMaterial({ color: 0xff6a2a, transparent: true, opacity: 0.2, depthWrite: false });
 function shotMesh(sh) { if (sh.kind === "hail") { const m = new THREE.Mesh(ballGeo, ballMat); m.scale.set(0.75, 0.75, 1.25); const lace = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.5), M(0xffffff, 0.8)); lace.position.y = 0.42; m.add(lace); return m; } if (sh.kind === "slap") return new THREE.Mesh(puckGeo, puckMat); const g = new THREE.Group(); const f = new THREE.Mesh(flagGeo, flagMat); f.position.set(0.45, 0.3, 0); g.add(f); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 6), M(0xf4f4f4, 0.6)); g.add(pole); return g; }
@@ -187,6 +244,8 @@ function draw(dt) {
   const k = me(), t = race.track;
   for (const kk of race.karts) { const m = meshes.get(kk); m.g.position.set(kk.p.x, 0, kk.p.z); m.g.rotation.y = kk.yaw; m.body.rotation.z += ((kk.drift ? -kk.drift * 0.14 : 0) - m.body.rotation.z) * Math.min(1, 10 * dt); m.body.rotation.x += ((kk.boost > 0 ? -0.06 : 0) - m.body.rotation.x) * Math.min(1, 8 * dt);
     for (let w = 0; w < 4; w++) { const wg = m.wheels[w]; wg.children[0].rotation.x += kk.speed * dt / 0.36; wg.children[1].rotation.x = wg.children[0].rotation.x; if (w < 2) wg.rotation.y = kk.steer * 0.45; } m.flame.visible = kk.boost > 0; if (m.flame.visible) m.flame.scale.set(1, 0.8 + Math.random() * 0.6, 1); m.tag.visible = kk !== k;
+    const mood = kk.spin > 0 ? "spin" : kk.boost > 0 ? "boost" : kk.drift ? "drift" : "calm"; if (mood !== m.mood) { m.mood = mood; m.face.material.map = faceTex(mood); m.face.material.needsUpdate = true; }
+    m.bean.rotation.z += ((kk.drift ? -kk.drift * 0.22 : 0) - m.bean.rotation.z) * Math.min(1, 8 * dt); m.bean.position.y += ((kk.boost > 0 ? 0.98 : 1.05) - m.bean.position.y) * Math.min(1, 8 * dt);
     if (kk.spin > 0) m.g.rotation.y = kk.yaw; }
   // sparks in a drift
   if (k.drift && Math.random() < 0.7) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), new THREE.MeshBasicMaterial({ color: Math.random() < 0.5 ? 0xffd23f : 0xff8a1c })); const side = -k.drift; s.position.set(k.p.x + Math.cos(k.yaw) * side * 0.9 - Math.sin(k.yaw) * 0.8, 0.2, k.p.z - Math.sin(k.yaw) * side * 0.9 - Math.cos(k.yaw) * 0.8); s.userData = { v: new THREE.Vector3((Math.random() - 0.5) * 6, 2 + Math.random() * 3, (Math.random() - 0.5) * 6), life: 0.5 }; scene.add(s); fx.push(s); }
