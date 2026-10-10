@@ -14,11 +14,21 @@ const saveBest = () => { try { localStorage.setItem(BEST_KEY, JSON.stringify(bes
 
 /* ---------------------------------------------------------------- audio: an engine and a few blips, all synthesised */
 let AC = null, eng = null, engGain = null, vol = 0.6;
-function audioOn() { if (AC) return; try { AC = new (window.AudioContext || window.webkitAudioContext)(); const o = AC.createOscillator(); o.type = "sawtooth"; o.frequency.value = 60; const f = AC.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 600; engGain = AC.createGain(); engGain.gain.value = 0; o.connect(f); f.connect(engGain); engGain.connect(AC.destination); o.start(); eng = o; } catch {} }
-function engine(speed, throttle, on) { if (!eng) return; const t = AC.currentTime; eng.frequency.setTargetAtTime(55 + Math.abs(speed) * 5.5 + (throttle ? 12 : 0), t, 0.05); engGain.gain.setTargetAtTime(on ? (0.035 + Math.abs(speed) / KART.MAX * 0.05) * vol : 0, t, 0.08); }
+function audioOn() { if (AC) { loadSounds(); return; } try { AC = new (window.AudioContext || window.webkitAudioContext)(); const o = AC.createOscillator(); o.type = "sawtooth"; o.frequency.value = 60; const f = AC.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 600; engGain = AC.createGain(); engGain.gain.value = 0; o.connect(f); f.connect(engGain); engGain.connect(AC.destination); o.start(); eng = o; loadSounds(); } catch {} }
+function engine(speed, throttle, on, drifting = false) { if (!AC) return; const t = AC.currentTime, sp = Math.abs(speed) / KART.MAX;
+  if (SND.engineSrc) { SND.engineSrc.playbackRate.setTargetAtTime(0.7 + sp * 1.1 + (throttle ? 0.08 : 0), t, 0.08); SND.engineGain.gain.setTargetAtTime(on ? (0.25 + sp * 0.35) * vol : 0, t, 0.1); }
+  else if (eng) { eng.frequency.setTargetAtTime(55 + Math.abs(speed) * 5.5 + (throttle ? 12 : 0), t, 0.05); engGain.gain.setTargetAtTime(on ? (0.035 + sp * 0.05) * vol : 0, t, 0.08); }
+  if (SND.driftGain) SND.driftGain.gain.setTargetAtTime(on && drifting ? 0.5 * vol : 0, t, 0.06); }
 function tone(f, to, dur, type = "square", g = 0.12) { if (!AC) return; const o = AC.createOscillator(), a = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, AC.currentTime); if (to) o.frequency.exponentialRampToValueAtTime(to, AC.currentTime + dur); a.gain.setValueAtTime(g * vol, AC.currentTime); a.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + dur); o.connect(a); a.connect(AC.destination); o.start(); o.stop(AC.currentTime + dur); }
 function noise(dur, g = 0.2, lp = 2000) { if (!AC) return; const n = AC.sampleRate * dur, b = AC.createBuffer(1, n, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n); const s = AC.createBufferSource(); s.buffer = b; const f = AC.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = lp; const a = AC.createGain(); a.gain.value = g * vol; s.connect(f); f.connect(a); a.connect(AC.destination); s.start(); }
-const SFX = { count: () => tone(440, 0, 0.12), go: () => tone(880, 1200, 0.3), item: () => tone(600, 1200, 0.15, "triangle"), boost: () => { noise(0.5, 0.25, 3000); tone(200, 900, 0.4, "sawtooth", 0.08); }, spin: () => { noise(0.3, 0.3, 800); tone(300, 80, 0.4, "square", 0.1); }, bump: () => noise(0.12, 0.2, 600), hail: () => { noise(0.25, 0.15, 2500); tone(700, 350, 0.3, "sawtooth", 0.07); }, slap: () => { noise(0.08, 0.3, 1500); tone(1200, 400, 0.12, "square", 0.08); }, bath: () => { noise(0.35, 0.22, 900); tone(400, 150, 0.3, "triangle", 0.08); }, flag: () => { tone(1500, 1500, 0.08, "square", 0.1); setTimeout(() => tone(1500, 1500, 0.08, "square", 0.1), 120); setTimeout(() => tone(1500, 1500, 0.08, "square", 0.1), 240); }, shield: () => tone(300, 700, 0.3, "triangle", 0.08), blocked: () => { noise(0.2, 0.3, 700); tone(220, 110, 0.3, "square", 0.1); }, lap: () => { tone(660, 0, 0.1); setTimeout(() => tone(990, 0, 0.15), 110); }, finish: () => { tone(523, 0, 0.15); setTimeout(() => tone(659, 0, 0.15), 150); setTimeout(() => tone(784, 0, 0.3), 300); }, drift: () => noise(0.15, 0.08, 1200) };
+/* SOUND FILES (2026-10-12, the owner: "audio/sounds as well … i can have another ai program make them"). Every cue has a slot in
+   snd/<name>.mp3; the page fetches each once at the first gesture and plays the file when it exists, the synthesised cue when it
+   does not — so files can land one at a time. The engine and the drift are LOOPS whose rate follows the speed. Specs in snd/README.md. */
+const SND_V = 1, SND_FILES = { bath_drop: "mp3", bath_hit: "mp3", bump: "ogg", click: "ogg", count: "ogg", drill: "ogg", engine_loop: "wav", final_lap: "ogg", finish_lose: "ogg", finish_win: "ogg", flag_hit: "ogg", go: "ogg", hail_hit: "ogg", item: "ogg", lap: "ogg", oline_block: "ogg", oline_up: "ogg", slap_hit: "ogg", slap_shot: "ogg" };   // what is in snd/ right now (name: extension); a cue not listed uses its synthesised fallback
+const SND = { buf: new Map(), loaded: false, engineSrc: null, engineGain: null, driftSrc: null, driftGain: null };
+async function loadSounds() { if (SND.loaded || !AC) return; SND.loaded = true; await Promise.all(Object.entries(SND_FILES).map(async ([n, ext]) => { try { const r = await fetch(`snd/${n}.${ext}?v=${SND_V}`); if (!r.ok) return; const b = await AC.decodeAudioData(await r.arrayBuffer()); SND.buf.set(n, b); } catch {} })); if (SND.buf.has("engine_loop")) { SND.engineGain = AC.createGain(); SND.engineGain.gain.value = 0; SND.engineGain.connect(AC.destination); SND.engineSrc = AC.createBufferSource(); SND.engineSrc.buffer = SND.buf.get("engine_loop"); SND.engineSrc.loop = true; SND.engineSrc.connect(SND.engineGain); SND.engineSrc.start(); if (engGain) engGain.gain.value = 0; } if (SND.buf.has("drift_loop")) { SND.driftGain = AC.createGain(); SND.driftGain.gain.value = 0; SND.driftGain.connect(AC.destination); SND.driftSrc = AC.createBufferSource(); SND.driftSrc.buffer = SND.buf.get("drift_loop"); SND.driftSrc.loop = true; SND.driftSrc.connect(SND.driftGain); SND.driftSrc.start(); } }
+function file(n, g = 1) { const b = SND.buf.get(n); if (!b || !AC) return false; const src = AC.createBufferSource(); src.buffer = b; const a = AC.createGain(); a.gain.value = g * vol; src.connect(a); a.connect(AC.destination); src.start(); return true; }
+const SFX = { count: () => file("count") || tone(440, 0, 0.12), go: () => file("go") || tone(880, 1200, 0.3), item: () => file("item") || tone(600, 1200, 0.15, "triangle"), boost: () => file("drill") || (noise(0.5, 0.25, 3000), tone(200, 900, 0.4, "sawtooth", 0.08)), spin: () => file("spin") || (noise(0.3, 0.3, 800), tone(300, 80, 0.4, "square", 0.1)), bump: () => file("bump") || noise(0.12, 0.2, 600), hail: () => file("hail_throw") || (noise(0.25, 0.15, 2500), tone(700, 350, 0.3, "sawtooth", 0.07)), hailHit: () => file("hail_hit"), slap: () => file("slap_shot") || (noise(0.08, 0.3, 1500), tone(1200, 400, 0.12, "square", 0.08)), slapHit: () => file("slap_hit"), bath: () => file("bath_drop") || (noise(0.35, 0.22, 900), tone(400, 150, 0.3, "triangle", 0.08)), bathHit: () => file("bath_hit"), flag: () => file("flag_throw") || (tone(1500, 1500, 0.08, "square", 0.1), setTimeout(() => tone(1500, 1500, 0.08, "square", 0.1), 120), setTimeout(() => tone(1500, 1500, 0.08, "square", 0.1), 240)), flagHit: () => file("flag_hit"), shield: () => file("oline_up") || tone(300, 700, 0.3, "triangle", 0.08), blocked: () => file("oline_block") || (noise(0.2, 0.3, 700), tone(220, 110, 0.3, "square", 0.1)), lap: () => file("lap") || (tone(660, 0, 0.1), setTimeout(() => tone(990, 0, 0.15), 110)), finalLap: () => file("final_lap") || (tone(660, 0, 0.1), setTimeout(() => tone(990, 0, 0.15), 110)), finish: (won) => file(won ? "finish_win" : "finish_lose") || (tone(523, 0, 0.15), setTimeout(() => tone(659, 0, 0.15), 150), setTimeout(() => tone(784, 0, 0.3), 300)), drift: () => SND.driftSrc ? true : noise(0.15, 0.08, 1200), click: () => file("click") };
 
 /* ---------------------------------------------------------------- three: scene, textures, meshes */
 const canvas = $("c"), renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
@@ -34,17 +44,24 @@ const TEX = {
   box: canvasTex(64, 64, (g, w, h) => { g.fillStyle = "#ffd23f"; g.fillRect(0, 0, w, h); g.fillStyle = "#1a1300"; g.font = "bold 44px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("?", w / 2, h / 2 + 2); })
 };
 const M = (c, r = 0.75, m = 0.05) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+/* REAL TEXTURES, TO TEST (2026-10-12, the owner: "find some free ones … and add them in to test"). CC0 photos from Poly Haven
+   (asphalt_02, aerial_grass_rock, concrete_floor_worn_001, asphalt_pit_lane), shrunk to 256 px tiles in tex/. A material starts on
+   the drawn texture and swaps to the file when it arrives, so a missing file costs nothing; `?tex=0` keeps the drawn ones to compare. */
+const TEX_V = 1, USE_FILES = new URLSearchParams(location.search).get("tex") !== "0", loader = new THREE.TextureLoader();
+function fileTex(mat, name, repeat) { if (!USE_FILES) return; loader.load(`tex/${name}.webp?v=${TEX_V}`, (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); mat.map = t; mat.needsUpdate = true; }); }
 let trackGroup = null, itemMeshes = [], ghostMesh = null;
 function buildTrackScene(track) {
   if (trackGroup) { scene.remove(trackGroup); trackGroup.traverse((o) => { o.geometry?.dispose?.(); }); }
   trackGroup = new THREE.Group(); itemMeshes = [];
   scene.background = new THREE.Color(track.sky); scene.fog = new THREE.Fog(track.sky, 160, 420);
   const def = TRACKS[track.key];
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), new THREE.MeshStandardMaterial({ map: TEX.grass(`#${def.ground.toString(16).padStart(6, "0")}`), roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; trackGroup.add(ground);
+  const groundMat = new THREE.MeshStandardMaterial({ map: TEX.grass(`#${def.ground.toString(16).padStart(6, "0")}`), roughness: 1 });
+  fileTex(groundMat, track.key === "lot" ? "grass" : track.key === "docks" ? "concrete" : "pitlane", [90, 90]);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), groundMat); ground.rotation.x = -Math.PI / 2; ground.position.y = -0.02; trackGroup.add(ground);
   // the road: a ribbon, the kerbs on each edge, the start line
   const N = track.N, half = track.width / 2;
   const ribbon = (offA, offB, mat, uvScale) => { const pos = [], uv = [], idx = []; for (let i = 0; i <= N; i++) { const q = track.pts[i % N]; pos.push(q.x + q.nx * offA, 0, q.z + q.nz * offA, q.x + q.nx * offB, 0, q.z + q.nz * offB); uv.push(i / uvScale, 0, i / uvScale, 1); if (i < N) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } } const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return new THREE.Mesh(g, mat); };
-  const road = ribbon(half, -half, new THREE.MeshStandardMaterial({ map: TEX.asphalt, roughness: 0.95, side: THREE.DoubleSide }), 6); /* the ribbon's winding depends on which way the loop runs, so both sides draw */ road.position.y = 0.0; trackGroup.add(road);
+  const roadMat = new THREE.MeshStandardMaterial({ map: TEX.asphalt, roughness: 0.95, side: THREE.DoubleSide }); fileTex(roadMat, "road", [1, 1]); const road = ribbon(half, -half, roadMat, 6); /* the ribbon's winding depends on which way the loop runs, so both sides draw */ road.position.y = 0.0; trackGroup.add(road);
   TEX.asphalt.repeat.set(1, 1);
   const kerbMat = new THREE.MeshStandardMaterial({ map: TEX.kerb, roughness: 0.8, side: THREE.DoubleSide }); const kL = ribbon(half + 1.1, half, kerbMat, 3), kR = ribbon(-half, -half - 1.1, kerbMat, 3); kL.position.y = kR.position.y = 0.01; trackGroup.add(kL, kR);
   const q0 = track.pts[0]; const start = new THREE.Mesh(new THREE.BoxGeometry(track.width, 0.05, 1.6), M(0xf4f4f4, 0.6)); start.position.set(q0.x, 0.02, q0.z); start.rotation.y = Math.atan2(q0.tx, q0.tz); trackGroup.add(start);
@@ -119,12 +136,12 @@ function onEvent(e) {
     case "shield": if (mine) { SFX.shield(); say("O-LINE", "seven seconds of cover"); } break;
     case "blocked": if (mine) { SFX.blocked(); say("O-LINE HELD", `the ${ITEMS[e.why]?.n || e.why} bounced off`); } else feed(`${esc(e.k.name)}'s O-Line held`); break;
     case "boost": if (mine) { SFX.boost(); if (e.from === "drift") say("DRIFT BOOST", `${e.t.toFixed(1)} s`); } break;
-    case "spin": { const what = { hail: "took a Hail Mary", slap: "took a slapshot", bath: "got the Gatorade bath", flag: "flag on the play" }[e.why] || e.why; if (mine) { SFX.spin(); say({ hail: "SACKED", slap: "SLAPSHOT", bath: "GATORADE BATH", flag: "FLAG ON THE PLAY" }[e.why] || "SPUN OUT", e.by ? `by ${e.by.name}` : ""); } else { feed(`${esc(e.k.name)} ${what}${e.by === me() ? " · yours" : ""}`, e.by === me() ? "me" : ""); if (e.by === me()) SFX.spin(); } break; }
+    case "spin": { const what = { hail: "took a Hail Mary", slap: "took a slapshot", bath: "got the Gatorade bath", flag: "flag on the play" }[e.why] || e.why; if (mine) { ({ hail: SFX.hailHit, slap: SFX.slapHit, bath: SFX.bathHit, flag: SFX.flagHit }[e.why]?.() || SFX.spin()); say({ hail: "SACKED", slap: "SLAPSHOT", bath: "GATORADE BATH", flag: "FLAG ON THE PLAY" }[e.why] || "SPUN OUT", e.by ? `by ${e.by.name}` : ""); } else { feed(`${esc(e.k.name)} ${what}${e.by === me() ? " · yours" : ""}`, e.by === me() ? "me" : ""); if (e.by === me()) SFX.spin(); } break; }
     case "bump": if (e.a === me() || e.b === me()) SFX.bump(); break;
     case "wall": if (mine) SFX.bump(); break;
     case "drift": if (mine) { drifting = e.on; if (e.on) SFX.drift(); } break;
-    case "lap": if (mine) { SFX.lap(); const t = race.track, b = best[trackKey] || (best[trackKey] = {}); const pb = !b.lap || e.time < b.lap; if (pb) { b.lap = e.time; saveBest(); ghost.keepBest(); } say(e.lap >= t.laps ? "FINAL LAP DONE" : e.lap === t.laps - 1 ? "FINAL LAP" : `LAP ${e.lap + 1}`, `${fmtTime(e.time)}${pb ? " · best lap!" : ""}`); $("hudBest").textContent = `best ${fmtTime(b.lap)}`; ghost.lapStart(); } break;
-    case "finish": if (mine) { SFX.finish(); say(ordinal(e.k.place), e.k.place === 1 ? "you win" : "finished"); const b = best[trackKey] || (best[trackKey] = {}); if (mode === "race" && (!b.total || e.k.total < b.total)) { b.total = e.k.total; saveBest(); } if (mode === "race" && e.k.place === 1) b.wins = (b.wins || 0) + 1, saveBest(); } else feed(`${esc(e.k.name)} finished ${ordinal(e.k.place)}`); break;
+    case "lap": if (mine) { if (e.lap === race.track.laps - 1) SFX.finalLap(); else SFX.lap(); const t = race.track, b = best[trackKey] || (best[trackKey] = {}); const pb = !b.lap || e.time < b.lap; if (pb) { b.lap = e.time; saveBest(); ghost.keepBest(); } say(e.lap >= t.laps ? "FINAL LAP DONE" : e.lap === t.laps - 1 ? "FINAL LAP" : `LAP ${e.lap + 1}`, `${fmtTime(e.time)}${pb ? " · best lap!" : ""}`); $("hudBest").textContent = `best ${fmtTime(b.lap)}`; ghost.lapStart(); } break;
+    case "finish": if (mine) { SFX.finish(e.k.place === 1); say(ordinal(e.k.place), e.k.place === 1 ? "you win" : "finished"); const b = best[trackKey] || (best[trackKey] = {}); if (mode === "race" && (!b.total || e.k.total < b.total)) { b.total = e.k.total; saveBest(); } if (mode === "race" && e.k.place === 1) b.wins = (b.wins || 0) + 1, saveBest(); } else feed(`${esc(e.k.name)} finished ${ordinal(e.k.place)}`); break;
     case "done": setTimeout(() => showResults(), 400); break;
   }
 }
@@ -178,7 +195,7 @@ function draw(dt) {
   // HUD
   $("hudLap").textContent = `LAP ${Math.min(k.lap + 1, t.laps)}/${t.laps}`; $("hudT").textContent = fmtTime(race.state === "count" ? 0 : race.t - race.started); $("hudPos").textContent = mode === "tt" ? (k.lapStart ? fmtTime(race.t - k.lapStart) : "") : ordinal(k.place || race.karts.length);
   $("hudItemIc").textContent = k.item ? ITEMS[k.item].icon : ""; $("hudItemN").textContent = k.item ? ITEMS[k.item].n : ""; $("hudSpeed").style.width = `${Math.round(clamp(Math.abs(k.speed) / (KART.MAX * 1.3), 0, 1) * 100)}%`; $("hudSpeedN").textContent = `${Math.round(Math.abs(k.speed) * 3.6)} km/h`;
-  engine(k.speed, inputFor().accel, true);
+  engine(k.speed, inputFor().accel, true, Boolean(k.drift));
   drawMap();
 }
 function drawMap() {
@@ -217,7 +234,7 @@ function showResults() {
   for (const b of document.querySelectorAll("[data-tab]")) b.classList.remove("on"); $("resumeBtn").hidden = true; $("over").hidden = false;
 }
 $("over").addEventListener("click", (e) => {
-  const b = e.target.closest("button"); if (!b) return; audioOn();
+  const b = e.target.closest("button"); if (!b) return; audioOn(); SFX.click();
   if (b.dataset.resume) return resumeGame();
   if (b.dataset.tab) return showMenu(b.dataset.tab);
   if (b.dataset.track) { trackKey = b.dataset.track; return drawMenu(); }
