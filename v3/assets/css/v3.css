@@ -3605,6 +3605,7 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 .games-feats li::before{content:"";flex:0 0 auto;width:8px;height:8px;margin-top:6px;border-radius:50%;background:rgb(var(--card-rgb));box-shadow:0 0 9px rgba(var(--card-rgb),.65)}
 .games-feats li>span{min-width:0}
 .games-feats b{color:var(--text);font-weight:800}
+.games-soonline b{color:var(--red);font-weight:800;white-space:normal;line-height:1.35}
 .games-eyebrow{margin:4px 0 10px;font-size:.66rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
 .games-cards .cas-card-live b.nums{color:var(--gold);font-family:var(--display)}
 .games-cards.small .cas-card-live{font-size:.7rem}

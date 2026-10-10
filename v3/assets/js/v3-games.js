@@ -41,7 +41,7 @@
      will be Texas Hold Em, BlackJack"). A card with a ribbon and no link; the picture is the Lounge's poker table mid-hand. */
   const SOON = {
     poker: { title: "Poker", sub: "Cards for tickets", icon: "🃏", art: `/v3/assets/img/games/poker.webp?v=${ART_V}`, rgb: "214,40,110", ribbon: "Coming Soon", soon: true,
-      blurb: "Sit down at a table in the Lounge and play the regulars for tickets.",
+      blurb: "Coming soon: Sit down at a table in the lounge and play the regulars for ZCoins.",
       feats: [["Texas Hold 'Em", "sit-and-go tables against EastCoin members"], ["Blackjack", "against the house, hand after hand"], ["Tickets on the table", "ZCoins become tickets at the cashier"], ["Dealt by the room server", "you are only ever shown your own cards"]] }
   };
   function go(route) {
@@ -109,7 +109,7 @@
     // coming soon
     page.append(el("p", "games-eyebrow", "Coming soon"));
     const soon = el("div", "cas-cards games-cards");
-    for (const [key, g] of Object.entries(SOON)) { const c = card(key, g, { big: true }); c.tile.classList.add("soon"); c.live.append(el("i", "cas-card-dot"), el("span", "cas-card-phase", g.blurb)); soon.append(c.tile); }
+    for (const [key, g] of Object.entries(SOON)) { const c = card(key, g, { big: true }); c.tile.classList.add("soon"); c.live.classList.add("games-soonline"); c.live.append(el("b", null, g.blurb)); soon.append(c.tile); }   // bold red, the owner's words
     page.append(soon);
 
     root.append(page);
