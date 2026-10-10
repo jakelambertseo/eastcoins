@@ -94,7 +94,7 @@
     for (const [key, g] of Object.entries(BIG)) {
       const c = card(key, g, { big: true });
       if (key === "cs67") { refs.cs67 = c.live; c.live.append(el("i", "cas-card-dot"), el("span", "cas-card-phase", "Looking for the rooms…")); }
-      if (g.online) { c.live.remove(); const on = el("div", "cas-card-online"); on.hidden = true; c.tile.append(on); refs.online = { el: on, url: g.online }; }
+      if (g.online) { const on = el("div", "cas-card-online"); on.hidden = true; c.live.replaceWith(on); refs.online = { el: on, url: g.online }; }   // in the live line's place, above the features, so both columns line up
       refs.big.append(c.tile);
     }
     page.append(refs.big);
