@@ -8,10 +8,15 @@
    the centreline in a lane of their own, drift the corners, use what they pick up, and rubber-band a little toward the person).
    Nothing here draws or plays a sound. `stepRace(race, inputs, dt, rand)` moves the whole race one step and pushes events. */
 
-export const VERSION = 1;
+export const VERSION = 2;
 export const KART = {
-  ACC: 15, MAX: 23, REV_MAX: 7, COAST: 0.9, TURN: 2.4, GRIP_AT: 7, DRIFT_TURN: 1.45, DRIFT_SLIP: 2.8, SLIP: 9,
-  DRIFT_MIN_S: 0.8, DRIFT_MAX_S: 2.2, BOOST_MUL: 1.3, SPIN_S: 1.1, GRASS_MUL: 0.55, WALL: 8, R: 1.15, STEP: 1 / 60, LAPS: 3, PLAYERS: 8
+  /* POLISH PASS (2026-10-13, the owner: "cars need to be slightly faster, feel weightier, bounce off each other a bit"): MAX 23 → 26.5,
+     the wheel eases in (STEER_RATE), the heading lags the nose more (SLIP 9 → 6), and a corner at full speed turns less (HIGH_SPEED_TURN). */
+  ACC: 17, MAX: 26.5, REV_MAX: 7, COAST: 0.9, TURN: 2.3, GRIP_AT: 7, DRIFT_TURN: 1.45, DRIFT_SLIP: 2.4, SLIP: 6, STEER_RATE: 7, HIGH_SPEED_TURN: 0.65,
+  DRIFT_MIN_S: 0.8, DRIFT_MAX_S: 2.2, BOOST_MUL: 1.3, SPIN_S: 1.1, GRASS_MUL: 0.55, WALL: 8, R: 1.15, STEP: 1 / 60, LAPS: 3, PLAYERS: 8,
+  /* the genre's feel pieces: drift tiers (Mario Kart's mini-turbos — hold longer, bigger boost, different sparks), a rocket start on the
+     countdown, a slipstream behind a rival, and a bump that actually shoves */
+  DRIFT_TIERS: [0.8, 1.7, 2.6], DRIFT_BOOST: [0.7, 1.2, 1.8], ROCKET_WINDOW: 0.55, ROCKET_BOOST: 1.3, BURNOUT_S: 1.1, DRAFT_S: 1.0, DRAFT_BOOST: 0.9, DRAFT_RANGE: 10, DRAFT_LANE: 2.4, BUMP_PUSH: 0.6, BUMP_MAX: 7
 };
 /* THE POWER-UPS (2026-10-12, the owner: "give it some unique power ups, and make them sports related … it needs some character"). Six,
    each a play from a sport, dealt by where you are in the race: the leader gets what slows them little, the back gets what catches up. */
@@ -76,7 +81,7 @@ export const progressOf = (track, k) => k.lap * track.N + k.i + (k.alongF || 0);
 /* ---------------------------------------------------------------- karts */
 export function newKart(i, name, bot, color) {
   return { i, name, bot, color, p: { x: 0, z: 0 }, yaw: 0, head: 0, speed: 0, steer: 0, drift: 0, driftT: 0, boost: 0, spin: 0, item: null, itemT: 0, i0: 0, lap: 0, sector: 0, cpNext: 1, alongF: 0,
-    lane: 0, laneT: 0, skill: 1, shield: 0, lapStart: 0, lapTimes: [], bestLap: 0, total: 0, finished: 0, place: 0, grass: false, lastHit: -9, onItem: -1 };
+    lane: 0, laneT: 0, skill: 1, shield: 0, push: { x: 0, z: 0 }, draftT: 0, heldT: 0, burnout: 0, driftTier: 0, lapStart: 0, lapTimes: [], bestLap: 0, total: 0, finished: 0, place: 0, grass: false, lastHit: -9, onItem: -1 };
 }
 /** Put the field on the grid: two abreast, the leader of the grid at the back of the start line, 4 m between rows. */
 export function placeOnGrid(track, karts) {
@@ -90,7 +95,7 @@ export function stepKart(track, k, inp, dt, now, events) {
   const max = KART.MAX * grassMul * (k.boost > 0 ? KART.BOOST_MUL : 1) * k.skill;
   if (k.spin > 0) { k.spin -= dt; k.yaw += 8 * dt; k.speed *= Math.max(0, 1 - 2.2 * dt); }
   else {
-    const steer = clamp(inp.steer || 0, -1, 1); k.steer = steer;
+    const want = clamp(inp.steer || 0, -1, 1); k.steer += (want - k.steer) * Math.min(1, KART.STEER_RATE * dt); const steer = k.steer;
     if (inp.accel && k.speed < max) k.speed = Math.min(max, k.speed + KART.ACC * grassMul * dt);
     else if (inp.brake) { if (k.speed > 0.3) k.speed -= 24 * dt; else k.speed = Math.max(-KART.REV_MAX, k.speed - 6 * dt); }
     else k.speed -= k.speed * KART.COAST * dt;
@@ -99,10 +104,10 @@ export function stepKart(track, k, inp, dt, now, events) {
     // the drift: hold it with the wheel turned at speed; it locks a direction, turns harder, slides, and charges a boost for the release
     const wantDrift = Boolean(inp.drift) && Math.abs(steer) > 0.15 && k.speed > 9;
     if (!k.drift && wantDrift) { k.drift = Math.sign(steer); k.driftT = 0; events?.push({ type: "drift", k, on: true }); }
-    if (k.drift && (!inp.drift || k.speed < 6)) { if (k.driftT >= KART.DRIFT_MIN_S) { k.boost = Math.max(k.boost, 0.6 + Math.min(k.driftT, KART.DRIFT_MAX_S) * 0.45); events?.push({ type: "boost", k, from: "drift", t: k.boost }); } k.drift = 0; k.driftT = 0; events?.push({ type: "drift", k, on: false }); }
-    if (k.drift) k.driftT += dt;
+    if (k.drift && (!inp.drift || k.speed < 6)) { if (k.driftTier > 0) { const t = KART.DRIFT_BOOST[k.driftTier - 1]; k.boost = Math.max(k.boost, t); events?.push({ type: "boost", k, from: "drift", t, tier: k.driftTier }); } k.drift = 0; k.driftT = 0; k.driftTier = 0; events?.push({ type: "drift", k, on: false }); }
+    if (k.drift) { k.driftT += dt; const tier = KART.DRIFT_TIERS.filter((x) => k.driftT >= x).length; if (tier !== k.driftTier) { k.driftTier = tier; events?.push({ type: "drifttier", k, tier }); } }
     const grip = clamp(Math.abs(k.speed) / KART.GRIP_AT, 0, 1), dir = k.speed < 0 ? -1 : 1;
-    let turn = steer * KART.TURN * grip * dir;
+    let turn = steer * KART.TURN * grip * dir * (1 - (1 - KART.HIGH_SPEED_TURN) * clamp(Math.abs(k.speed) / KART.MAX, 0, 1));   // heavier at speed: the same lock turns less
     if (k.drift) turn = (k.drift * 0.55 + steer * 0.75) * KART.TURN * KART.DRIFT_TURN * grip;   // a drift always turns its way; the wheel tightens or opens it
     k.yaw += turn * dt;
     k.speed -= Math.abs(turn) * Math.max(0, k.speed) * (k.drift ? 0.04 : 0.16) * dt;   // a corner costs speed; a drift costs a quarter of it, which is why you drift
@@ -110,7 +115,8 @@ export function stepKart(track, k, inp, dt, now, events) {
   if (k.boost > 0) k.boost -= dt;
   // the heading follows the nose: slowly in a drift (the slide), quickly otherwise
   k.head += wrapAngle(k.yaw - k.head) * Math.min(1, (k.drift ? KART.DRIFT_SLIP : KART.SLIP) * dt);
-  k.p.x += Math.sin(k.head) * k.speed * dt; k.p.z += Math.cos(k.head) * k.speed * dt;
+  k.p.x += Math.sin(k.head) * k.speed * dt + k.push.x * dt; k.p.z += Math.cos(k.head) * k.speed * dt + k.push.z * dt; const pd = Math.max(0, 1 - 5 * dt); k.push.x *= pd; k.push.z *= pd;
+  if (k.burnout > 0) { k.burnout -= dt; k.speed = Math.min(k.speed, 2); }
   // where on the track, how far off the line, grass and walls
   k.i = nearest(track, k.p, k.i); const off = lateral(track, k.p, k.i), half = track.width / 2;
   k.grass = Math.abs(off) > half;
@@ -172,7 +178,10 @@ export function botInput(race, k, dt, rand) {
   const tx = q.x + q.nx * lane, tz = q.z + q.nz * lane;
   const want = Math.atan2(tx - k.p.x, tz - k.p.z), diff = wrapAngle(want - k.yaw);
   const steer = clamp(diff * 2.2, -1, 1), sharp = Math.abs(diff);
-  const inp = { accel: true, brake: sharp > 1.25 && k.speed > 14, steer, drift: sharp > 0.32 && k.speed > 11 && !k.grass, use: false };
+  // a bot commits to a drift: once in, it holds for a tier or so (or while the corner still needs it) and lets go once the nose has come round
+  const drift = k.drift ? (diff * k.drift > -0.25 && (k.driftT < (k.botHold || 0) || sharp > 0.15)) : (sharp > 0.32 && k.speed > 11 && !k.grass);
+  if (drift && !k.drift) k.botHold = 0.9 + rand() * 1.5;
+  const inp = { accel: true, brake: sharp > 1.25 && k.speed > 14, steer, drift, use: false };
   if (k.item) { const me = progressOf(t, k); let aheadClose = false, behindClose = false; for (const o of race.karts) { if (o === k) continue; const d = progressOf(t, o) - me; if (d > 0 && d < 30) aheadClose = true; if (d < 0 && d > -14) behindClose = true; }
     if (k.item === "drill") inp.use = sharp < 0.25; else if (k.item === "hail") inp.use = aheadClose || rand() < 0.002; else if (k.item === "slap") inp.use = (aheadClose && sharp < 0.3) || rand() < 0.002; else if (k.item === "flag") inp.use = k.place > 1 || rand() < 0.01; else if (k.item === "oline") inp.use = behindClose || rand() < 0.003; else inp.use = behindClose || rand() < 0.003; }
   return inp;
@@ -190,7 +199,13 @@ export function newRace(trackKey, humanName, bots = KART.PLAYERS - 1, rand = Mat
 /** The whole race, one step. `inputFor(k)` gives the person's input (bots make their own). */
 export function stepRace(race, inputFor, dt, rand, events) {
   race.t += dt; const now = race.t, t = race.track;
-  if (race.state === "count") { race.countT -= dt; if (race.countT <= 0) { race.state = "race"; race.started = now; for (const k of race.karts) { k.raceStart = now; k.lapStart = 0; } events?.push({ type: "go" }); } for (const k of race.karts) { k.speed = 0; } return; }
+  if (race.state === "count") { race.countT -= dt;
+    for (const k of race.karts) { k.speed = 0; const inp = k.bot ? { accel: race.countT < (k.rocketAt ?? (k.rocketAt = rand() < 0.45 ? 0.1 + rand() * 0.4 : 1.5 + rand())) } : inputFor(k); k.heldT = inp.accel ? k.heldT + dt : 0; }
+    if (race.countT <= 0) { race.state = "race"; race.started = now; for (const k of race.karts) { k.raceStart = now; k.lapStart = 0;
+        // the rocket start: throttle down inside the window before the lights go is a boost; held since long before them is a burnout
+        if (k.heldT > 0 && k.heldT <= KART.ROCKET_WINDOW) { k.boost = KART.ROCKET_BOOST; events?.push({ type: "boost", k, from: "rocket", t: KART.ROCKET_BOOST }); } else if (k.heldT > 1.2) { k.burnout = KART.BURNOUT_S; events?.push({ type: "burnout", k }); } }
+      events?.push({ type: "go" }); }
+    return; }
   if (race.state === "done") return;
   // ranking first, so items know the places
   const order = race.karts.slice().sort((a, b) => (b.finished ? 1e9 - b.total : progressOf(t, b)) - (a.finished ? 1e9 - a.total : progressOf(t, a)));
@@ -203,10 +218,19 @@ export function stepRace(race, inputFor, dt, rand, events) {
     else inp = inputFor(k);
     if (inp.use) useItem(race, k, now, events);
     stepKart(t, k, inp, dt, now, events);
+    // the slipstream: a second tucked close behind a rival in the same lane pays a boost
+    if (!k.finished && k.draftT >= 0) { let behind = false; for (const o of race.karts) { if (o === k || o.finished) continue; const d = progressOf(t, o) - progressOf(t, k); if (d > 2 && d < KART.DRAFT_RANGE && Math.abs(lateral(t, o.p, o.i) - lateral(t, k.p, k.i)) < KART.DRAFT_LANE) { behind = true; break; } } k.draftT = behind ? k.draftT + dt : 0; if (k.draftT >= KART.DRAFT_S) { k.boost = Math.max(k.boost, KART.DRAFT_BOOST); k.draftT = -1.5; events?.push({ type: "boost", k, from: "draft", t: KART.DRAFT_BOOST }); } }
+    else if (k.draftT < 0) k.draftT = Math.min(0, k.draftT + dt);
     takeItems(race, k, now, rand, events); takePads(race, k, now, events);
   }
   // karts push each other apart
-  for (let a = 0; a < race.karts.length; a++) for (let b = a + 1; b < race.karts.length; b++) { const A = race.karts[a], B = race.karts[b]; const dx = B.p.x - A.p.x, dz = B.p.z - A.p.z, d = Math.hypot(dx, dz), min = KART.R * 2; if (d < min && d > 0.001) { const push = (min - d) / 2, ux = dx / d, uz = dz / d; A.p.x -= ux * push; A.p.z -= uz * push; B.p.x += ux * push; B.p.z += uz * push; const va = A.speed, vb = B.speed; A.speed = va * 0.85 + vb * 0.1; B.speed = vb * 0.85 + va * 0.1; if (now - A.lastHit > 0.4 && now - B.lastHit > 0.4) { A.lastHit = B.lastHit = now; events?.push({ type: "bump", a: A, b: B }); } } }
+  for (let a = 0; a < race.karts.length; a++) for (let b = a + 1; b < race.karts.length; b++) { const A = race.karts[a], B = race.karts[b]; const dx = B.p.x - A.p.x, dz = B.p.z - A.p.z, d = Math.hypot(dx, dz), min = KART.R * 2; if (d < min && d > 0.001) {
+    const push = (min - d) / 2, ux = dx / d, uz = dz / d; A.p.x -= ux * push; A.p.z -= uz * push; B.p.x += ux * push; B.p.z += uz * push;
+    // how fast they are closing along the line between them, as a shove that each carries for a moment
+    const vax = Math.sin(A.head) * A.speed + A.push.x, vaz = Math.cos(A.head) * A.speed + A.push.z, vbx = Math.sin(B.head) * B.speed + B.push.x, vbz = Math.cos(B.head) * B.speed + B.push.z;
+    const closing = (vax - vbx) * ux + (vaz - vbz) * uz; if (closing > 0) { const j = Math.min(KART.BUMP_MAX, 2 + closing * KART.BUMP_PUSH); A.push.x -= ux * j; A.push.z -= uz * j; B.push.x += ux * j; B.push.z += uz * j; A.speed *= 0.94; B.speed *= 0.94;
+      const side = Math.sin(A.head) * uz - Math.cos(A.head) * ux; A.yaw += side * 0.06; B.yaw -= side * 0.06;   // the wheel kicks a touch away from the hit
+      if (now - A.lastHit > 0.35 || now - B.lastHit > 0.35) { A.lastHit = B.lastHit = now; events?.push({ type: "bump", a: A, b: B, force: j }); } } } }
   // the shots: a Hail Mary and a slapshot run down the track (the football steers into its target's lane), a flag flies straight at the leader; puddles wait
   for (const k of race.karts) if (k.shield > 0) k.shield -= dt;
   for (let s = race.shots.length - 1; s >= 0; s--) { const sh = race.shots[s]; sh.t -= dt; let gone = sh.t <= 0;
