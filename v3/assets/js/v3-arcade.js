@@ -25,8 +25,8 @@
   function needCss() {
     if (document.getElementById(CSS_ID)) return;
     const st = document.createElement("style"); st.id = CSS_ID;
-    st.textContent = `body.arcade-on .shell{grid-template-columns:minmax(0,1fr)}
-body.arcade-on .chatrail{display:none!important}
+    st.textContent = `body.arcade-on:not(.arcade-chat) .shell{grid-template-columns:minmax(0,1fr)}
+body.arcade-on:not(.arcade-chat) .chatrail{display:none!important}
 body.arcade-on .spooky-layer{display:none!important}
 body.arcade-on{overflow:hidden}
 body.arcade-on .view{padding:0;height:calc(100vh - var(--nav-h));height:calc(100dvh - var(--nav-h));overflow:hidden}
@@ -37,7 +37,7 @@ body.arcade-on .arcade-frame{display:block;width:100%;height:100%;border:0;backg
     return {
       mount(container) {
         needCss();
-        document.body.classList.add("arcade-on");
+        document.body.classList.add("arcade-on"); document.body.classList.toggle("arcade-chat", room === "blockshot");   // (2026-10-11) the shooter keeps the Twitch rail beside it
         // an old ?view=lounge link shows the short address (/lounge), keeping anything else on the query
         const q = new URLSearchParams(location.search);
         if (q.get("view") === room) { q.delete("view"); history.replaceState(history.state, "", `/${room}${q.size ? `?${q}` : ""}${location.hash}`); }
@@ -45,7 +45,7 @@ body.arcade-on .arcade-frame{display:block;width:100%;height:100%;border:0;backg
         frame.className = "arcade-frame"; frame.title = ROOMS[room].title;
         const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname), as = new URLSearchParams(location.search).get("as");
         frame.src = `${local ? ROOMS[room].local : ROOMS[room].live}?embed=1${local && as ? `&as=${encodeURIComponent(as)}` : ""}`;
-        frame.allow = "autoplay; fullscreen";
+        frame.allow = "autoplay; fullscreen; pointer-lock";
         frame.addEventListener("load", () => frame?.focus(), { once: true });
         container.append(frame);
         onMsg = (e) => {
@@ -59,7 +59,7 @@ body.arcade-on .arcade-frame{display:block;width:100%;height:100%;border:0;backg
       unmount() {
         removeEventListener("message", onMsg); onMsg = null;
         if (frame) { frame.src = "about:blank"; frame.remove(); frame = null; }
-        document.body.classList.remove("arcade-on");
+        document.body.classList.remove("arcade-on", "arcade-chat");
       }
     };
   }

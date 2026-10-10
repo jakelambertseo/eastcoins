@@ -437,9 +437,12 @@
      running. Now the shell knows the arcade routes itself: html.arcade-route closes the rail on the first paint (index.html sets it
      inline before anything draws), Twitch is not mounted at all while an arcade route is up, and it mounts when you leave. The chat
      preference is untouched; nothing already mounted is reloaded. */
+  /* (2026-10-11) Blockshot keeps the rail: the owner wants to feel the shooter "integrated into the site" with the nav and the chat,
+     so it is framed beside the rail like any other view; only the lounge rooms close it. */
+  const RAIL_CLOSED = new Set(["lounge", "climb"]);
   let wasArcade = false;
   function arcadeRail() {
-    const arcade = SHORT_URL.has(state.route);
+    const arcade = RAIL_CLOSED.has(state.route);
     document.documentElement.classList.toggle("arcade-route", arcade);
     if (wasArcade && !arcade && chatVisible() && !chatMounted) mountChat();
     wasArcade = arcade;
