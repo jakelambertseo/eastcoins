@@ -8,7 +8,7 @@
    the centreline in a lane of their own, drift the corners, use what they pick up, and rubber-band a little toward the person).
    Nothing here draws or plays a sound. `stepRace(race, inputs, dt, rand)` moves the whole race one step and pushes events. */
 
-export const VERSION = 4;
+export const VERSION = 5;
 export const KART = {
   /* POLISH PASS (2026-10-13, the owner: "cars need to be slightly faster, feel weightier, bounce off each other a bit"): MAX 23 → 26.5,
      the wheel eases in (STEER_RATE), the heading lags the nose more (SLIP 9 → 6), and a corner at full speed turns less (HIGH_SPEED_TURN). */
@@ -61,9 +61,19 @@ export const TRACKS = {
     items: [0.15, 0.4, 0.62, 0.85], pads: [0.27, 0.74], laps: 3 },
   roofs: { name: "Rooftop Run", blurb: "Up on the Rooftops: long straights across the bridges, a corkscrew round the tower and a blind drop at the end.", width: 12, sky: 0xb0a0d8, ground: 0x4a4458,
     pts: [[0, 70], [60, 70], [95, 40], [95, -20], [60, -60], [10, -70], [-30, -40], [-10, -10], [-50, 10], [-95, -15], [-100, 30], [-60, 65]],
-    items: [0.2, 0.45, 0.65, 0.88], pads: [0.33, 0.77], laps: 3 }
+    items: [0.2, 0.45, 0.65, 0.88], pads: [0.33, 0.77], laps: 3 },
+  /* MAP PASS (2026-10-13, the owner: "a longer, more complex map, with jumps, and shortcuts, ala real mariokart maps"): about a kilometre
+     round the stadium. Two ramps on the main road (hit SPACE in the air for a trick, a boost on landing), a dirt cut through the infield
+     (shorter, narrower, rough), and the Jumbotron Gap — a ramp onto a cut over water that only a boosted kart clears. */
+  stadium: { name: "Tailgate Mile", blurb: "The long one: a mile round the stadium with two ramps, a dirt cut through the infield and the Jumbotron Gap — a jump you only clear with a boost.", width: 14, sky: 0x9fd0f0, ground: 0x4a9a44,
+    pts: [[0, 150], [70, 155], [130, 130], [165, 80], [170, 20], [150, -40], [110, -80], [60, -100], [20, -70], [-10, -110], [-60, -130], [-110, -100], [-140, -50], [-120, 0], [-150, 50], [-130, 110], [-80, 150], [-40, 140]],
+    items: [0.08, 0.3, 0.5, 0.68, 0.86], pads: [0.2, 0.6], laps: 3,
+    jumps: [{ at: 0.25, len: 7, h: 1.8 }, { at: 0.94, len: 5, h: 1.2 }],
+    cuts: [{ name: "the infield cut", from: [110, -80], to: [-60, -130], via: [[40, -125]], width: 8, dirt: true, bot: 0.35 },
+           { name: "the Jumbotron Gap", from: [-120, 0], to: [-130, 110], via: [[-108, 55]], width: 9, ramp: true, gap: [9, 34], bot: 0 }] }
 };
-export const TRACK_LIST = ["lot", "docks", "roofs"];
+export const TRACK_LIST = ["lot", "docks", "roofs", "stadium"];
+export const JUMP = { kick: 0.34, gravity: 22, trickBoost: 0.8, airTurn: 0.25, roughMul: 0.85 };
 
 function catmull(p0, p1, p2, p3, t) { const t2 = t * t, t3 = t2 * t; return 0.5 * ((2 * p1) + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3); }
 /** Sample the loop: `pts[i] = {x, z, tx, tz, nx, nz}` (unit tangent, left normal), about a metre apart, `N` of them, `len` metres. */
@@ -78,8 +88,23 @@ export function buildTrack(key) {
   const SECTORS = 12, sector = N / SECTORS;
   const items = def.items.map((f) => [-1, 0, 1].map((lane) => ({ i: Math.round(f * N) % N, off: lane * (def.width / 2 - 2.5), t: 0 }))).flat();
   const pads = (def.pads || []).map((f) => ({ i: Math.round(f * N) % N, off: 0 }));   // (2026-10-12) boost pads: a strip across the middle of the road, a second of boost to whoever drives over it
-  return { key, name: def.name, blurb: def.blurb, width: def.width, sky: def.sky, ground: def.ground, laps: def.laps, pts, N, len, SECTORS, sector, items, pads };
+  const jumps = (def.jumps || []).map((j) => ({ i: Math.round(j.at * N) % N, len: j.len, h: j.h }));
+  const near = (xz) => { let b = 0, bd = Infinity; for (let i = 0; i < N; i++) { const d = (pts[i].x - xz[0]) ** 2 + (pts[i].z - xz[1]) ** 2; if (d < bd) { bd = d; b = i; } } return b; };
+  const cuts = (def.cuts || []).map((c, idx) => { const fromI = near(c.from), toI = near(c.to); const ctrl = [[pts[fromI].x, pts[fromI].z], ...c.via, [pts[toI].x, pts[toI].z]]; const cp = openPath(ctrl);
+    return { idx, name: c.name, fromI, toI, span: ((toI - fromI) % N + N) % N, width: c.width, dirt: Boolean(c.dirt), ramp: Boolean(c.ramp), gap: c.gap || null, bot: c.bot || 0, pts: cp.pts, N: cp.N, len: cp.len }; });
+  return { key, name: def.name, blurb: def.blurb, width: def.width, sky: def.sky, ground: def.ground, laps: def.laps, pts, N, len, SECTORS, sector, items, pads, jumps, cuts };
 }
+/** An open spline through control points, resampled a metre apart with tangents and left normals (a shortcut's line). */
+function openPath(ctrl) { const raw = []; for (let s = 0; s < ctrl.length - 1; s++) { const p0 = ctrl[Math.max(0, s - 1)], p1 = ctrl[s], p2 = ctrl[s + 1], p3 = ctrl[Math.min(ctrl.length - 1, s + 2)]; for (let k = 0; k < 24; k++) { const t = k / 24; raw.push([catmull(p0[0], p1[0], p2[0], p3[0], t), catmull(p0[1], p1[1], p2[1], p3[1], t)]); } } raw.push(ctrl[ctrl.length - 1]);
+  let len = 0; const cum = [0]; for (let i = 0; i < raw.length - 1; i++) { len += Math.hypot(raw[i + 1][0] - raw[i][0], raw[i + 1][1] - raw[i][1]); cum.push(len); }
+  const N = Math.max(2, Math.round(len)), pts = []; let j = 0;
+  for (let i = 0; i < N; i++) { const d = (i / (N - 1)) * len; while (j < cum.length - 2 && cum[j + 1] < d) j++; const a = raw[j], b = raw[j + 1], t = (d - cum[j]) / (cum[j + 1] - cum[j] || 1); pts.push({ x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t }); }
+  for (let i = 0; i < N; i++) { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(N - 1, i + 1)]; let tx = b.x - a.x, tz = b.z - a.z; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l; const p = pts[i]; p.tx = tx; p.tz = tz; p.nx = -tz; p.nz = tx; }
+  return { pts, N, len };
+}
+/** Nearest sample on a shortcut, searching near `hint` when it has one (−1 scans the lot). */
+export function nearestCut(cut, p, hint = -1) { let best = 0, bd = Infinity; const look = (i) => { i = Math.max(0, Math.min(cut.N - 1, i)); const q = cut.pts[i], d = (p.x - q.x) ** 2 + (p.z - q.z) ** 2; if (d < bd) { bd = d; best = i; } }; if (hint >= 0) for (let k = -30; k <= 30; k++) look(hint + k); else { for (let i = 0; i < cut.N; i += 3) look(i); const b = best; for (let k = -3; k <= 3; k++) look(b + k); } return best; }
+export const cutLateral = (cut, p, i) => { const q = cut.pts[i]; return (p.x - q.x) * q.nx + (p.z - q.z) * q.nz; };
 /** Nearest sample to p, searching near `hint` first (a kart never jumps far in a step). */
 export function nearest(track, p, hint = 0) {
   const N = track.N, pts = track.pts; let best = -1, bd = Infinity;
@@ -95,7 +120,7 @@ export const progressOf = (track, k) => k.lap * track.N + k.i + (k.alongF || 0);
 /* ---------------------------------------------------------------- karts */
 export function newKart(i, name, bot, color) {
   return { i, name, bot, color, p: { x: 0, z: 0 }, yaw: 0, head: 0, speed: 0, steer: 0, drift: 0, driftT: 0, boost: 0, spin: 0, item: null, itemT: 0, i0: 0, lap: 0, sector: 0, cpNext: 1, alongF: 0,
-    lane: 0, laneT: 0, skill: 1, shield: 0, push: { x: 0, z: 0 }, draftT: 0, heldT: 0, burnout: 0, driftTier: 0, splits: [], prevPlace: 0, slow: 0, frozen: 0, truck: 0, wet: false, lapStart: 0, lapTimes: [], bestLap: 0, total: 0, finished: 0, place: 0, grass: false, lastHit: -9, onItem: -1 };
+    lane: 0, laneT: 0, skill: 1, shield: 0, push: { x: 0, z: 0 }, draftT: 0, heldT: 0, burnout: 0, driftTier: 0, splits: [], prevPlace: 0, slow: 0, frozen: 0, truck: 0, wet: false, y: 0, vy: 0, air: false, trick: false, cut: -1, cutIdx: -1, ci: 0, wantCut: -1, cutSeen: -1, cutGrace: 0, rough: false, lapStart: 0, lapTimes: [], bestLap: 0, total: 0, finished: 0, place: 0, grass: false, lastHit: -9, onItem: -1 };
 }
 /** Put the field on the grid: two abreast, the leader of the grid at the back of the start line, 4 m between rows. */
 export function placeOnGrid(track, karts) {
@@ -106,7 +131,8 @@ export function placeOnGrid(track, karts) {
 /** One kart, one step. `inp` = {accel, brake, steer (-1..1), drift, use}. Returns nothing; pushes to `events`. */
 export function stepKart(track, k, inp, dt, now, events) {
   const grassMul = k.grass ? KART.GRASS_MUL : 1;
-  const max = KART.MAX * grassMul * (k.boost > 0 ? KART.BOOST_MUL : 1) * k.skill * (k.slow > 0 ? PLAY.pressMul : 1) * (k.wet ? PLAY.rainMul : 1) * (k.truck > 0 ? PLAY.truckMul : 1);
+  const max = KART.MAX * grassMul * (k.boost > 0 ? KART.BOOST_MUL : 1) * k.skill * (k.slow > 0 ? PLAY.pressMul : 1) * (k.wet ? PLAY.rainMul : 1) * (k.truck > 0 ? PLAY.truckMul : 1) * (k.rough ? JUMP.roughMul : 1);
+  if (k.air && inp.drift && !k.trick && k.spin <= 0) { k.trick = true; events?.push({ type: "trick", k }); }
   if (k.slow > 0) k.slow -= dt; if (k.truck > 0) k.truck -= dt; if (k.frozen > 0) { k.frozen -= dt; k.speed = Math.min(k.speed, 0.5); }
   if (k.spin > 0) { k.spin -= dt; k.yaw += 8 * dt; k.speed *= Math.max(0, 1 - 2.2 * dt); }
   else {
@@ -118,14 +144,15 @@ export function stepKart(track, k, inp, dt, now, events) {
     if (k.speed < -KART.REV_MAX) k.speed = -KART.REV_MAX;
     if (k.frozen > 0) k.speed = Math.min(k.speed, 0.5);   // iced: the throttle does nothing until it thaws
     // the drift: hold it with the wheel turned at speed; it locks a direction, turns harder, slides, and charges a boost for the release
-    const wantDrift = Boolean(inp.drift) && Math.abs(steer) > 0.15 && k.speed > 9;
+    const wantDrift = Boolean(inp.drift) && Math.abs(steer) > 0.15 && k.speed > 9 && !k.air;
     if (!k.drift && wantDrift) { k.drift = Math.sign(steer); k.driftT = 0; events?.push({ type: "drift", k, on: true }); }
     if (k.drift && (!inp.drift || k.speed < 6)) { if (k.driftTier > 0) { const t = KART.DRIFT_BOOST[k.driftTier - 1]; k.boost = Math.max(k.boost, t); events?.push({ type: "boost", k, from: "drift", t, tier: k.driftTier }); } k.drift = 0; k.driftT = 0; k.driftTier = 0; events?.push({ type: "drift", k, on: false }); }
     if (k.drift) { k.driftT += dt; const tier = KART.DRIFT_TIERS.filter((x) => k.driftT >= x).length; if (tier !== k.driftTier) { k.driftTier = tier; events?.push({ type: "drifttier", k, tier }); } }
     const grip = clamp(Math.abs(k.speed) / KART.GRIP_AT, 0, 1), dir = k.speed < 0 ? -1 : 1;
     let turn = steer * KART.TURN * grip * dir * (1 - (1 - KART.HIGH_SPEED_TURN) * clamp(Math.abs(k.speed) / KART.MAX, 0, 1));   // heavier at speed: the same lock turns less
     if (k.drift) turn = (k.drift * 0.55 + steer * 0.75) * KART.TURN * KART.DRIFT_TURN * grip;
-    if (k.wet) turn *= 0.8;   // a drift always turns its way; the wheel tightens or opens it
+    if (k.wet) turn *= 0.8;
+    if (k.air) turn *= JUMP.airTurn;   // a drift always turns its way; the wheel tightens or opens it
     k.yaw += turn * dt;
     k.speed -= Math.abs(turn) * Math.max(0, k.speed) * (k.drift ? 0.04 : 0.16) * dt;   // a corner costs speed; a drift costs a quarter of it, which is why you drift
   }
@@ -136,14 +163,32 @@ export function stepKart(track, k, inp, dt, now, events) {
   if (k.burnout > 0) { k.burnout -= dt; k.speed = Math.min(k.speed, 2); }
   // where on the track, how far off the line, grass and walls
   k.i = nearest(track, k.p, k.i); const off = lateral(track, k.p, k.i), half = track.width / 2;
-  k.grass = Math.abs(off) > half;
-  if (Math.abs(off) > half + KART.WALL) { const q = track.pts[k.i], s = Math.sign(off), lim = half + KART.WALL; k.p.x = q.x + q.nx * s * lim; k.p.z = q.z + q.nz * s * lim; k.speed *= 0.5; if (now - k.lastHit > 0.5) { k.lastHit = now; events?.push({ type: "wall", k }); } }
+  // a shortcut: nearer to its line than the road's and inside its width puts you on it; its walls hold you, its progress maps onto the lap
+  const wasCut = k.cut; k.cut = -1; k.rough = false; let groundY = 0;
+  for (const c of track.cuts || []) { const ci = nearestCut(c, k.p, wasCut === c.idx ? k.ci : -1); const coff = cutLateral(c, k.p, ci), lim = c.width / 2 + 2.5;
+    if (Math.abs(coff) <= lim + 0.01 && ci > 0 && ci < c.N - 1 && (Math.abs(coff) < Math.abs(off) - 1 || (Math.abs(off) > half && ci > 10 && ci < c.N - 10))) {   // past the mouths, being off the road and near the cut counts; at a mouth you must be clearly nearer the cut
+      if (k.cutIdx !== c.idx) events?.push({ type: "cut", k, cut: c });
+      k.cut = c.idx; k.cutIdx = c.idx; k.ci = ci; k.rough = c.dirt && !k.air; k.cutGrace = 1.2; k.i = (c.fromI + Math.round(c.span * ci / (c.N - 1))) % track.N;
+      if (Math.abs(coff) > c.width / 2 + 2) { const q = c.pts[ci], s = Math.sign(coff), l = c.width / 2 + 2; k.p.x = q.x + q.nx * s * l; k.p.z = q.z + q.nz * s * l; k.speed *= 0.5; if (now - k.lastHit > 0.5) { k.lastHit = now; events?.push({ type: "wall", k }); } }
+      if (c.ramp && !k.air) { if (ci <= 6) groundY = ci / 6 * 1.6; if (ci >= 6 && ci <= 9 && Math.abs(k.speed) > 3) launch(k, events); }
+      if (c.gap && !k.air && k.y <= 0.01 && ci >= c.gap[0] && ci <= c.gap[1]) { const q = track.pts[c.fromI]; k.p.x = q.x; k.p.z = q.z; k.yaw = k.head = Math.atan2(q.tx, q.tz); k.speed = 0; k.spin = 0.8; k.drift = 0; k.boost = 0; k.cut = -1; k.cutIdx = -1; k.cutGrace = 0; k.i = c.fromI; events?.push({ type: "fall", k, cut: c }); }
+      break; } }
+  if (k.cut < 0 && k.cutGrace <= 0) k.cutIdx = -1; if (k.cutGrace > 0) k.cutGrace -= dt;
+  k.grass = k.cut < 0 && !k.air && Math.abs(off) > half;
+  if (k.cut < 0 && Math.abs(off) > half + KART.WALL) { const q = track.pts[k.i], s = Math.sign(off), lim = half + KART.WALL; k.p.x = q.x + q.nx * s * lim; k.p.z = q.z + q.nz * s * lim; k.speed *= 0.5; if (now - k.lastHit > 0.5) { k.lastHit = now; events?.push({ type: "wall", k }); } }
+  // the ramps on the road: climb them, leave the end at a kick; in the air, gravity, then the landing (a trick pays a boost)
+  if (k.cut < 0 && !k.air) for (const j of track.jumps || []) { const on = ((k.i - j.i) % track.N + track.N) % track.N; if (on < j.len) groundY = Math.max(groundY, on / j.len * j.h); if (on >= j.len - 1 && on <= j.len + 1 && Math.abs(k.speed) > 3) launch(k, events); }
+  if (k.air) { k.y += k.vy * dt; k.vy -= JUMP.gravity * dt; if (k.y <= groundY && k.vy < 0) { k.y = groundY; k.vy = 0; k.air = false; k.speed *= 0.97; events?.push({ type: "land", k, trick: k.trick }); if (k.trick) { k.boost = Math.max(k.boost, JUMP.trickBoost); events?.push({ type: "boost", k, from: "trick", t: JUMP.trickBoost }); } k.trick = false; } }
+  else k.y = groundY;
   k.alongF = clamp(along(track, k.p, k.i), -0.5, 0.5);
-  // sectors in order; a lap when the first sector follows the last
+  // sectors in order; a lap when the first sector follows the last — a shortcut may skip sectors, never the line
   const sec = Math.floor(k.i / track.sector);
+  if ((k.cut >= 0 || k.cutGrace > 0) && sec !== k.cpNext && !k.finished) { let c = k.cpNext, n = 0; const passed = []; while (c !== sec && c !== 0 && n < 5) { passed.push(c); c = (c + 1) % track.SECTORS; n++; } if (c === sec && n > 0) { for (const s of passed) if (s !== 0 && k.lapStart > 0) k.splits.push(now - k.lapStart); k.cpNext = sec; } }
   if (sec === k.cpNext && !k.finished) { k.cpNext = (sec + 1) % track.SECTORS; if (sec === 0 && k.lap === 0 && k.lapStart === 0) k.lapStart = now; else if (sec === 0) { const lt = now - k.lapStart; k.lapTimes.push(lt); if (!k.bestLap || lt < k.bestLap) k.bestLap = lt; k.lap++; const splits = k.splits; k.splits = []; k.lapStart = now; events?.push({ type: "lap", k, lap: k.lap, time: lt, splits }); if (k.lap >= track.laps) { k.finished = now; k.total = now - k.raceStart; events?.push({ type: "finish", k }); } } else if (k.lapStart > 0) { const st = now - k.lapStart; k.splits.push(st); events?.push({ type: "sector", k, sec, t: st }); } }
   k.sector = sec;
 }
+
+function launch(k, events) { k.air = true; k.vy = Math.max(4, Math.abs(k.speed) * JUMP.kick); k.trick = false; k.drift = 0; k.driftT = 0; k.driftTier = 0; events?.push({ type: "jump", k }); }
 
 /* ---------------------------------------------------------------- items */
 /** What a box gives, by place: the leader gets what slows them little; the back gets what catches up. */
@@ -205,9 +250,13 @@ function spinOut(k, now, events, why, by) {
 export function botInput(race, k, dt, rand) {
   const t = race.track, N = t.N;
   k.laneT -= dt; if (k.laneT <= 0) { k.laneT = 3 + rand() * 4; k.lane = (rand() - 0.5) * (t.width - 5); }
-  const look = Math.round(6 + Math.abs(k.speed) * 0.55), ti = (k.i + look) % N, q = t.pts[ti];
+  const look = Math.round(6 + Math.abs(k.speed) * 0.55), ti = (k.i + look) % N; let q = null, onCut = false;
+  if (k.cut >= 0) { const c = t.cuts[k.cut]; const ci = k.ci + look; q = ci < c.N - 1 ? c.pts[ci] : t.pts[(c.toI + (ci - c.N + 1)) % N]; onCut = ci < c.N - 1; }
+  else { for (const c of t.cuts || []) { const ahead = ((c.fromI - k.i) % N + N) % N; if (ahead < 30 && k.cutSeen !== k.lap * 10 + c.idx) { k.cutSeen = k.lap * 10 + c.idx; const odds = c.gap ? (k.boost > 0.6 ? 0.6 : 0) : c.bot; k.wantCut = rand() < odds ? c.idx : -1; } }
+    if (k.wantCut >= 0) { const c = t.cuts[k.wantCut]; const ahead = ((c.fromI - k.i) % N + N) % N; if (ahead < 30) { q = c.pts[Math.min(c.N - 1, Math.max(0, look - ahead + 2))]; onCut = true; } else if (ahead > N / 2) k.wantCut = -1; } }
+  if (!q) q = t.pts[ti];
   // dodge a banana in the lane ahead
-  let lane = k.lane; for (const b of race.puddles) { const bi = nearest(t, b, k.i); const ahead = ((bi - k.i) % N + N) % N; if (ahead < 25) { const boff = lateral(t, b, bi); if (Math.abs(boff - lane) < 2.2) lane = boff + (boff > 0 ? -3 : 3); } }
+  let lane = onCut ? clamp(k.lane, -2, 2) : k.lane; for (const b of race.puddles) { const bi = nearest(t, b, k.i); const ahead = ((bi - k.i) % N + N) % N; if (ahead < 25) { const boff = lateral(t, b, bi); if (Math.abs(boff - lane) < 2.2) lane = boff + (boff > 0 ? -3 : 3); } }
   const tx = q.x + q.nx * lane, tz = q.z + q.nz * lane;
   const want = Math.atan2(tx - k.p.x, tz - k.p.z), diff = wrapAngle(want - k.yaw);
   let steer = clamp(diff * 2.2, -1, 1); const sharp = Math.abs(diff);
@@ -215,7 +264,7 @@ export function botInput(race, k, dt, rand) {
   // a bot commits to a drift: once in, it holds for a tier or so (or while the corner still needs it) and lets go once the nose has come round
   const drift = k.drift ? (diff * k.drift > -0.25 && (k.driftT < (k.botHold || 0) || sharp > 0.15)) : (sharp > 0.32 && k.speed > 11 && !k.grass);
   if (drift && !k.drift) k.botHold = 0.9 + rand() * 1.5;
-  const inp = { accel: true, brake: sharp > 1.25 && k.speed > 14, steer, drift, use: false };
+  const inp = { accel: true, brake: sharp > 1.25 && k.speed > 14, steer, drift: drift || k.air, use: false };   // in the air, hold it: a trick
   if (k.item) { const me = progressOf(t, k); let aheadClose = false, behindClose = false; for (const o of race.karts) { if (o === k) continue; const d = progressOf(t, o) - me; if (d > 0 && d < 30) aheadClose = true; if (d < 0 && d > -14) behindClose = true; }
     if (k.item === "drill") inp.use = sharp < 0.25; else if (k.item === "hail") inp.use = aheadClose || rand() < 0.002; else if (k.item === "slap") inp.use = (aheadClose && sharp < 0.3) || rand() < 0.002; else if (k.item === "flag") inp.use = k.place > 1 || rand() < 0.01; else if (k.item === "oline") inp.use = behindClose || rand() < 0.003;
     else if (k.item === "pick6" || k.item === "buzzer" || k.item === "homer" || k.item === "nutmeg") inp.use = aheadClose || rand() < 0.002; else if (k.item === "trade") inp.use = k.place > 2 || rand() < 0.01; else if (k.item === "press") inp.use = k.place > 3 || rand() < 0.005;
