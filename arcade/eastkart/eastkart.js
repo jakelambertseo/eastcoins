@@ -47,7 +47,12 @@ const M = (c, r = 0.75, m = 0.05) => new THREE.MeshStandardMaterial({ color: c, 
 /* REAL TEXTURES, TO TEST (2026-10-12, the owner: "find some free ones … and add them in to test"). CC0 photos from Poly Haven
    (asphalt_02, aerial_grass_rock, concrete_floor_worn_001, asphalt_pit_lane), shrunk to 256 px tiles in tex/. A material starts on
    the drawn texture and swaps to the file when it arrives, so a missing file costs nothing; `?tex=0` keeps the drawn ones to compare. */
-const TEX_V = 1, USE_FILES = new URLSearchParams(location.search).get("tex") !== "0", loader = new THREE.TextureLoader();
+const TEX_V = 2, USE_FILES = new URLSearchParams(location.search).get("tex") !== "0", loader = new THREE.TextureLoader();
+/* (2026-10-12) the owner's own generated set: road, grass, concrete, pit lane, kerb, the ? box, three containers and a tower wall.
+   `texNow` hands back a texture at once (three fills it in when the file lands) for materials that are born with it. */
+function texNow(name, repeat = [1, 1]) { const t = loader.load(`tex/${name}.webp?v=${TEX_V}`); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); return t; }
+/** A box whose faces repeat a texture every `tile` metres rather than stretching it once across the face. */
+function tiledBox(w, h, d, tile) { const g = new THREE.BoxGeometry(w, h, d); const uv = g.attributes.uv, sizes = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]]; for (let f = 0; f < 6; f++) { const [su, sv] = sizes[f]; for (let k = 0; k < 4; k++) { const i = f * 4 + k; uv.setXY(i, uv.getX(i) * su / tile, uv.getY(i) * sv / tile); } } return g; }
 function fileTex(mat, name, repeat) { if (!USE_FILES) return; loader.load(`tex/${name}.webp?v=${TEX_V}`, (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeat[0], repeat[1]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); mat.map = t; mat.needsUpdate = true; }); }
 let trackGroup = null, itemMeshes = [], ghostMesh = null;
 function buildTrackScene(track) {
@@ -63,7 +68,7 @@ function buildTrackScene(track) {
   const ribbon = (offA, offB, mat, uvScale) => { const pos = [], uv = [], idx = []; for (let i = 0; i <= N; i++) { const q = track.pts[i % N]; pos.push(q.x + q.nx * offA, 0, q.z + q.nz * offA, q.x + q.nx * offB, 0, q.z + q.nz * offB); uv.push(i / uvScale, 0, i / uvScale, 1); if (i < N) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } } const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return new THREE.Mesh(g, mat); };
   const roadMat = new THREE.MeshStandardMaterial({ map: TEX.asphalt, roughness: 0.95, side: THREE.DoubleSide }); fileTex(roadMat, "road", [1, 1]); const road = ribbon(half, -half, roadMat, 6); /* the ribbon's winding depends on which way the loop runs, so both sides draw */ road.position.y = 0.0; trackGroup.add(road);
   TEX.asphalt.repeat.set(1, 1);
-  const kerbMat = new THREE.MeshStandardMaterial({ map: TEX.kerb, roughness: 0.8, side: THREE.DoubleSide }); const kL = ribbon(half + 1.1, half, kerbMat, 3), kR = ribbon(-half, -half - 1.1, kerbMat, 3); kL.position.y = kR.position.y = 0.01; trackGroup.add(kL, kR);
+  const kerbMat = new THREE.MeshStandardMaterial({ map: TEX.kerb, roughness: 0.8, side: THREE.DoubleSide }); fileTex(kerbMat, "kerb", [1, 1]); const kL = ribbon(half + 1.1, half, kerbMat, 4), kR = ribbon(-half, -half - 1.1, kerbMat, 4); kL.position.y = kR.position.y = 0.01; trackGroup.add(kL, kR);
   const q0 = track.pts[0]; const start = new THREE.Mesh(new THREE.BoxGeometry(track.width, 0.05, 1.6), M(0xf4f4f4, 0.6)); start.position.set(q0.x, 0.02, q0.z); start.rotation.y = Math.atan2(q0.tx, q0.tz); trackGroup.add(start);
   const chk = new THREE.Mesh(new THREE.BoxGeometry(track.width, 0.051, 0.8), M(0x111111, 0.6)); chk.position.set(q0.x, 0.02, q0.z); chk.rotation.y = start.rotation.y; trackGroup.add(chk);
   // a banner over the line
@@ -73,14 +78,17 @@ function buildTrackScene(track) {
   const pal = track.key === "lot" ? [0xc96a4b, 0x3b7fbf, 0x2f9d6a, 0xd8c89a] : track.key === "docks" ? [0xb8412f, 0x3261a8, 0x7a8a99, 0xd9a441] : [0x5e4b8b, 0x8a6bb5, 0x3b3550, 0xc1b7e0];
   let seed = 11; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   const blocks = new THREE.Group();
-  for (let i = 0; i < N; i += 14) { for (const s of [-1, 1]) { if (rnd() < 0.45) continue; const q = track.pts[i], d = half + KART.WALL + 4 + rnd() * 26, w = 4 + rnd() * 9, h = 3 + rnd() * 12, x = q.x + q.nx * s * d, z = q.z + q.nz * s * d;
+  const containerMats = USE_FILES && track.key === "docks" ? ["container_blue", "container_red", "container_yellow"].map((n) => new THREE.MeshStandardMaterial({ map: texNow(n), roughness: 0.7 })) : null;
+  const towerMat = USE_FILES && track.key === "roofs" ? new THREE.MeshStandardMaterial({ map: texNow("tower"), roughness: 0.85 }) : null;
+  for (let i = 0; i < N; i += 14) { for (const s of [-1, 1]) { if (rnd() < 0.45) continue; const q = track.pts[i], d = half + KART.WALL + 4 + rnd() * 26, w = containerMats ? 6 : 4 + rnd() * 9, h = containerMats ? 2.6 * (1 + Math.floor(rnd() * 3)) : 3 + rnd() * 12, x = q.x + q.nx * s * d, z = q.z + q.nz * s * d;
     // keep blocks off the road entirely (the loop folds back on itself)
     let clear = true; for (let j = 0; j < N; j += 6) { const p = track.pts[j]; if ((p.x - x) ** 2 + (p.z - z) ** 2 < (half + w / 2 + 3) ** 2) { clear = false; break; } } if (!clear) continue;
-    const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), M(pal[Math.floor(rnd() * pal.length)], 0.85)); b.position.set(x, h / 2, z); b.rotation.y = rnd() * Math.PI; blocks.add(b); } }
+    if (containerMats) { for (let lvl = 0; lvl < h / 2.6; lvl++) { const c = new THREE.Mesh(tiledBox(6, 2.6, 6, 6), containerMats[Math.floor(rnd() * 3)]); c.position.set(x, 1.3 + lvl * 2.6, z); c.rotation.y = Math.round(rnd() * 2) * Math.PI / 2 + (rnd() - 0.5) * 0.2; blocks.add(c); } continue; }
+    const b = new THREE.Mesh(towerMat ? tiledBox(w, h, w, 9) : new THREE.BoxGeometry(w, h, w), towerMat || M(pal[Math.floor(rnd() * pal.length)], 0.85)); b.position.set(x, h / 2, z); b.rotation.y = towerMat ? Math.round(rnd() * 4) * Math.PI / 2 : rnd() * Math.PI; blocks.add(b); } }
   trackGroup.add(blocks);
   for (let i = 0; i < N; i += 9) { for (const s of [-1, 1]) { if (rnd() < 0.7) continue; const q = track.pts[i], d = half + 2.2 + rnd() * 3; const c = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.1, 8), M(0xff7a1c, 0.7)); c.position.set(q.x + q.nx * s * d, 0.55, q.z + q.nz * s * d); trackGroup.add(c); } }
   // the item boxes
-  for (const it of track.items) { const q = track.pts[it.i]; const m = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.3, 1.3), new THREE.MeshStandardMaterial({ map: TEX.box, emissive: 0x664400, roughness: 0.4 })); m.position.set(q.x + q.nx * it.off, 1.1, q.z + q.nz * it.off); trackGroup.add(m); itemMeshes.push({ m, it }); }
+  for (const it of track.items) { const q = track.pts[it.i]; const m = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.3, 1.3), new THREE.MeshStandardMaterial({ map: USE_FILES ? texNow("box") : TEX.box, emissive: 0x4a3300, roughness: 0.4 })); m.position.set(q.x + q.nx * it.off, 1.1, q.z + q.nz * it.off); trackGroup.add(m); itemMeshes.push({ m, it }); }
   scene.add(trackGroup);
 }
 function kartMesh(k) {
