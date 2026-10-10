@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store", "eastscape", "lounge", "climb", "blockshot"];   /* (2026-09-28) eastscape: the game in the shell, a test; (2026-10-07) lounge, climb: the arcade framed in the shell */
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store", "eastscape", "lounge", "climb", "cs67"];   /* (2026-10-11) cs67: the shooter, named CS67 (was blockshot) */   /* (2026-09-28) eastscape: the game in the shell, a test; (2026-10-07) lounge, climb: the arcade framed in the shell */
 
   /* ------------------------------------------------------ loading views
 
@@ -79,7 +79,7 @@
     wrapped: [...LOGOS, "v3-wrapped.js"],
     highlights: ["v3-highlights.js"],
     eastscape: ["v3-eastscape.js"],   /* (2026-09-28) the game framed inside the site, a test, not linked */
-    lounge: ["v3-arcade.js"], climb: ["v3-arcade.js"], blockshot: ["v3-arcade.js"],   /* (2026-10-07) the arcade framed inside the site, a test, not linked */
+    lounge: ["v3-arcade.js"], climb: ["v3-arcade.js"], cs67: ["v3-arcade.js"],   /* (2026-10-07) the arcade framed inside the site, a test, not linked */
     // The store's preview is the real profile card, so it loads the profile script too.
     store: [...LOGOS, "v3-profile.js", "v3-store.js"],
     users: ["eastcoins-music-config.js", "v3-users.js"],
@@ -228,6 +228,9 @@
 
     let changed = false;
 
+    // /?view=blockshot — the shooter's name until 2026-10-11; it is CS67 now
+    if (view === "blockshot") { params.set("view", "cs67"); changed = true; }
+
     // /?watch=<url> — a pasted embed
     const watch = params.get("watch");
     if (watch) {
@@ -292,7 +295,7 @@
     // /movie/inception and /tv/lost-s1-ep1 are the Movies & TV view.
     if (/^\/(movie|tv)\/./i.test(location.pathname)) return "screen";
     // /lounge and /climb: the arcade's short addresses (functions/lounge.js, climb.js)
-    const short = location.pathname.match(/^\/(lounge|climb|blockshot)\/?$/i);
+    const short = location.pathname.match(/^\/(lounge|climb|cs67)\/?$/i);
     if (short) return short[1].toLowerCase();
     const view = new URL(location.href).searchParams.get("view");
     return ROUTES.includes(view) ? view : "events";
@@ -306,7 +309,10 @@
     if (state.route === name) render();
   }
 
-  const SHORT_URL = new Set(["lounge", "climb", "blockshot"]);   // routes with their own short address
+  const SHORT_URL = new Set(["lounge", "climb", "cs67"]);   // routes with their own short address
+  /* (2026-10-11) CS67 keeps the Twitch rail: the owner wants the shooter "integrated into the site" with the nav and the chat, so it is
+     framed beside the rail like any other view and the chat mounts there as usual; only the lounge rooms close it. */
+  const RAIL_CLOSED = new Set(["lounge", "climb"]);
   function go(name, { push = true } = {}) {
     if (!ROUTES.includes(name)) name = "events";
     state.route = name;
@@ -324,7 +330,7 @@
     wrapped: "EastCoin Wrapped",
     highlights: "Highlights — EastCoin",
     eastscape: "EastScape — EastCoin",
-    lounge: "The Lounge — EastCoin", climb: "The Climb — EastCoin", blockshot: "Blockshot — EastCoin",
+    lounge: "The Lounge — EastCoin", climb: "The Climb — EastCoin", cs67: "CS67 — EastCoin",
     store: "Store — EastCoin",
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",
@@ -437,9 +443,6 @@
      running. Now the shell knows the arcade routes itself: html.arcade-route closes the rail on the first paint (index.html sets it
      inline before anything draws), Twitch is not mounted at all while an arcade route is up, and it mounts when you leave. The chat
      preference is untouched; nothing already mounted is reloaded. */
-  /* (2026-10-11) Blockshot keeps the rail: the owner wants to feel the shooter "integrated into the site" with the nav and the chat,
-     so it is framed beside the rail like any other view; only the lounge rooms close it. */
-  const RAIL_CLOSED = new Set(["lounge", "climb"]);
   let wasArcade = false;
   function arcadeRail() {
     const arcade = RAIL_CLOSED.has(state.route);
@@ -670,7 +673,7 @@
       /* private mode — the preference simply doesn't persist */
     }
     chatHiddenSince = visible ? 0 : Date.now();
-    if (visible && !SHORT_URL.has(state.route)) mountChat();   // (not in the arcade: start-up calls this before anything is idle; see arcadeRail)
+    if (visible && !RAIL_CLOSED.has(state.route)) mountChat();   // (not in the lounge rooms: start-up calls this before anything is idle; see arcadeRail)
   }
 
   // Chat is core to this site, not an extra, so it should not wait for a
@@ -679,7 +682,7 @@
   // keeps the original performance win without the page sitting there
   // half-built until someone happens to touch it.
   function armChatLoad() {
-    if (!chatVisible() || SHORT_URL.has(routeFromUrl())) return;   // (in the arcade the rail is closed: it mounts on leaving, see arcadeRail)
+    if (!chatVisible() || RAIL_CLOSED.has(routeFromUrl())) return;   // (in the lounge rooms the rail is closed: it mounts on leaving, see arcadeRail)
     const start = () => mountChat();
     if ("requestIdleCallback" in window) {
       window.requestIdleCallback(start, { timeout: 1500 });
