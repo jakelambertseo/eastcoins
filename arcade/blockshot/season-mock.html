@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>CS67 Season One — mockup</title>
+<!-- A MOCKUP (2026-10-12, the owner: "would it be possible to create a Season, and/or some way for users to grind levels in solo, such
+     as a campaign, a story, aim training, etc?"). Nothing here touches an account: the season level, the stars and the drill scores live
+     in this page and reset on reload. It exists to settle the shape — one season pass fed by online play AND solo play, a campaign of
+     missions built from the modes that already exist, and an aim lab — before anything is wired to the rules, the room server or D1. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap">
+<style>
+:root{--bg:#0e1118;--panel:#171b25;--panel2:#11151d;--line:#2a3040;--ink:#f2f4f8;--dim:#8a93a6;--you:#ffd84a;--info:#6ad0ff;--danger:#ff5a5a;--good:#5df28a;--font:"Rajdhani",system-ui,sans-serif;
+  --c-common:#9aa3b5;--c-uncommon:#5ac8fa;--c-rare:#b06cff;--c-legend:#ff5a8a;--c-knife:#ffd84a}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:600 15px/1.45 var(--font)}
+body{background:radial-gradient(1100px 600px at 8% -10%,#15223a,transparent),radial-gradient(900px 600px at 100% 30%,#2a1024,transparent),var(--bg)}
+main{max-width:1180px;margin:0 auto;padding:22px 18px 70px}
+h1{margin:0;font-size:38px;letter-spacing:3px;text-transform:uppercase}h1 small{display:block;font-size:12px;letter-spacing:3px;color:var(--info)}
+h2{margin:30px 0 10px;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--info)}
+h3{margin:0;font-size:18px;letter-spacing:2px;text-transform:uppercase}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.note{color:var(--dim);font-size:13.5px;max-width:820px}.note b{color:#cfd5de}
+.tabs{display:flex;gap:6px;margin:22px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{padding:12px 18px;border:0;background:transparent;color:var(--dim);font:800 15px var(--font);letter-spacing:2px;text-transform:uppercase;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--you);border-bottom-color:var(--you)}
+.pane{display:none;padding-top:18px}.pane.on{display:block}
+.go{padding:10px 22px;border:0;background:var(--you);color:#1a1300;font:800 15px var(--font);letter-spacing:2px;text-transform:uppercase;cursor:pointer;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.go.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);clip-path:none}
+.go.sm{padding:7px 14px;font-size:13px}.go:disabled{opacity:.4;cursor:default}
+/* season */
+.season{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;padding:18px 20px;background:linear-gradient(135deg,#1c1440,#171b25 55%,#2a1024);border:1px solid var(--line);border-top:3px solid var(--you)}
+.season .name{font-size:30px;letter-spacing:3px;text-transform:uppercase;line-height:1}.season .name small{display:block;font-size:12px;letter-spacing:3px;color:var(--info)}
+.season .ends{text-align:right;color:var(--dim);font-size:13px;letter-spacing:1px;text-transform:uppercase}.season .ends b{display:block;font-size:26px;color:var(--ink);letter-spacing:1px}
+.xp{margin-top:12px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}.xp .lv{font-size:34px;color:var(--you);line-height:1}.xp .lv small{display:block;font-size:11px;letter-spacing:2px;color:var(--dim)}
+.bar{height:12px;background:rgba(255,255,255,.08);border:1px solid var(--line);position:relative}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--you),#ff9f1c);transition:width .5s}
+.xp small{color:var(--dim);letter-spacing:1px}
+.sources{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:12px}
+.src{padding:10px 12px;background:var(--panel2);border:1px solid var(--line)}.src b{display:block;font-size:20px;color:var(--you)}.src span{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
+.track{display:flex;gap:8px;overflow:auto;padding:14px 0 8px;scroll-snap-type:x proximity}
+.tier{flex:0 0 auto;width:132px;padding:10px;background:var(--panel2);border:1px solid var(--line);border-bottom:4px solid var(--c);--c:var(--c-common);scroll-snap-align:start;position:relative}
+.tier.got{outline:2px solid var(--good);outline-offset:-2px}.tier.got::after{content:"✓";position:absolute;right:8px;top:6px;color:var(--good);font-weight:800}
+.tier.next{outline:2px solid var(--you);outline-offset:-2px}
+.tier .n{font-size:11px;letter-spacing:2px;color:var(--dim)}.tier .ic{font-size:30px;line-height:1.2;margin:4px 0}.tier b{display:block;font-size:14px;line-height:1.15}.tier small{color:var(--c);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.weekly{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.ch{padding:11px 14px;background:var(--panel2);border:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}.ch b{font-size:13px;letter-spacing:1px;text-transform:uppercase}.ch small{color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}.ch i{grid-column:1/-1;display:block;height:3px;background:rgba(255,255,255,.1)}.ch i s{display:block;height:100%;background:var(--info)}
+.ch.done{border-color:rgba(93,242,138,.5)}.ch.done small{color:var(--good)}.ch.done i s{background:var(--good)}
+/* campaign */
+.story{padding:16px 18px;background:linear-gradient(90deg,rgba(255,216,74,.08),transparent);border-left:3px solid var(--you);margin-bottom:14px;max-width:900px}.story p{margin:0;color:#cfd5de;line-height:1.55}.story b{color:var(--you)}
+.chapters{display:grid;gap:14px}
+.chapter{padding:14px 16px;background:var(--panel);border:1px solid var(--line)}
+.chapter .head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}.chapter .head small{color:var(--dim);font-size:12px;letter-spacing:1px;text-transform:uppercase}
+.chapter .head .reward{color:var(--you);font-size:12px;letter-spacing:1px;text-transform:uppercase}
+.missions{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.m{padding:11px 12px;background:var(--panel2);border:1px solid var(--line);display:grid;gap:5px}.m.lock{opacity:.45}.m.boss{border-color:rgba(255,90,90,.5)}
+.m b{font-size:15px;letter-spacing:1px;text-transform:uppercase}.m .mode{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--info)}.m.boss .mode{color:var(--danger)}
+.m p{margin:0;color:var(--dim);font-size:13px;line-height:1.4}.m .stars{letter-spacing:3px;color:#5a6070;font-size:16px}.m .stars b{color:var(--you);letter-spacing:3px;font-size:16px}
+.m .foot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:2px}.m .foot small{color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+/* aim lab */
+.drills{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.drill{padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--info);display:grid;gap:8px}
+.drill p{margin:0;color:var(--dim);font-size:13px;line-height:1.4}
+.drill .best{display:flex;gap:14px;align-items:baseline}.drill .best b{font-size:26px;color:var(--ink)}.drill .best small{color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.medals{display:flex;gap:6px;font-size:11px;letter-spacing:1px;text-transform:uppercase}.medals span{padding:3px 8px;border:1px solid var(--line);color:var(--dim)}.medals .b{border-color:#b87333;color:#d7935a}.medals .s{border-color:#c0c0c0;color:#d8d8d8}.medals .g{border-color:var(--you);color:var(--you)}
+.range{position:relative;height:150px;background:#0a0d14;border:1px solid var(--line);overflow:hidden;cursor:crosshair}.range .t{position:absolute;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,#fff 18%,var(--danger) 20%,var(--danger) 55%,#fff 57%,#fff 70%,var(--danger) 72%);transform:translate(-50%,-50%);box-shadow:0 0 12px rgba(255,90,90,.6)}
+.range .hud{position:absolute;left:10px;top:8px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}.range .hud b{color:var(--ink)}
+.lb{display:grid;gap:4px;font-size:13px}.lb div{display:grid;grid-template-columns:22px 1fr auto;gap:8px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line)}.lb div span:first-child{color:var(--dim)}.lb div.me{border-color:rgba(255,216,74,.5)}
+/* feasibility */
+.feas{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.feas div{padding:14px 16px;background:var(--panel);border:1px solid var(--line)}.feas h3{font-size:14px;color:var(--info);margin-bottom:6px}.feas ul{margin:0;padding-left:18px;color:#cfd5de;font-size:13.5px;line-height:1.5}.feas li b{color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);padding:12px 22px;background:var(--you);color:#1a1300;font-weight:800;letter-spacing:2px;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);opacity:0;transition:opacity .2s;pointer-events:none}.toast.on{opacity:1}
+@media (max-width:640px){.season{grid-template-columns:1fr}.season .ends{text-align:left}}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1><small>CS67 · mockup · nothing here is saved</small>Season One</h1>
+    <p class="note" style="margin:0"><b>The idea in one line:</b> one season pass, 50 tiers, free, fed by every way of playing — online rounds, the daily and weekly challenges, a solo campaign of missions, and an aim lab. Solo play levels you up on a quiet night; online play levels you up faster.</p>
+  </div>
+
+  <div class="tabs"><button class="on" data-pane="season">Season pass</button><button data-pane="campaign">Campaign</button><button data-pane="aim">Aim lab</button><button data-pane="feas">What it would take</button></div>
+
+  <!-- ===================== SEASON ===================== -->
+  <section class="pane on" id="season">
+    <div class="season">
+      <div>
+        <div class="name"><small>Season One · Oct 20 → Dec 1</small>First Blood</div>
+        <div class="xp"><div class="lv"><span id="lv">7</span><small>season level</small></div><div><div class="bar"><i id="bar" style="width:46%"></i></div><small id="xpline">1,380 / 3,000 season XP to level 8</small></div><button class="go sm" id="simMatch">Simulate a round</button></div>
+        <div class="sources">
+          <div class="src"><b>+60</b><span>finish an online round</span></div><div class="src"><b>+150</b><span>win one</span></div><div class="src"><b>+5</b><span>per kill (+5 headshot)</span></div>
+          <div class="src"><b>+100</b><span>a daily challenge</span></div><div class="src"><b>+400</b><span>a weekly challenge</span></div><div class="src"><b>+40 / star</b><span>campaign missions</span></div><div class="src"><b>+25 / medal</b><span>aim lab drills</span></div>
+        </div>
+      </div>
+      <div class="ends">Season ends in<b>41 days</b>every tier is free · no catch-up needed: a solo night pays ~1 tier</div>
+    </div>
+
+    <h2>The track · 50 tiers · click one you have reached to claim it</h2>
+    <div class="track" id="track"></div>
+    <p class="note">Rewards are the Armory's language: Brass, finishes, titles, name effects and bean skins. The season knife at tier 50 and the season bean at tier 25 are the only two things that never come from a case, so the pass is the only way to own them. A tier is roughly one good online session or one solo evening; the whole track is about six weeks of regular play, which is the season.</p>
+
+    <h2>This week's challenges · reset Monday 9 AM Central</h2>
+    <div class="weekly">
+      <div class="ch"><b>Win 5 rounds</b><small>3 / 5 · 400 XP</small><i><s style="width:60%"></s></i></div>
+      <div class="ch done"><b>20 headshots</b><small>✓ 400 XP</small><i><s style="width:100%"></s></i></div>
+      <div class="ch"><b>Finish 3 campaign missions</b><small>1 / 3 · 400 XP</small><i><s style="width:33%"></s></i></div>
+      <div class="ch"><b>Gold medal in any drill</b><small>0 / 1 · 400 XP</small><i><s style="width:0"></s></i></div>
+      <div class="ch"><b>Plant or defuse 6 bombs</b><small>2 / 6 · 400 XP</small><i><s style="width:33%"></s></i></div>
+      <div class="ch"><b>Beat your Hop Line ghost</b><small>0 / 1 · 400 XP</small><i><s style="width:0"></s></i></div>
+    </div>
+  </section>
+
+  <!-- ===================== CAMPAIGN ===================== -->
+  <section class="pane" id="campaign">
+    <div class="story"><p><b>The Lot Files.</b> While everyone was watching the game, the bots took the maps. Bot Dude #1 runs the Lot, Tin Man has the Docks, Clanker holds the Rooftops and Mr Roboto's squad has dug into the Compound. Sixteen missions, four maps, four bosses. Every mission is a mode that already exists with one twist on it; every star is season XP; every chapter ends with a title nobody else can buy.</p></div>
+    <p class="note"><b>Stars:</b> one for finishing, two for beating the par time, three for no deaths. <b>Pace:</b> the first three missions of a chapter unlock together; the boss opens when you hold six stars in the chapter. Replays keep your best.</p>
+    <div class="chapters" id="chapters"></div>
+  </section>
+
+  <!-- ===================== AIM LAB ===================== -->
+  <section class="pane" id="aim">
+    <p class="note"><b>Five drills, sixty seconds each,</b> played in the game's own engine on an empty range: same sensitivity, same guns, same crosshair as a match. Bronze, silver and gold per drill pay season XP once each; a daily warm-up (any three drills) pays 50 XP. Every drill has its own all-time and weekly board.</p>
+    <h2>Try one · click the targets</h2>
+    <div class="range" id="range"><div class="hud">Gridshot · <b id="rangeScore">0</b> hits · <b id="rangeT">60</b> s · best <b id="rangeBest">—</b></div></div>
+    <h2>The drills</h2>
+    <div class="drills">
+      <div class="drill"><h3>Gridshot</h3><p>Targets pop one at a time on a 3×3 grid. Hit as many as you can in sixty seconds; a miss costs nothing but time.</p><div class="best"><b>74</b><small>your best · #12 this week</small></div><div class="medals"><span class="b">bronze 50</span><span class="s">silver 70</span><span class="g">gold 90</span></div></div>
+      <div class="drill"><h3>Flick</h3><p>One target at a time, far apart, small. Pure flick aim: the distance and the size scale up every ten hits.</p><div class="best"><b>41</b><small>your best · #30 this week</small></div><div class="medals"><span class="b">bronze 30</span><span class="s">silver 45</span><span class="g">gold 60</span></div></div>
+      <div class="drill"><h3>Tracking</h3><p>A bean strafes and jumps along the range. Score is time on target with the rifle, out of sixty seconds.</p><div class="best"><b>31.4 s</b><small>your best · #8 this week</small></div><div class="medals"><span class="b">bronze 25 s</span><span class="s">silver 35 s</span><span class="g">gold 45 s</span></div></div>
+      <div class="drill"><h3>Spray control</h3><p>Hold the rifle's twenty-eight rounds inside a circle on the wall; the circle shrinks every magazine. Scored by rounds inside.</p><div class="best"><b>—</b><small>not played yet</small></div><div class="medals"><span class="b">bronze 60%</span><span class="s">silver 75%</span><span class="g">gold 90%</span></div></div>
+      <div class="drill"><h3>Reaction</h3><p>Red light, green light: fire the instant it turns. Ten rounds, scored by your average in milliseconds; a jump start voids the round.</p><div class="best"><b>212 ms</b><small>your best · #19 this week</small></div><div class="medals"><span class="b">bronze 260</span><span class="s">silver 220</span><span class="g">gold 190</span></div></div>
+      <div class="drill"><h3>Warm-up</h3><p>Any three drills in a day. Fifty season XP, once a day, and the drills' weekly boards are where the regulars argue about who has hands.</p><div class="best"><b>2 / 3</b><small>today</small></div><div class="lb"><div class="me"><span>1</span><span>therealb4nksy</span><span>Gridshot 96</span></div><div><span>2</span><span>heartlarva</span><span>Gridshot 91</span></div><div><span>3</span><span>zwades</span><span>Gridshot 88</span></div></div></div>
+    </div>
+  </section>
+
+  <!-- ===================== FEASIBILITY ===================== -->
+  <section class="pane" id="feas">
+    <div class="feas">
+      <div><h3>Already in the game</h3><ul>
+        <li><b>Bots, maps, modes, parkour, XP, Brass, levels, skins</b> and the daily challenges — every mission above is a practice round with a rule twist, so the engine needs no new systems to play them.</li>
+        <li><b>Practice runs in the browser</b> with the real rules file; a mission is practice mode plus a modifier (bot count, bot skill, allowed guns, a timer, a zone, a boss bean with more health).</li>
+        <li><b>The season pass is a ledger</b>: one table of season XP per Twitch account, one of claimed tiers. The site already pays Brass idempotently; the same shape pays tiers.</li>
+      </ul></div>
+      <div><h3>What has to be built</h3><ul>
+        <li><b>A mission runner</b> in the page: load a mission's rules, run it, judge stars, report the result. ~2–3 days with the sixteen missions written.</li>
+        <li><b>The aim range</b>: an empty map, targets, five drill scripts, a board endpoint. ~2 days.</li>
+        <li><b>The pass</b>: season XP sources wired into the round report, the challenges and the solo reports; the track page; claiming. ~1–2 days.</li>
+        <li><b>A season's rewards</b>: a knife, a bean and a handful of finishes and titles drawn for it.</li>
+      </ul></div>
+      <div><h3>The honest limit</h3><ul>
+        <li><b>Solo scores are reported by the page</b>, not judged by the room server the way online rounds are. Someone who wants to can forge a gold medal.</li>
+        <li>So solo play should pay <b>season XP and titles</b>, never Brass directly, and the pass should cap how much of a tier solo play can fill in a day — then a forged score buys a cosmetic a day early and nothing else.</li>
+        <li>Online play stays the only source of Brass and the fast lane for the pass, which keeps the rooms full.</li>
+      </ul></div>
+      <div><h3>Order, if you want it</h3><ul>
+        <li><b>1. Aim lab</b> — smallest, standalone, and the boards give the regulars something to fight over at once.</li>
+        <li><b>2. The pass</b> — turns everything already earned into a track with an end date.</li>
+        <li><b>3. Campaign</b> — the biggest piece; chapter one alone (four missions on the Lot) would be a fine first drop.</li>
+      </ul></div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const $ = (id) => document.getElementById(id);
+for (const b of document.querySelectorAll(".tabs button")) b.addEventListener("click", () => { for (const x of document.querySelectorAll(".tabs button")) x.classList.toggle("on", x === b); for (const p of document.querySelectorAll(".pane")) p.classList.toggle("on", p.id === b.dataset.pane); });
+let toastT = 0; function toast(t) { $("toast").textContent = t; $("toast").classList.add("on"); clearTimeout(toastT); toastT = setTimeout(() => $("toast").classList.remove("on"), 1800); }
+
+/* ---- the season track: fifty tiers, a reward each ---- */
+const R = { c: "common", u: "uncommon", r: "rare", l: "legend", k: "knife" };
+const TIERS = [];
+const pool = [["🪙", "150 Brass", "c"], ["🎨", "Rifle finish · Slate", "u"], ["🏷️", "Title · Rookie", "c"], ["🪙", "200 Brass", "c"], ["✨", "Name effect · Shine", "u"], ["🎨", "Pistol finish · Ember", "u"], ["🪙", "250 Brass", "c"], ["🔫", "Shotgun finish · Tide", "r"], ["🏷️", "Title · Dockworker", "u"], ["🪙", "300 Brass", "c"], ["🎨", "Sniper finish · Frost", "r"], ["📦", "Weapon case", "u"]];
+for (let i = 1; i <= 50; i++) { let t; if (i === 50) t = ["🔪", "Season knife · First Blood", "k"]; else if (i === 25) t = ["🫘", "Season bean · Lot Rat", "l"]; else if (i % 10 === 0) t = ["👑", `Title · ${["Marksman", "Dock Boss", "Roof King", "Compound"][i / 10 - 1]}`, "l"]; else t = pool[(i * 7) % pool.length]; TIERS.push({ n: i, ic: t[0], name: t[1], r: t[2] }); }
+let level = 7, xp = 1380, claimed = 6;
+const NEED = 3000;
+function drawTrack() {
+  $("track").innerHTML = TIERS.map((t) => `<div class="tier${t.n <= claimed ? " got" : t.n <= level ? " next" : ""}" data-n="${t.n}" style="--c:var(--c-${t.r})"><div class="n">TIER ${t.n}</div><div class="ic">${t.ic}</div><b>${t.name}</b><small>${t.r === "k" ? "season only" : t.r === "l" ? "legendary" : t.r === "r" ? "rare" : t.r === "u" ? "uncommon" : "common"}</small></div>`).join("");
+  $("lv").textContent = level; $("bar").style.width = `${Math.round((xp / NEED) * 100)}%`; $("xpline").textContent = `${xp.toLocaleString()} / ${NEED.toLocaleString()} season XP to level ${level + 1}`;
+}
+$("track").addEventListener("click", (e) => { const t = e.target.closest(".tier"); if (!t) return; const n = Number(t.dataset.n); if (n > level) return toast(`Reach level ${n} first`); if (n <= claimed) return toast("Already claimed"); claimed = n; drawTrack(); toast(`Claimed · ${TIERS[n - 1].name}`); });
+$("simMatch").addEventListener("click", () => { const k = 4 + Math.floor(Math.random() * 10), hs = Math.floor(k / 3), won = Math.random() < 0.25; const gain = 60 + k * 5 + hs * 5 + (won ? 150 : 0); xp += gain; while (xp >= NEED) { xp -= NEED; level++; } drawTrack(); toast(`Round over · ${k} kills${won ? " · won" : ""} · +${gain} XP`); });
+drawTrack();
+
+/* ---- the campaign ---- */
+const CH = [
+  { name: "Chapter 1 · The Lot", boss: "Bot Dude #1", reward: "Title · Lot Rat", open: true, m: [
+    ["Orientation", "Free-for-all", "Three bots, three minutes. Ten kills. Learn the pads and the slide-hop.", 3],
+    ["Hold the Pad", "King of the hill", "Stand on the centre pad for sixty seconds in total while five bots try to move you.", 2],
+    ["Sidearm Only", "Pistol only", "Ten kills with the pistol. The rifle is locked; the bots keep theirs.", 1],
+    ["Boss · Bot Dude #1", "Boss", "One bot, three hundred health, a shotgun, and the Lot's pads to chase him with.", 0, true]] },
+  { name: "Chapter 2 · The Docks", boss: "Tin Man", reward: "Title · Dockworker", open: true, m: [
+    ["Dockworkers", "Free-for-all", "Fifteen kills against five bots at a higher skill than the room's.", 1],
+    ["Headhunter", "Headshots only", "Eight headshots. Body shots do nothing.", 0],
+    ["One Magazine", "No reload", "One magazine per life. Make twenty-eight rounds count for ten kills.", 0],
+    ["Boss · Tin Man", "Boss", "Tin Man and two guards on the cranes. He only takes headshots.", 0, true]] },
+  { name: "Chapter 3 · The Rooftops", boss: "Clanker", reward: "Title · Roof King", open: false, m: [
+    ["Long Shots", "Sniper only", "Ten kills with the sniper from the tower before the bots reach it.", 0],
+    ["King of the Tower", "Hold", "Hold the penthouse for ninety seconds. Falling off counts as a death.", 0],
+    ["The Ladder", "Gun Game", "Climb the whole Gun Game ladder against four bots inside four minutes.", 0],
+    ["Boss · Clanker", "Boss", "Clanker jumps the gaps faster than you. Pads only; no stairs.", 0, true]] },
+  { name: "Chapter 4 · The Compound", boss: "Mr Roboto", reward: "Title · Compound Clear · season bean skin", open: false, m: [
+    ["Plant It", "Bomb · attack", "Plant and keep it alive three times against three defenders.", 0],
+    ["Hold It", "Bomb · defend", "Defuse three plants. You and two bots against three.", 0],
+    ["Last One Standing", "Survival", "No respawns. Six bots, one of you, the yard wall at your back.", 0],
+    ["Boss · Mr Roboto", "Boss", "Mr Roboto and his squad in the centre building. Clear it room by room.", 0, true]] }
+];
+function drawChapters() {
+  $("chapters").innerHTML = CH.map((c, ci) => { const stars = c.m.reduce((s, m) => s + m[3], 0); return `<div class="chapter"><div class="head"><div><h3>${c.name}</h3><small>${stars} / 12 stars · boss opens at 6 · ${c.open ? "open" : "opens when the chapter before is cleared"}</small></div><span class="reward">clear: ${c.reward}</span></div><div class="missions">${c.m.map((m, mi) => { const boss = m[4], locked = !c.open || (boss && stars < 6); return `<div class="m${boss ? " boss" : ""}${locked ? " lock" : ""}" data-c="${ci}" data-m="${mi}"><span class="mode">${m[1]}</span><b>${m[0]}</b><p>${m[2]}</p><div class="foot"><span class="stars"><b>${"★".repeat(m[3])}</b>${"★".repeat(3 - m[3])}</span>${locked ? `<small>locked</small>` : `<button class="go sm ghost" data-play="1">${m[3] ? "Replay" : "Play"}</button>`}</div></div>`; }).join("")}</div></div>`; }).join("");
+}
+$("chapters").addEventListener("click", (e) => { const b = e.target.closest("[data-play]"); if (!b) return; const m = b.closest(".m"), c = CH[m.dataset.c], mm = c.m[m.dataset.m]; const got = Math.min(3, mm[3] + 1 + (Math.random() < 0.3 ? 1 : 0)); const gain = (got - mm[3]) * 40; mm[3] = got; if (c.m.every((x) => x[3] > 0) && CH[CH.indexOf(c) + 1]) CH[CH.indexOf(c) + 1].open = true; xp += gain; while (xp >= NEED) { xp -= NEED; level++; } drawTrack(); drawChapters(); toast(`${mm[0]} · ${got} star${got === 1 ? "" : "s"}${gain ? ` · +${gain} XP` : ""}`); });
+drawChapters();
+
+/* ---- the range: a sixty-second gridshot you can click ---- */
+const range = $("range"); let rs = 0, rt = 60, rtimer = 0, rbest = 0, target = null;
+function placeTarget() { if (target) target.remove(); target = document.createElement("div"); target.className = "t"; const r = range.getBoundingClientRect(); target.style.left = `${20 + Math.random() * (r.width - 40)}px`; target.style.top = `${30 + Math.random() * (r.height - 50)}px`; range.append(target); }
+range.addEventListener("click", (e) => { if (!rtimer) { rs = 0; rt = 60; $("rangeScore").textContent = 0; $("rangeT").textContent = 60; placeTarget(); rtimer = setInterval(() => { rt--; $("rangeT").textContent = rt; if (rt <= 0) { clearInterval(rtimer); rtimer = 0; target?.remove(); target = null; rbest = Math.max(rbest, rs); $("rangeBest").textContent = rbest; const medal = rs >= 90 ? "gold" : rs >= 70 ? "silver" : rs >= 50 ? "bronze" : null; if (medal) { xp += 25; drawTrack(); } toast(`Gridshot · ${rs} hits${medal ? ` · ${medal} · +25 XP` : ""}`); } }, 1000); return; } if (e.target === target) { rs++; $("rangeScore").textContent = rs; placeTarget(); } });
+</script>
+</body>
+</html>
