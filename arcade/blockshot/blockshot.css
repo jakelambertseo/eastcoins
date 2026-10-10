@@ -102,7 +102,7 @@ h2{margin:0 0 6px;font:800 26px/1.1 var(--font);text-transform:uppercase;letter-
 .res-top{margin:4px 0 10px;padding:10px 12px;background:rgba(255,216,74,.06);border:1px solid rgba(255,216,74,.25)}
 #reloadBar{position:absolute;left:50%;top:66%;transform:translateX(-50%);width:180px;pointer-events:none;text-align:center}#reloadBar[hidden]{display:none}#reloadBar span{display:block;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--ink);text-shadow:0 1px 2px #000;margin-bottom:5px}#reloadBar .rb{height:5px;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}#reloadBar .rb i{display:block;height:100%;width:0;background:var(--you)}
 #hint{position:absolute;left:50%;top:calc(50% + 86px);transform:translateX(-50%);padding:5px 12px;background:rgba(0,0,0,.55);color:var(--ink);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;pointer-events:none;white-space:nowrap}#hint[hidden]{display:none}
-.sw{display:inline-block;width:16px;height:16px;border:1px solid rgba(255,255,255,.3);vertical-align:middle}
+.xsw{display:inline-block;width:16px;height:16px;border:1px solid rgba(255,255,255,.3);vertical-align:middle}
 .res-foot .next{font-size:18px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--you)}
 #scope{position:absolute;inset:0;pointer-events:none;display:none;background:radial-gradient(circle at center,transparent 23%,rgba(0,0,0,.94) 24%)}
 #scope::before,#scope::after{content:"";position:absolute;left:50%;top:50%;background:rgba(0,0,0,.8)}#scope::before{width:1px;height:50%;transform:translate(-50%,-50%)}#scope::after{height:1px;width:50%;transform:translate(-50%,-50%)}

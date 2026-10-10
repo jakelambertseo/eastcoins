@@ -741,6 +741,9 @@
   });
 
   els.settingsMenu.addEventListener("click", (event) => {
+    // (2026-10-11) MultiView and the Store moved here from the top nav: routed in place like a nav link, never a page load
+    const link = event.target.closest("a[data-route]");
+    if (link) { if (event.metaKey || event.ctrlKey || event.shiftKey) return; event.preventDefault(); setMenuOpen(false); go(link.dataset.route); return; }
     const item = event.target.closest("[data-toggle]");
     if (!item) return;
     const key = item.dataset.toggle;

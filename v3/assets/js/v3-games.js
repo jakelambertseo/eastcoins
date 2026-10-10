@@ -1,25 +1,42 @@
 /* ============================================================
-   EastCoin V3 — the Game Room
+   EastCoin V3 — the Games floor
 
      /?view=games
 
-   Small games played for titles. Today's games with where you got to
-   in each, the day's boards, and who has taken the most days this
-   month. No ZCoins anywhere: that is what the casino is for, and
-   keeping them out is what lets these games be quick and silly.
+   (2026-10-11, the owner: "make the games page highly mimic the casino
+   page (with cards, etc), but give it a slightly different formatting.
+   then put it on the games page alone, and move the eastscape card
+   there too.") The casino's cards, laid out two ways: the two worlds —
+   CS67 and EastScape — lead as wide 16:9 cards, and the five quick
+   games sit under them five across on colour panels with their emoji.
+   Today's boards and the month's champions fold away below, the way
+   the casino's ledger does. The quick games are played for titles,
+   never ZCoins; CS67 pays Brass, EastScape pays ZCoins.
    ============================================================ */
 (() => {
   "use strict";
 
   const K = window.ECCasino;
   const POLL_MS = 45000;
+  const ART_V = 1;
+  const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const ARCADE = LOCAL ? "http://localhost:8788" : "https://arcade.eastcoin.vip";
   let root = null;
-  let shell = null;
   let refs = {};
   let data = null;
   let timer = 0;
 
   const el = (t, c, x) => K.el(t, c, x);
+
+  /* The two big games. CS67's key in /api/games/home is still "blockshot"
+     (its files keep that name); the card is CS67 whatever the API calls it. */
+  const BIG = {
+    cs67: { title: "CS67", sub: "EastCoin's shooter", icon: "🔫", route: "cs67", art: `/v3/assets/img/games/cs67.webp?v=${ART_V}`, rgb: "26,120,200",
+      blurb: "Krunker-style: free-for-all, Gun Game, Bomb 3v3 and Parkour. Big maps built for slide-hopping, an Armory of finishes, levels and skins." },
+    eastscape: { title: "EastScape", sub: "EastCoin Casino MMO", icon: "🗺️", href: "/eastscape", art: "/v3/assets/img/casino/eastscape.webp?v=5", rgb: "255,122,26", ribbon: "Now Open",
+      online: "/api/eastscape/online", spooky: true, blurb: "Every casino game, in a world you walk around. Fight, mine, fish and craft for ZCoins." }
+  };
+  const SMALL_RGB = { helmet: "143,195,215", simon: "52,168,92", fg: "196,142,38", centre: "186,58,96", gold: "214,168,24" };
 
   async function load() {
     try {
@@ -30,6 +47,7 @@
     } catch {
       if (refs.status) refs.status.textContent = "Reconnecting…";
     }
+    pollRooms();
   }
 
   function go(route) {
@@ -37,77 +55,102 @@
     window.ECV3?.go(route, { push: false });
   }
 
+  /* One card, the casino's shape: an art panel with the name across the
+     foot of it, a live line under the panel. `big` cards are 16:9 with a
+     picture; small ones are 4:3 colour panels showing their emoji. */
+  function card(key, g, { big = false } = {}) {
+    const playable = Boolean(g.route || g.href);
+    const tile = el(playable ? "a" : "div", `cas-card games-card games-${key}${big ? " big" : ""}${g.href ? " open" : ""}${g.spooky ? " spooky" : ""}`);
+    tile.style.setProperty("--card-rgb", g.rgb);
+    if (g.href) tile.href = g.href;   // a page of its own, not a route: an ordinary link
+    else if (g.route) {
+      tile.href = `/?view=${g.route}`;
+      tile.addEventListener("click", (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); go(g.route); });
+    }
+    tile.title = g.blurb || "";
+
+    const art = el("div", "cas-card-art");
+    if (g.art) {
+      const pic = document.createElement("img");
+      pic.className = "cas-card-img";
+      pic.src = g.art; pic.alt = ""; pic.decoding = "async";
+      pic.addEventListener("error", () => { pic.remove(); art.classList.add("no-art"); });
+      art.append(pic);
+    } else art.classList.add("no-art");
+    art.append(el("span", "cas-card-ico", g.icon || ""));
+    const name = el("div", "cas-card-name");
+    name.append(el("b", null, g.title), el("small", null, g.sub || (g.daily ? "One a day" : "Play any time")));
+    art.append(name);
+    if (g.ribbon) art.append(el("span", "cas-card-ribbon open", g.ribbon));
+    if (g.spooky) for (const c of ["es-fog", "es-bat b1", "es-bat b2", "es-glow"]) art.append(el("span", `es-fx ${c}`));
+    tile.append(art);
+
+    const live = el("div", "cas-card-live");
+    tile.append(live);
+    return { tile, live };
+  }
+
   function build() {
     root.replaceChildren();
     refs = {};
-    const page = el("section", "gameroom");
+    const page = el("section", "casino gameroom games-floor");
 
-    const head = el("div", "viewhead");
+    const head = el("div", "viewhead cas-head");
     const copy = el("div");
-    copy.append(el("h1", null, "Game Room"),
-      el("p", null, "Quick games for titles, not ZCoins. The crest is a new one every day at midnight Central, the rest are open all hours, and the gold button turns up when it feels like it."));
+    copy.append(el("h1", null, "Games"), el("p", null, "Two worlds, and five quick games played for titles rather than ZCoins."));
     head.append(copy);
     refs.status = el("span", "cf-status", "Loading…");
     head.append(refs.status);
     page.append(head);
 
-    refs.tiles = el("div", "gr-tiles");
-    page.append(refs.tiles);
+    // the two worlds
+    refs.big = el("div", "cas-cards games-cards");
+    for (const [key, g] of Object.entries(BIG)) {
+      const c = card(key, g, { big: true });
+      if (key === "cs67") { refs.cs67 = c.live; c.live.append(el("i", "cas-card-dot"), el("span", "cas-card-phase", "Looking for the rooms…")); }
+      if (g.online) { c.live.remove(); const on = el("div", "cas-card-online"); on.hidden = true; c.tile.append(on); refs.online = { el: on, url: g.online }; }
+      refs.big.append(c.tile);
+    }
+    page.append(refs.big);
+
+    // the quick games
+    page.append(el("p", "games-eyebrow", "Quick games · for titles, not ZCoins"));
+    refs.small = el("div", "cas-cards games-cards small");
+    page.append(refs.small);
+
+    /* Today's boards and the month's champions: a fold that starts
+       closed, like the casino's ledger — reference, not the reason
+       anyone opened the page. */
+    const foldHead = el("button", "cas-ledger-head");
+    foldHead.type = "button";
+    foldHead.setAttribute("aria-expanded", "false");
+    const foldTitle = el("h2", null, "Today's boards");
+    foldTitle.append(el("i", "cas-fold-mark"));
+    refs.boardNote = el("span");
+    foldHead.append(foldTitle, refs.boardNote);
+    const foldBody = el("div", "cas-ledger-body");
+    foldBody.hidden = true;
+    foldHead.addEventListener("click", () => {
+      const open = foldBody.hidden;
+      foldBody.hidden = !open;
+      foldHead.classList.toggle("open", open);
+      foldHead.setAttribute("aria-expanded", String(open));
+    });
 
     const lower = el("div", "gr-lower");
     const boards = el("section", "cf-card");
-    const bh = el("h2", null, "Today's board");
-    refs.boardNote = el("small");
-    bh.append(refs.boardNote);
+    boards.append(el("h2", null, "Today's board"));
     refs.boards = el("div", "gr-boards");
-    boards.append(bh, refs.boards);
-
+    boards.append(refs.boards);
     const champs = el("section", "cf-card");
     const ch = el("h2", null, "Most days won");
     ch.append(el("small", null, "last 30 days"));
     refs.champs = el("div", "gr-champs");
     champs.append(ch, refs.champs);
-
     lower.append(boards, champs);
-    page.append(lower);
+    foldBody.append(lower);
+    page.append(foldHead, foldBody);
     root.append(page);
-  }
-
-  function tile(g) {
-    // The Gold Button has no page of its own: it comes to you.
-    const playable = Boolean(g.route);
-    const a = el(playable ? "a" : "div", `cas-tile gr-tile gr-${g.key}${g.open ? " is-open" : ""}`);
-    if (playable) {
-      a.href = `/?view=${g.route}`;
-      a.addEventListener("click", (e) => { if (e.metaKey || e.ctrlKey || e.shiftKey) return; e.preventDefault(); go(g.route); });
-    }
-
-    const top = el("div", "cas-tile-top");
-    top.append(el("span", "cas-ico", g.icon));
-    const name = el("div");
-    name.append(el("b", null, g.name));
-    name.append(el("small", null, g.daily ? "One a day" : "Play as often as you like"));
-    top.append(name);
-    a.append(top);
-    a.append(el("p", "cas-blurb", g.blurb));
-
-    const foot = el("div", "gr-tile-foot");
-    if (g.state) foot.append(el("span", `gr-state${g.played ? " done" : ""}`, g.state));
-    else if (g.daily) foot.append(el("span", "gr-state new", "Not played yet"));
-    const top1 = g.key === "gold" ? null : g.board?.[0];
-    if (top1) {
-      const lead = el("span", "gr-lead");
-      lead.append(document.createTextNode("Leader "), el("b", null, top1.user.displayName), document.createTextNode(` · ${top1.score}`));
-      foot.append(lead);
-    }
-    a.append(foot);
-
-    if (g.record?.streak > 1) a.append(el("span", "gr-streak", `🔥 ${g.record.streak} days`));
-    a.append(el("span", "cas-play", playable ? "Play →"
-      : g.open ? "It's up — look bottom left"
-        : g.winner ? `Taken by ${g.winner.user.displayName}`
-          : "Watch for it"));
-    return a;
   }
 
   /** Each game counts something different; say which. */
@@ -119,16 +162,32 @@
     return `${row.score} made${row.detail?.longest ? ` · ${row.detail.longest}yd` : ""}`;
   }
 
+  function smallCard(g) {
+    const { tile, live } = card(g.key, { title: g.name, icon: g.icon, route: g.route, daily: g.daily, rgb: SMALL_RGB[g.key] || "120,120,140", blurb: g.blurb });
+    if (g.played) tile.classList.add("done");
+    // The Gold Button has no page of its own: it comes to you.
+    const top1 = g.key === "gold" ? null : g.board?.[0];
+    if (g.key === "gold") {
+      live.append(el("span", "cas-card-phase", g.open ? "It's up — look bottom left" : g.winner ? `Taken by ${g.winner.user.displayName}` : "Watch for it"));
+    } else {
+      live.append(el("span", "cas-card-phase", g.state || (g.daily ? "Not played yet" : "Play any time")));
+      if (top1) { const lead = el("span", "cas-card-right"); lead.append(el("span", "cas-card-room", `${top1.user.displayName} · ${top1.score}`)); live.append(lead); }
+    }
+    if (g.record?.streak > 1) tile.append(el("div", "cas-card-plays", `🔥 ${g.record.streak} days running`));
+    return tile;
+  }
+
   function render() {
-    if (!data || !refs.tiles) return;
+    if (!data || !refs.small) return;
     refs.status.textContent = data.playersToday ? `${data.playersToday} played today` : "Nobody has played yet today";
 
-    refs.tiles.replaceChildren();
-    for (const g of data.games) refs.tiles.append(tile(g));
+    refs.small.replaceChildren();
+    for (const g of data.games) { if (g.key === "blockshot" || g.key === "cs67") continue; refs.small.append(smallCard(g)); }
 
     refs.boardNote.textContent = data.day;
     refs.boards.replaceChildren();
     for (const g of data.games) {
+      if (g.key === "blockshot" || g.key === "cs67") continue;
       const col = el("div", "gr-boardcol");
       col.append(el("h3", null, `${g.icon} ${g.name}`));
       if (!g.board.length) { col.append(el("p", "cf-empty", "Nobody yet — first score takes it.")); refs.boards.append(col); continue; }
@@ -153,19 +212,58 @@
     }
   }
 
+  /* Who is in CS67 right now: the four rooms' public /state, added up
+     (names from every room, the count from all four). Four small CORS
+     reads every 45 s while the page is open; nothing touches a database. */
+  async function pollRooms() {
+    const live = refs.cs67; if (!live || document.hidden) return;
+    const rooms = [["bs", "Free-for-all"], ["gg", "Gun Game"], ["bomb", "Bomb"], ["park", "Parkour"]];
+    const got = await Promise.all(rooms.map(async ([p, n]) => { try { const j = await fetch(`${ARCADE}/${p}/state`, { cache: "no-store" }).then((r) => r.json()); return j?.ok ? { n, playing: j.playing || 0, names: j.names || [] } : null; } catch { return null; } }));
+    if (refs.cs67 !== live) return;
+    const up = got.filter(Boolean);
+    live.replaceChildren();
+    const dot = el("i", "cas-card-dot");
+    if (!up.length) { live.append(dot, el("span", "cas-card-phase", "The match server isn't answering")); live.parentElement?.classList.remove("hot"); return; }
+    const total = up.reduce((s, r) => s + r.playing, 0), names = [...new Set(up.flatMap((r) => r.names))].slice(0, 6);
+    live.parentElement?.classList.toggle("hot", total > 0);
+    live.append(dot, el("span", "cas-card-phase", total ? `${total} playing now${names.length ? ` · ${names.join(", ")}` : ""}` : "Bots only right now · jump in"));
+    const busiest = up.filter((r) => r.playing).sort((a, b) => b.playing - a.playing)[0];
+    if (busiest) { const right = el("span", "cas-card-right"); right.append(el("span", "cas-card-room", busiest.n)); live.append(right); }
+  }
+
+  /* EastScape's "N people online now", the casino floor's own code: once a
+     minute while the tab is visible, from /api/eastscape/online's 30-second
+     edge cache. */
+  let onlineTimer = 0;
+  async function pollOnline() {
+    const o = refs.online; if (!o || document.hidden) return;
+    try {
+      const r = await fetch(o.url, { cache: "no-store" }); if (!r.ok) throw new Error(String(r.status));
+      const n = Math.max(0, Number((await r.json()).online) || 0);
+      if (refs.online !== o) return;
+      o.el.textContent = "";
+      o.el.classList.toggle("none", n === 0);
+      o.el.append(el("i"), n === 0 ? document.createTextNode("Nobody online right now") : el("span", null, `${n.toLocaleString()} ${n === 1 ? "person" : "people"} online now`));
+      o.el.hidden = false;
+    } catch (e) { o.el.hidden = true; }
+  }
+
   const view = {
-    mount(container, api) {
+    mount(container) {
       root = container;
-      shell = api;
-      document.title = "Game Room — EastCoin";
+      document.title = "Games — EastCoin";
       window.ECPresence?.beat("games");
       build();
       load();
+      pollOnline();
       timer = window.setInterval(() => { if (!document.hidden) load(); }, POLL_MS);
+      onlineTimer = window.setInterval(pollOnline, 60000);
+      document.addEventListener("visibilitychange", pollOnline);
     },
     unmount() {
-      window.clearInterval(timer);
-      timer = 0;
+      window.clearInterval(timer); timer = 0;
+      window.clearInterval(onlineTimer); onlineTimer = 0;
+      document.removeEventListener("visibilitychange", pollOnline);
       data = null; refs = {};
       document.title = "EastCoin";
     }

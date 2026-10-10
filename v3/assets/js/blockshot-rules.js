@@ -43,7 +43,9 @@ export const need = (lvl) => Math.round(100 * Math.pow(lvl, 1.5));
 /** Level and the XP into it, from lifetime XP. */
 export function levelOf(total) { let lvl = 1, xp = Math.max(0, Math.floor(total)); while (xp >= need(lvl)) { xp -= need(lvl); lvl++; } return { level: lvl, xp, next: need(lvl) }; }
 export function xpForRound({ kills = 0, headshots = 0, streaks = 0, won = false }) { return kills * XP.kill + headshots * (XP.headshot - XP.kill) + streaks * XP.streak3 + XP.round + (won ? XP.win : 0); }
-export const BOT_NAMES = ["bootypaper", "heartlarva", "andyreidisapawg", "zwades", "cenozoicmegafauna", "drhealsgud", "psilocyboone", "fasteddie", "aallldeeeez", "charleskellybirdlaw", "therealb4nksy", "kellzifer", "bigrig", "allyrose7774"];
+/* (2026-10-11, the owner: "make the bot names obvious … users think they are playing real players") Bots used to wear the regulars'
+   names. Now every bot is plainly a bot; a real player who joins takes a bot's seat (the server's slotFor picks one, a dead one first). */
+export const BOT_NAMES = ["Bot Dude #1", "Bot Bro #2", "Robo Ray", "Beep Boop", "NPC Nate", "Bot Betty", "Tin Man", "Autobean", "Bot Guy #7", "Mr Roboto", "Clanker", "Bot Bob", "Unit 11", "Bot Dude #13"];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 /* ------------------------------------------------------------------ vectors and rotations (no three.js here) */

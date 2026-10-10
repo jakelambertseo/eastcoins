@@ -9,12 +9,12 @@
    and predict only your own bean. `stepWorld` hands back EVENTS and everything you hear and read comes from those. Nothing calls /api/. */
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk, PARK, PARK_MAPS, newRun, parkPlace, parkStep, parkReset, medalFor, GG, ggGun } from "/v3/assets/js/blockshot-rules.js?v=19";
+import { World, newBean, stepWorld, botInput, respawnBean, cast, switchGun, SWAP_S, V, PHYS, RULES, GUNS, GUN_KEYS, PRIMARY_KEYS, MAPS, MAP_LIST, BOT_NAMES, BOTS, BOMB, BOMB_MAP, newBomb, bombStartRound, bombStep, bombGoal, isAtk, PARK, PARK_MAPS, newRun, parkPlace, parkStep, parkReset, medalFor, GG, ggGun } from "/v3/assets/js/blockshot-rules.js?v=20";
 import { finMat, finCss, finOf, knifeOf } from "./armory-fin.js?v=1";
-import { createNet } from "./net.js?v=20";
+import { createNet } from "./net.js?v=21";
 import { material, skin as skinTex } from "./tex.js?v=1";
 import { play, setVolume, ensure as audioOn } from "./audio.js?v=11";
-import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=15";
+import { profile, award, need, SKINS, COLORS, owns, wear, kd, accuracy, recordRound, titleFor, XP, save, syncFromServer, unlockedBetween, site } from "./profile.js?v=16";
 
 const V3 = THREE.Vector3;
 const $ = (id) => document.getElementById(id);
@@ -101,10 +101,11 @@ function makeBean(sk, look = null) {
 }
 function paintTag(b) {
   const carrier = Boolean(bomb) && bomb.carrier === b.i, side = b.team === undefined || !me || me.team === undefined ? "" : b.team === me.team ? "us" : "them";
-  const key = `${b.name}|${Math.round(b.hp)}|${carrier ? 1 : 0}|${side}`; if (key === b.mesh.tagKey) return; b.mesh.tagKey = key;
+  const label = b.name;   // (2026-10-11) bots carry obviously-bot names from BOT_NAMES, so the tag needs no mark
+  const key = `${label}|${Math.round(b.hp)}|${carrier ? 1 : 0}|${side}`; if (key === b.mesh.tagKey) return; b.mesh.tagKey = key;
   const c = b.mesh.tagCanvas, x = c.getContext("2d"); x.clearRect(0, 0, c.width, c.height);
-  x.textAlign = "center"; x.lineWidth = 5; x.strokeStyle = "#000"; x.font = "800 26px Lora, Georgia, serif"; x.strokeText(b.name, 128, 30); x.fillStyle = side === "us" ? "#8ae07a" : side === "them" ? "#ff7a7a" : "#fff"; x.fillText(b.name, 128, 30);
-  if (carrier) { const w = x.measureText(b.name).width; x.fillStyle = "#ffd84a"; x.fillRect(128 - w / 2 - 22, 12, 14, 14); x.fillStyle = "#000"; x.fillRect(128 - w / 2 - 18, 16, 6, 6); }
+  x.textAlign = "center"; x.lineWidth = 5; x.strokeStyle = "#000"; x.font = "800 26px Lora, Georgia, serif"; x.strokeText(label, 128, 30); x.fillStyle = side === "us" ? "#8ae07a" : side === "them" ? "#ff7a7a" : b.bot ? "#cfd5de" : "#fff"; x.fillText(label, 128, 30);
+  if (carrier) { const w = x.measureText(label).width; x.fillStyle = "#ffd84a"; x.fillRect(128 - w / 2 - 22, 12, 14, 14); x.fillStyle = "#000"; x.fillRect(128 - w / 2 - 18, 16, 6, 6); }
   x.fillStyle = "#000"; x.fillRect(48, 40, 160, 10); x.fillStyle = b.hp > 50 ? "#8ae07a" : b.hp > 25 ? "#ffd84a" : "#ff5a5a"; x.fillRect(50, 42, 156 * clamp(b.hp / MAX_HP, 0, 1), 6);
   b.mesh.tag.material.map.needsUpdate = true;
 }
@@ -686,7 +687,7 @@ $("over").addEventListener("click", (e) => {
 $("over").addEventListener("input", (e) => {
   const el = e.target.closest("[data-set]"); if (!el) return; const k = el.dataset.set, v = el.type === "checkbox" ? el.checked : el.type === "range" ? Number(el.value) : el.value;
   profile.settings[k] = v; save(); const out = el.parentElement.querySelector("output"); if (out) out.textContent = k === "sens" ? `${v.toFixed(1)}×` : k === "fov" ? `${v}°` : k === "volume" ? `${Math.round(v * 100)}%` : "";
-  if (k === "volume") setVolume(v); if (k.startsWith("crosshair")) { applyXhair(); if (k === "crosshairColor") out.innerHTML = `<i class="sw" style="background:${XHAIR_COLORS[v] || "#fff"}"></i>`; if (k === "crosshairSize") out.textContent = `${Number(v).toFixed(1)}×`; }
+  if (k === "volume") setVolume(v); if (k.startsWith("crosshair")) { applyXhair(); if (k === "crosshairColor") out.innerHTML = `<i class="xsw" style="background:${XHAIR_COLORS[v] || "#fff"}"></i>`; if (k === "crosshairSize") out.textContent = `${Number(v).toFixed(1)}×`; }
 });
 setVolume(profile.settings.volume); applyXhair();
 /* THE END OF A ROUND (2026-10-09): one screen for both modes. The top three stand on a podium in their own skins (their meshes cloned

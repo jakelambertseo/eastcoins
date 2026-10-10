@@ -36,7 +36,7 @@
        the EastScape card, make the ribbon say now open, and link it to eastcoin.vip/eastscape") OPEN. `href` makes the card a plain
        link to the game's own page (it is not a route in this shell), and `open` is its ribbon; like `soon` it has no live line and
        no plays counter, because nothing on this floor polls it. `spooky` dresses it for the Long Night. */
-    eastscape: { title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", open: "Now Open", href: "/eastscape", online: "/api/eastscape/online", spooky: true, line: "Now open: fight, mine, fish and craft for ZCoins.", blurb: "Every game on this floor, in a world you walk around. Fight, mine, fish and craft for ZCoins, and play the same tables at the same odds." },
+    eastscape: { hidden: true, /* (2026-10-11) moved to the Games floor (v3-games.js); the entry stays so nothing below it has to change */ title: "EastScape", icon: "🗺️", sub: "EastCoin Casino MMO", open: "Now Open", href: "/eastscape", online: "/api/eastscape/online", spooky: true, line: "Now open: fight, mine, fish and craft for ZCoins.", blurb: "Every game on this floor, in a world you walk around. Fight, mine, fish and craft for ZCoins, and play the same tables at the same odds." },
     flip: { title: "Coin Flip", icon: "🪙", blurb: "Heads or tails, about 2×. One coin for the whole room, every 30 seconds.", route: "flip" },
     wheel: { title: "Wheel", icon: "🎡", blurb: "Red or black about 2.03×, the gold sliver about 60×. One spin a minute.", route: "wheel" },
     race: { title: "Horse Race", icon: "🐎", blurb: "Four runners from 2× to 14×. They're off every minute.", route: "race", hidden: true },

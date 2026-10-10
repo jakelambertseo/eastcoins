@@ -121,6 +121,7 @@ img{max-width:100%}
   /* No glow animation: animating box-shadow repaints the sticky nav every
      frame, on every page, and hover on the rest of the page pays for it. */
 }
+.nav-tag.new{background:linear-gradient(120deg,#3ddc84,#1f9d55);box-shadow:0 0 12px rgba(61,220,132,.45)}   /* (2026-10-11) Games is the new thing */
 .nav-badge{
   display:inline-flex;align-items:center;justify-content:center;
   min-width:19px;height:19px;padding:0 6px;border-radius:999px;
@@ -3579,6 +3580,23 @@ a.glink:hover{color:var(--gold);border-bottom-color:rgba(var(--gold-rgb),.5)}
 }
 
 .cas-ticker{margin:0 0 14px}
+/* THE GAMES FLOOR (2026-10-11, the owner: "make the games page highly mimic the casino page (with cards, etc), but give it a
+   slightly different formatting … move the eastscape card there too"). The casino's cards, laid out two ways: the two worlds lead
+   as wide 16:9 cards, and the five quick games sit under them five across on 4:3 colour panels with their emoji, since they have no
+   painted art. Everything else is the casino's own classes. */
+.games-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;max-width:1080px;margin-bottom:18px}
+.games-cards.small{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.games-card .cas-card-art{aspect-ratio:16/9}
+.games-cards.small .cas-card-art{aspect-ratio:4/3;padding:10px}
+.games-cards.small .cas-card-ico{display:block;top:16%;font-size:2.4rem}
+.games-cards.small .cas-card-name b{font-size:.88rem}
+.games-cards.small .cas-card-name small{font-size:.48rem}
+.games-card.cas-card.done .cas-card-art{outline:2px solid rgba(var(--gr-rgb),.55);outline-offset:-2px}
+.games-eyebrow{margin:4px 0 10px;font-size:.66rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2)}
+.games-cards .cas-card-live b.nums{color:var(--gold);font-family:var(--display)}
+.games-cards.small .cas-card-live{font-size:.7rem}
+@media (max-width:980px){.games-cards.small{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:620px){.games-cards,.games-cards.small{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .cas-ledger-head{
   display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;
   width:100%;margin:26px 0 10px;padding:18px 0 0;border:0;border-top:1px solid var(--line);
