@@ -63,3 +63,11 @@
 .tb{margin:12px 0 18px}.tb-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font:900 16px var(--disp);color:var(--cream);letter-spacing:-.02em}.tb-head span{font:600 12px var(--font);color:var(--dim);text-align:right}.tb-head span b{color:var(--mint)}.tb-me{font:600 12px var(--font);color:var(--dim);margin:6px 0 0}
 .res a.go{display:inline-block;text-decoration:none}.btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 6px}.hud[hidden]{display:none}
 @media (max-width:900px){.over.podium{background:rgba(14,15,19,.86)}.over.podium .panel{max-width:none}}
+
+/* PLAYS PASS (2026-10-13): legendary ring, emoji icons for unpainted plays, the rain, the blackout */
+.item.legend{box-shadow:inset 0 0 0 7px #ffc83c,inset 0 0 0 9px #0f1014,0 0 34px rgba(255,200,60,.6);animation:lgpulse 1.1s ease-in-out infinite}@keyframes lgpulse{50%{box-shadow:inset 0 0 0 7px #fff1b0,inset 0 0 0 9px #0f1014,0 0 44px rgba(255,200,60,.9)}}
+.item .emo{font-size:44px;line-height:1}.keys .lg b{color:#ffc83c}.lgtag{font:800 10px var(--font);letter-spacing:.14em;color:#15161b;background:#ffc83c;border-radius:999px;padding:2px 7px;margin-left:6px;font-style:normal;vertical-align:middle}
+.feed p.gold{background:#ffc83c;color:#15161b}
+.wx{position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(100deg,transparent 0 11px,rgba(220,235,255,.22) 11px 12px,transparent 12px 23px);background-size:100% 100%;animation:rain .35s linear infinite;mix-blend-mode:screen}.wx::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(40,50,70,.35),rgba(20,25,35,.5))}@keyframes rain{to{background-position:-40px 60px}}.wx[hidden]{display:none}
+.dark{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 34% 40% at 50% 72%,rgba(0,0,0,.2) 0,rgba(0,0,0,.88) 70%,#000 100%)}.dark[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.item.legend{animation:none}.wx{animation:none}}
