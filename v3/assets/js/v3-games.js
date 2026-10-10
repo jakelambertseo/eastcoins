@@ -92,7 +92,7 @@
 
     const head = el("div", "viewhead cas-head");
     const copy = el("div");
-    copy.append(el("h1", null, "Games"), el("p", null, "Two worlds: Counterstrike 67 and EastScape."));
+    copy.append(el("h1", null, "Games"), el("p", null, "Two worlds: Counterstrike 67 and EastScape - Poker nights coming soon."));
     head.append(copy);
     page.append(head);
 
