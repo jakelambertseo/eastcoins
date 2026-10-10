@@ -93,11 +93,11 @@ function kartMesh(k) {
   for (const x of [-0.13, 0.13]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: 0x111111 })); e.position.set(x, 1.22, 0.24); g.add(e); }
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.2, 8), new THREE.MeshBasicMaterial({ color: 0xff8a1c, transparent: true, opacity: 0.9 })); flame.rotation.x = Math.PI / 2; flame.position.set(0, 0.5, -1.9); flame.visible = false; g.add(flame);
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(1.3, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.03; g.add(shadow);
-  const c = document.createElement("canvas"); c.width = 256; c.height = 64; const x2 = c.getContext("2d"); x2.textAlign = "center"; x2.font = "800 30px Rajdhani, sans-serif"; x2.lineWidth = 5; x2.strokeStyle = "#000"; x2.strokeText(k.name, 128, 40); x2.fillStyle = k.bot ? "#cfd5de" : "#ffd23f"; x2.fillText(k.name, 128, 40);
+  const c = document.createElement("canvas"); c.width = 256; c.height = 64; const x2 = c.getContext("2d"); x2.textAlign = "center"; x2.font = "900 24px Unbounded, Figtree, sans-serif"; x2.lineWidth = 5; x2.strokeStyle = "#000"; x2.strokeText(k.name, 128, 40); x2.fillStyle = k.bot ? "#cfd5de" : "#ffd23f"; x2.fillText(k.name, 128, 40);
   const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); tag.scale.set(2.2, 0.55, 1); tag.position.y = 2.2; g.add(tag);
   scene.add(g); return { g, body, wheels, flame, tag };
 }
-const ballGeo = new THREE.SphereGeometry(0.5, 12, 10), ballMat = M(0x8a4b22, 0.6), puckGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.18, 14), puckMat = M(0x111318, 0.4, 0.3), puddleGeo = new THREE.CircleGeometry(1.5, 18), puddleMat = new THREE.MeshStandardMaterial({ color: 0xff8a1c, roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.85 }), flagGeo = new THREE.BoxGeometry(0.9, 0.6, 0.06), flagMat = M(0xffd23f, 0.6), shieldGeo = new THREE.SphereGeometry(2.1, 16, 12), shieldMat = new THREE.MeshBasicMaterial({ color: 0x3ad5ff, transparent: true, opacity: 0.22, depthWrite: false });
+const ballGeo = new THREE.SphereGeometry(0.5, 12, 10), ballMat = M(0x8a4b22, 0.6), puckGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.18, 14), puckMat = M(0x111318, 0.4, 0.3), puddleGeo = new THREE.CircleGeometry(1.5, 18), puddleMat = new THREE.MeshStandardMaterial({ color: 0xff8a1c, roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.85 }), flagGeo = new THREE.BoxGeometry(0.9, 0.6, 0.06), flagMat = M(0xffd23f, 0.6), shieldGeo = new THREE.SphereGeometry(2.1, 16, 12), shieldMat = new THREE.MeshBasicMaterial({ color: 0xff6a2a, transparent: true, opacity: 0.2, depthWrite: false });
 function shotMesh(sh) { if (sh.kind === "hail") { const m = new THREE.Mesh(ballGeo, ballMat); m.scale.set(0.75, 0.75, 1.25); const lace = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.5), M(0xffffff, 0.8)); lace.position.y = 0.42; m.add(lace); return m; } if (sh.kind === "slap") return new THREE.Mesh(puckGeo, puckMat); const g = new THREE.Group(); const f = new THREE.Mesh(flagGeo, flagMat); f.position.set(0.45, 0.3, 0); g.add(f); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 6), M(0xf4f4f4, 0.6)); g.add(pole); return g; }
 
 /* ---------------------------------------------------------------- the race on the page */
@@ -193,8 +193,8 @@ function draw(dt) {
   camLook.set(k.p.x + Math.sin(k.head) * 5, 1.1, k.p.z + Math.cos(k.head) * 5); camera.lookAt(camLook);
   camera.fov += ((68 + sp * 10 + (k.boost > 0 ? 8 : 0)) - camera.fov) * Math.min(1, 6 * dt); camera.updateProjectionMatrix();
   // HUD
-  $("hudLap").textContent = `LAP ${Math.min(k.lap + 1, t.laps)}/${t.laps}`; $("hudT").textContent = fmtTime(race.state === "count" ? 0 : race.t - race.started); $("hudPos").textContent = mode === "tt" ? (k.lapStart ? fmtTime(race.t - k.lapStart) : "") : ordinal(k.place || race.karts.length);
-  $("hudItemIc").textContent = k.item ? ITEMS[k.item].icon : ""; $("hudItemN").textContent = k.item ? ITEMS[k.item].n : ""; $("hudSpeed").style.width = `${Math.round(clamp(Math.abs(k.speed) / (KART.MAX * 1.3), 0, 1) * 100)}%`; $("hudSpeedN").textContent = `${Math.round(Math.abs(k.speed) * 3.6)} km/h`;
+  $("hudLap").textContent = `LAP ${Math.min(k.lap + 1, t.laps)}/${t.laps}`; $("hudT").textContent = fmtTime(race.state === "count" ? 0 : race.t - race.started); $("hudPos").textContent = mode === "tt" ? (k.lapStart ? fmtTime(race.t - k.lapStart) : "—") : ordinal(k.place || race.karts.length); $("hudPos").classList.toggle("tt", mode === "tt");
+  $("hudItemIc").textContent = k.item ? ITEMS[k.item].icon : ""; $("hudItemN").textContent = k.item ? ITEMS[k.item].n : ""; $("hudSpeedo").style.setProperty("--v", `${Math.round(clamp(Math.abs(k.speed) / (KART.MAX * 1.3), 0, 1) * 100)}%`); $("hudSpeedN").textContent = `${Math.round(Math.abs(k.speed) * 3.6)}`;
   engine(k.speed, inputFor().accel, true, Boolean(k.drift));
   drawMap();
 }
@@ -213,10 +213,10 @@ function trackThumb(c, key) { const t = buildTrack(key); const g = c.getContext(
 function drawMenu() {
   const P = $("panel");
   if (tab === "play") {
-    P.innerHTML = `<h1><small>EastKart · ${mode === "tt" ? "time trial" : "race"} · v${VERSION}</small>EastKart</h1><p><b>Eight beans, three laps, items.</b> Pick a track. In a race it is you against seven bots; in a time trial it is you against the ghost of your best lap.</p>
+    P.innerHTML = `<h1><small>${mode === "tt" ? "time trial" : "race"} · v${VERSION}</small>Pick a track</h1><p><b>Eight beans, three laps, items.</b> In a race it is you against seven bots; in a time trial it is you against the ghost of your best lap.</p>
       <p class="eyebrow">Track</p><div class="tracks">${TRACK_LIST.map((k) => { const d = TRACKS[k], b = best[k] || {}; return `<button class="track${k === trackKey ? " on" : ""}" data-track="${k}"><canvas data-thumb="${k}"></canvas><div><b>${esc(d.name)}</b><small>${esc(d.blurb)}</small><div class="best">best lap ${fmtTime(b.lap)}${b.total ? ` · race ${fmtTime(b.total)}` : ""}${b.wins ? ` · ${b.wins} win${b.wins === 1 ? "" : "s"}` : ""}</div></div></button>`; }).join("")}</div>
       <div class="pm-row"><div class="seg"><button class="${mode === "race" ? "on" : ""}" data-mode="race">Race · vs 7 bots</button><button class="${mode === "tt" ? "on" : ""}" data-mode="tt">Time trial · vs your ghost</button></div><label style="color:var(--dim);font-size:13px">Name <input id="nm" maxlength="16" value="${esc(localStorage.getItem(NAME_KEY) || "You")}" style="width:120px;padding:6px 8px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--ink);font:inherit"></label></div>
-      <button class="go" data-go="1">${mode === "tt" ? "Start the trial" : "Start the race"}</button>`;
+      <button class="go" data-go="1">${mode === "tt" ? "Start the trial →" : "Lights out →"}</button>`;
     for (const c of P.querySelectorAll("[data-thumb]")) trackThumb(c, c.dataset.thumb);
   } else if (tab === "times") {
     P.innerHTML = `<h1><small>kept in this browser</small>Your times</h1><div class="res"><table>${TRACK_LIST.map((k) => { const b = best[k] || {}; return `<tr><td>${esc(TRACKS[k].name)}</td><td class="n">best lap ${fmtTime(b.lap)}</td><td class="n">best race ${fmtTime(b.total)}</td><td class="n">${b.wins || 0} wins</td></tr>`; }).join("")}</table></div><p>Online races with everyone, boards and Brass come with the room server, the way CS67's did.</p>`;
@@ -228,7 +228,7 @@ function drawMenu() {
 function showResults() {
   state = "done"; engine(0, false, false); const t = race.track, k = me();
   const rows = race.karts.slice().sort((a, b) => a.place - b.place);
-  $("panel").innerHTML = `<div class="res"><h1><small>${esc(t.name)} · ${mode === "tt" ? "time trial" : "race"}</small>${mode === "tt" ? "Trial done" : k.place === 1 ? "You win!" : `${ordinal(k.place)} place`}</h1><div class="big">${fmtTime(k.total)}</div><p>best lap <b>${fmtTime(k.bestLap)}</b>${best[trackKey]?.lap === k.bestLap ? " · your best on this track" : ""}</p>
+  $("panel").innerHTML = `<div class="res"><h1><small>${esc(t.name)} · ${mode === "tt" ? "time trial" : "race"}</small>${mode === "tt" ? "Trial done" : k.place === 1 ? "You win" : `${ordinal(k.place)} place`}</h1><div class="big">${mode === "tt" ? fmtTime(k.bestLap) : ordinal(k.place)}</div><p>race time <b>${fmtTime(k.total)}</b></p><p>best lap <b>${fmtTime(k.bestLap)}</b>${best[trackKey]?.lap === k.bestLap ? " · your best on this track" : ""}</p>
     <table>${rows.map((r) => `<tr class="${r === k ? "me" : ""}"><td>${ordinal(r.place)}</td><td>${esc(r.name)}${r.bot ? " <small style='color:var(--dim)'>bot</small>" : ""}</td><td class="n">${fmtTime(r.total)}</td><td class="n">lap ${fmtTime(r.bestLap)}</td></tr>`).join("")}</table>
     <button class="go" data-go="1">Race again</button><button class="go ghost" data-tab="play">Menu</button></div>`;
   for (const b of document.querySelectorAll("[data-tab]")) b.classList.remove("on"); $("resumeBtn").hidden = true; $("over").hidden = false;
