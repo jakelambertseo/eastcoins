@@ -702,6 +702,8 @@
         ["/u/{me}#movies", "Their own profile · Movies"],
         ["/?view=picks", "Picks"],
         ["/?view=casino", "Casino"],
+        ["/?view=cs67", "CS67"],
+        ["/?view=games", "Games"],
         ["/?view=music", "Green Room"],
         ["/", "Sports"],
         ["/?view=activity", "Activity"]

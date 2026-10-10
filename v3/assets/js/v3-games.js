@@ -6,12 +6,11 @@
    (2026-10-11, the owner: "make the games page highly mimic the casino
    page (with cards, etc), but give it a slightly different formatting.
    then put it on the games page alone, and move the eastscape card
-   there too.") The casino's cards, laid out two ways: the two worlds —
-   CS67 and EastScape — lead as wide 16:9 cards, and the five quick
-   games sit under them five across on colour panels with their emoji.
-   Today's boards and the month's champions fold away below, the way
-   the casino's ledger does. The quick games are played for titles,
-   never ZCoins; CS67 pays Brass, EastScape pays ZCoins.
+   there too." Then: "remove all the quick games / section under CS67
+   and EastScape.") The casino's cards, two of them: CS67 and EastScape
+   as wide 16:9 cards, and nothing else. The quick games (Helmet Zoom,
+   Simon, Field Goal, Dead Centre, the Gold Button) keep their routes and
+   their API, but the floor no longer lists them or their boards.
    ============================================================ */
 (() => {
   "use strict";
@@ -23,7 +22,6 @@
   const ARCADE = LOCAL ? "http://localhost:8788" : "https://arcade.eastcoin.vip";
   let root = null;
   let refs = {};
-  let data = null;
   let timer = 0;
 
   const el = (t, c, x) => K.el(t, c, x);
@@ -36,19 +34,6 @@
     eastscape: { title: "EastScape", sub: "EastCoin Casino MMO", icon: "🗺️", href: "/eastscape", art: "/v3/assets/img/casino/eastscape.webp?v=5", rgb: "255,122,26", ribbon: "Now Open",
       online: "/api/eastscape/online", spooky: true, blurb: "Every casino game, in a world you walk around. Fight, mine, fish and craft for ZCoins." }
   };
-  const SMALL_RGB = { helmet: "143,195,215", simon: "52,168,92", fg: "196,142,38", centre: "186,58,96", gold: "214,168,24" };
-
-  async function load() {
-    try {
-      const payload = await fetch("/api/games/home", { credentials: "include" }).then((r) => r.json());
-      if (!payload?.ok) throw new Error(payload?.code || "home");
-      data = payload;
-      render();
-    } catch {
-      if (refs.status) refs.status.textContent = "Reconnecting…";
-    }
-    pollRooms();
-  }
 
   function go(route) {
     history.pushState({ view: route }, "", `/?view=${route}`);
@@ -56,8 +41,7 @@
   }
 
   /* One card, the casino's shape: an art panel with the name across the
-     foot of it, a live line under the panel. `big` cards are 16:9 with a
-     picture; small ones are 4:3 colour panels showing their emoji. */
+     foot of it, a live line under the panel. */
   function card(key, g, { big = false } = {}) {
     const playable = Boolean(g.route || g.href);
     const tile = el(playable ? "a" : "div", `cas-card games-card games-${key}${big ? " big" : ""}${g.href ? " open" : ""}${g.spooky ? " spooky" : ""}`);
@@ -97,10 +81,8 @@
 
     const head = el("div", "viewhead cas-head");
     const copy = el("div");
-    copy.append(el("h1", null, "Games"), el("p", null, "Two worlds, and five quick games played for titles rather than ZCoins."));
+    copy.append(el("h1", null, "Games"), el("p", null, "Two worlds: the shooter and the MMO."));
     head.append(copy);
-    refs.status = el("span", "cf-status", "Loading…");
-    head.append(refs.status);
     page.append(head);
 
     // the two worlds
@@ -113,103 +95,7 @@
     }
     page.append(refs.big);
 
-    // the quick games
-    page.append(el("p", "games-eyebrow", "Quick games · for titles, not ZCoins"));
-    refs.small = el("div", "cas-cards games-cards small");
-    page.append(refs.small);
-
-    /* Today's boards and the month's champions: a fold that starts
-       closed, like the casino's ledger — reference, not the reason
-       anyone opened the page. */
-    const foldHead = el("button", "cas-ledger-head");
-    foldHead.type = "button";
-    foldHead.setAttribute("aria-expanded", "false");
-    const foldTitle = el("h2", null, "Today's boards");
-    foldTitle.append(el("i", "cas-fold-mark"));
-    refs.boardNote = el("span");
-    foldHead.append(foldTitle, refs.boardNote);
-    const foldBody = el("div", "cas-ledger-body");
-    foldBody.hidden = true;
-    foldHead.addEventListener("click", () => {
-      const open = foldBody.hidden;
-      foldBody.hidden = !open;
-      foldHead.classList.toggle("open", open);
-      foldHead.setAttribute("aria-expanded", String(open));
-    });
-
-    const lower = el("div", "gr-lower");
-    const boards = el("section", "cf-card");
-    boards.append(el("h2", null, "Today's board"));
-    refs.boards = el("div", "gr-boards");
-    boards.append(refs.boards);
-    const champs = el("section", "cf-card");
-    const ch = el("h2", null, "Most days won");
-    ch.append(el("small", null, "last 30 days"));
-    refs.champs = el("div", "gr-champs");
-    champs.append(ch, refs.champs);
-    lower.append(boards, champs);
-    foldBody.append(lower);
-    page.append(foldHead, foldBody);
     root.append(page);
-  }
-
-  /** Each game counts something different; say which. */
-  function scoreWords(key, row) {
-    if (key === "helmet") return row.detail?.solved ? `${row.detail.guesses}${row.detail.guesses === 1 ? " guess" : " guesses"}` : "missed";
-    if (key === "simon") return `${row.score} round${row.score === 1 ? "" : "s"}`;
-    if (key === "centre") return `${row.score} points`;
-    if (key === "gold") return row.detail?.tookMs ? `${(row.detail.tookMs / 1000).toFixed(1)}s` : "took it";
-    return `${row.score} made${row.detail?.longest ? ` · ${row.detail.longest}yd` : ""}`;
-  }
-
-  function smallCard(g) {
-    const { tile, live } = card(g.key, { title: g.name, icon: g.icon, route: g.route, daily: g.daily, rgb: SMALL_RGB[g.key] || "120,120,140", blurb: g.blurb });
-    if (g.played) tile.classList.add("done");
-    // The Gold Button has no page of its own: it comes to you.
-    const top1 = g.key === "gold" ? null : g.board?.[0];
-    if (g.key === "gold") {
-      live.append(el("span", "cas-card-phase", g.open ? "It's up — look bottom left" : g.winner ? `Taken by ${g.winner.user.displayName}` : "Watch for it"));
-    } else {
-      live.append(el("span", "cas-card-phase", g.state || (g.daily ? "Not played yet" : "Play any time")));
-      if (top1) { const lead = el("span", "cas-card-right"); lead.append(el("span", "cas-card-room", `${top1.user.displayName} · ${top1.score}`)); live.append(lead); }
-    }
-    if (g.record?.streak > 1) tile.append(el("div", "cas-card-plays", `🔥 ${g.record.streak} days running`));
-    return tile;
-  }
-
-  function render() {
-    if (!data || !refs.small) return;
-    refs.status.textContent = data.playersToday ? `${data.playersToday} played today` : "Nobody has played yet today";
-
-    refs.small.replaceChildren();
-    for (const g of data.games) { if (g.key === "blockshot" || g.key === "cs67") continue; refs.small.append(smallCard(g)); }
-
-    refs.boardNote.textContent = data.day;
-    refs.boards.replaceChildren();
-    for (const g of data.games) {
-      if (g.key === "blockshot" || g.key === "cs67") continue;
-      const col = el("div", "gr-boardcol");
-      col.append(el("h3", null, `${g.icon} ${g.name}`));
-      if (!g.board.length) { col.append(el("p", "cf-empty", "Nobody yet — first score takes it.")); refs.boards.append(col); continue; }
-      for (const row of g.board) {
-        const line = el("div", `gr-row${data.me && row.user.login === data.me.login ? " me" : ""}`);
-        line.append(el("span", "gr-rank", `${row.rank}`));
-        line.append(K.avatar(row.user, "cf-av small"));
-        line.append(K.nameLink(row.user));
-        line.append(el("span", "gr-score nums", scoreWords(g.key, row)));
-        col.append(line);
-      }
-      refs.boards.append(col);
-    }
-
-    refs.champs.replaceChildren();
-    if (!data.champions.length) refs.champs.append(el("p", "cf-empty", "Nobody has taken a day yet."));
-    for (const c of data.champions) {
-      const row = el("div", "gr-row");
-      row.append(K.avatar(c.user, "cf-av small"), K.nameLink(c.user));
-      row.append(el("span", "gr-score nums", `${c.wins} day${c.wins === 1 ? "" : "s"}`));
-      refs.champs.append(row);
-    }
   }
 
   /* Who is in CS67 right now: the four rooms' public /state, added up
@@ -254,9 +140,9 @@
       document.title = "Games — EastCoin";
       window.ECPresence?.beat("games");
       build();
-      load();
+      pollRooms();
       pollOnline();
-      timer = window.setInterval(() => { if (!document.hidden) load(); }, POLL_MS);
+      timer = window.setInterval(() => { if (!document.hidden) pollRooms(); }, POLL_MS);
       onlineTimer = window.setInterval(pollOnline, 60000);
       document.addEventListener("visibilitychange", pollOnline);
     },
@@ -264,7 +150,7 @@
       window.clearInterval(timer); timer = 0;
       window.clearInterval(onlineTimer); onlineTimer = 0;
       document.removeEventListener("visibilitychange", pollOnline);
-      data = null; refs = {};
+      refs = {};
       document.title = "EastCoin";
     }
   };
