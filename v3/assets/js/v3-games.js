@@ -37,6 +37,13 @@
       feats: [["A world you walk around", "with every casino table in it"], ["Fight, mine, fish and craft", "for ZCoins and tickets"], ["Dungeons, raids and world events", "with everyone online at once"], ["Pets, rolled loot and artifacts", "to chase for the long haul"]] }
   };
 
+  /* COMING SOON (2026-10-11, the owner: "add another section with Coming Soon and add poker to the games section as a card … there
+     will be Texas Hold Em, BlackJack"). A card with a ribbon and no link; the picture is the Lounge's poker table mid-hand. */
+  const SOON = {
+    poker: { title: "Poker", sub: "Cards for tickets", icon: "🃏", art: `/v3/assets/img/games/poker.webp?v=${ART_V}`, rgb: "214,40,110", ribbon: "Coming Soon", soon: true,
+      blurb: "Sit down at a table in the Lounge and play the regulars for tickets.",
+      feats: [["Texas Hold 'Em", "sit-and-go tables against EastCoin members"], ["Blackjack", "against the house, hand after hand"], ["Tickets on the table", "ZCoins become tickets at the cashier"], ["Dealt by the room server", "you are only ever shown your own cards"]] }
+  };
   function go(route) {
     history.pushState({ view: route }, "", `/?view=${route}`);
     window.ECV3?.go(route, { push: false });
@@ -45,7 +52,7 @@
   /* One card, the casino's shape: an art panel with the name across the
      foot of it, a live line under the panel. */
   function card(key, g, { big = false } = {}) {
-    const playable = Boolean(g.route || g.href);
+    const playable = Boolean(g.route || g.href) && !g.soon;
     const tile = el(playable ? "a" : "div", `cas-card games-card games-${key}${big ? " big" : ""}${g.href ? " open" : ""}${g.spooky ? " spooky" : ""}`);
     tile.style.setProperty("--card-rgb", g.rgb);
     if (g.href) tile.href = g.href;   // a page of its own, not a route: an ordinary link
@@ -67,7 +74,7 @@
     const name = el("div", "cas-card-name");
     name.append(el("b", null, g.title), el("small", null, g.sub || (g.daily ? "One a day" : "Play any time")));
     art.append(name);
-    if (g.ribbon) art.append(el("span", "cas-card-ribbon open", g.ribbon));
+    if (g.ribbon) art.append(el("span", `cas-card-ribbon${g.soon ? "" : " open"}`, g.ribbon));
     if (g.spooky) for (const c of ["es-fog", "es-bat b1", "es-bat b2", "es-glow"]) art.append(el("span", `es-fx ${c}`));
     tile.append(art);
 
@@ -98,6 +105,12 @@
       refs.big.append(c.tile);
     }
     page.append(refs.big);
+
+    // coming soon
+    page.append(el("p", "games-eyebrow", "Coming soon"));
+    const soon = el("div", "cas-cards games-cards");
+    for (const [key, g] of Object.entries(SOON)) { const c = card(key, g, { big: true }); c.tile.classList.add("soon"); c.live.append(el("i", "cas-card-dot"), el("span", "cas-card-phase", g.blurb)); soon.append(c.tile); }
+    page.append(soon);
 
     root.append(page);
   }
