@@ -3,7 +3,7 @@
    rules here against seven bots; a time trial runs alone against the ghost of your best lap (kept in this browser). The room server
    comes next, the way CS67's did: this file already keeps "what happened" (the rules) apart from "what it looks like". */
 import * as THREE from "three";
-import { KART, ITEMS, TRACKS, TRACK_LIST, buildTrack, newRace, stepRace, progressOf, fmtTime, ordinal, VERSION } from "/v3/assets/js/eastkart-rules.js?v=1";
+import { KART, ITEMS, TRACKS, TRACK_LIST, buildTrack, newRace, stepRace, progressOf, fmtTime, ordinal, VERSION } from "/v3/assets/js/eastkart-rules.js?v=2";
 
 const $ = (id) => document.getElementById(id), clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -18,7 +18,7 @@ function audioOn() { if (AC) return; try { AC = new (window.AudioContext || wind
 function engine(speed, throttle, on) { if (!eng) return; const t = AC.currentTime; eng.frequency.setTargetAtTime(55 + Math.abs(speed) * 5.5 + (throttle ? 12 : 0), t, 0.05); engGain.gain.setTargetAtTime(on ? (0.035 + Math.abs(speed) / KART.MAX * 0.05) * vol : 0, t, 0.08); }
 function tone(f, to, dur, type = "square", g = 0.12) { if (!AC) return; const o = AC.createOscillator(), a = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, AC.currentTime); if (to) o.frequency.exponentialRampToValueAtTime(to, AC.currentTime + dur); a.gain.setValueAtTime(g * vol, AC.currentTime); a.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + dur); o.connect(a); a.connect(AC.destination); o.start(); o.stop(AC.currentTime + dur); }
 function noise(dur, g = 0.2, lp = 2000) { if (!AC) return; const n = AC.sampleRate * dur, b = AC.createBuffer(1, n, AC.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n); const s = AC.createBufferSource(); s.buffer = b; const f = AC.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = lp; const a = AC.createGain(); a.gain.value = g * vol; s.connect(f); f.connect(a); a.connect(AC.destination); s.start(); }
-const SFX = { count: () => tone(440, 0, 0.12), go: () => tone(880, 1200, 0.3), item: () => tone(600, 1200, 0.15, "triangle"), boost: () => { noise(0.5, 0.25, 3000); tone(200, 900, 0.4, "sawtooth", 0.08); }, spin: () => { noise(0.3, 0.3, 800); tone(300, 80, 0.4, "square", 0.1); }, bump: () => noise(0.12, 0.2, 600), shell: () => tone(900, 300, 0.25, "sawtooth", 0.08), banana: () => tone(500, 250, 0.2, "triangle", 0.08), lap: () => { tone(660, 0, 0.1); setTimeout(() => tone(990, 0, 0.15), 110); }, finish: () => { tone(523, 0, 0.15); setTimeout(() => tone(659, 0, 0.15), 150); setTimeout(() => tone(784, 0, 0.3), 300); }, drift: () => noise(0.15, 0.08, 1200) };
+const SFX = { count: () => tone(440, 0, 0.12), go: () => tone(880, 1200, 0.3), item: () => tone(600, 1200, 0.15, "triangle"), boost: () => { noise(0.5, 0.25, 3000); tone(200, 900, 0.4, "sawtooth", 0.08); }, spin: () => { noise(0.3, 0.3, 800); tone(300, 80, 0.4, "square", 0.1); }, bump: () => noise(0.12, 0.2, 600), hail: () => { noise(0.25, 0.15, 2500); tone(700, 350, 0.3, "sawtooth", 0.07); }, slap: () => { noise(0.08, 0.3, 1500); tone(1200, 400, 0.12, "square", 0.08); }, bath: () => { noise(0.35, 0.22, 900); tone(400, 150, 0.3, "triangle", 0.08); }, flag: () => { tone(1500, 1500, 0.08, "square", 0.1); setTimeout(() => tone(1500, 1500, 0.08, "square", 0.1), 120); setTimeout(() => tone(1500, 1500, 0.08, "square", 0.1), 240); }, shield: () => tone(300, 700, 0.3, "triangle", 0.08), blocked: () => { noise(0.2, 0.3, 700); tone(220, 110, 0.3, "square", 0.1); }, lap: () => { tone(660, 0, 0.1); setTimeout(() => tone(990, 0, 0.15), 110); }, finish: () => { tone(523, 0, 0.15); setTimeout(() => tone(659, 0, 0.15), 150); setTimeout(() => tone(784, 0, 0.3), 300); }, drift: () => noise(0.15, 0.08, 1200) };
 
 /* ---------------------------------------------------------------- three: scene, textures, meshes */
 const canvas = $("c"), renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
@@ -77,19 +77,20 @@ function kartMesh(k) {
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.22, 1.2, 8), new THREE.MeshBasicMaterial({ color: 0xff8a1c, transparent: true, opacity: 0.9 })); flame.rotation.x = Math.PI / 2; flame.position.set(0, 0.5, -1.9); flame.visible = false; g.add(flame);
   const shadow = new THREE.Mesh(new THREE.CircleGeometry(1.3, 16), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.35 })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = 0.03; g.add(shadow);
   const c = document.createElement("canvas"); c.width = 256; c.height = 64; const x2 = c.getContext("2d"); x2.textAlign = "center"; x2.font = "800 30px Rajdhani, sans-serif"; x2.lineWidth = 5; x2.strokeStyle = "#000"; x2.strokeText(k.name, 128, 40); x2.fillStyle = k.bot ? "#cfd5de" : "#ffd23f"; x2.fillText(k.name, 128, 40);
-  const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); tag.scale.set(3.2, 0.8, 1); tag.position.y = 2.3; g.add(tag);
+  const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); tag.scale.set(2.2, 0.55, 1); tag.position.y = 2.2; g.add(tag);
   scene.add(g); return { g, body, wheels, flame, tag };
 }
-const shellGeo = new THREE.SphereGeometry(0.45, 12, 10), shellMat = M(0x2fbf5a, 0.5), bananaGeo = new THREE.ConeGeometry(0.35, 0.8, 6), bananaMat = M(0xffe135, 0.5);
+const ballGeo = new THREE.SphereGeometry(0.5, 12, 10), ballMat = M(0x8a4b22, 0.6), puckGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.18, 14), puckMat = M(0x111318, 0.4, 0.3), puddleGeo = new THREE.CircleGeometry(1.5, 18), puddleMat = new THREE.MeshStandardMaterial({ color: 0xff8a1c, roughness: 0.2, metalness: 0.1, transparent: true, opacity: 0.85 }), flagGeo = new THREE.BoxGeometry(0.9, 0.6, 0.06), flagMat = M(0xffd23f, 0.6), shieldGeo = new THREE.SphereGeometry(2.1, 16, 12), shieldMat = new THREE.MeshBasicMaterial({ color: 0x3ad5ff, transparent: true, opacity: 0.22, depthWrite: false });
+function shotMesh(sh) { if (sh.kind === "hail") { const m = new THREE.Mesh(ballGeo, ballMat); m.scale.set(0.75, 0.75, 1.25); const lace = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.5), M(0xffffff, 0.8)); lace.position.y = 0.42; m.add(lace); return m; } if (sh.kind === "slap") return new THREE.Mesh(puckGeo, puckMat); const g = new THREE.Group(); const f = new THREE.Mesh(flagGeo, flagMat); f.position.set(0.45, 0.3, 0); g.add(f); const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.2, 6), M(0xf4f4f4, 0.6)); g.add(pole); return g; }
 
 /* ---------------------------------------------------------------- the race on the page */
 let race = null, mode = "race", trackKey = TRACK_LIST[0], meshes = new Map(), fx = [], state = "menu", tab = "play", acc = 0, last = 0, drifting = false;
-let shellMeshes = new Map(), bananaMeshes = new Map();
+let shotMeshes = new Map(), puddleMeshes = new Map();
 const keys = {};
 addEventListener("keydown", (e) => { if (e.repeat) return; keys[e.code] = true; if (e.code === "Escape") { if (state === "race") showMenu("play"); else if (state === "paused") resumeGame(); } if (e.code === "KeyR" && state === "race") resetKart(); if (["Space", "ArrowUp", "ArrowDown"].includes(e.code)) e.preventDefault(); audioOn(); });
 addEventListener("keyup", (e) => { keys[e.code] = false; });
 addEventListener("blur", () => { for (const k in keys) keys[k] = false; });
-const inputFor = () => ({ accel: Boolean(keys.KeyW || keys.ArrowUp), brake: Boolean(keys.KeyS || keys.ArrowDown), steer: (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0), drift: Boolean(keys.Space), use: Boolean(keys.ShiftLeft || keys.ShiftRight || keys.KeyE) });
+const inputFor = () => ({ accel: Boolean(keys.KeyW || keys.ArrowUp), brake: Boolean(keys.KeyS || keys.ArrowDown), steer: (keys.KeyA || keys.ArrowLeft ? 1 : 0) - (keys.KeyD || keys.ArrowRight ? 1 : 0), drift: Boolean(keys.Space), use: Boolean(keys.ShiftLeft || keys.ShiftRight || keys.KeyE) });
 const me = () => race?.karts[0];
 function resetKart() { const k = me(); if (!k) return; const q = race.track.pts[k.i]; k.p.x = q.x; k.p.z = q.z; k.yaw = k.head = Math.atan2(q.tx, q.tz); k.speed = 0; k.spin = 0; k.drift = 0; }
 
@@ -98,7 +99,7 @@ function startRace() {
   race = newRace(trackKey, name, mode === "tt" ? 0 : KART.PLAYERS - 1);
   buildTrackScene(race.track);
   for (const [, m] of meshes) scene.remove(m.g); meshes = new Map(); for (const k of race.karts) meshes.set(k, kartMesh(k));
-  for (const [, m] of shellMeshes) scene.remove(m); shellMeshes = new Map(); for (const [, m] of bananaMeshes) scene.remove(m); bananaMeshes = new Map();
+  for (const [, m] of shotMeshes) scene.remove(m); shotMeshes = new Map(); for (const [, m] of puddleMeshes) scene.remove(m); puddleMeshes = new Map();
   if (ghostMesh) { scene.remove(ghostMesh.g); ghostMesh = null; }
   ghost.load(); if (mode === "tt" && ghost.trail) { ghostMesh = kartMesh({ name: "your ghost", bot: true, color: 0x6ad0ff }); ghostMesh.g.traverse((o) => { if (o.material && o.material.transparent !== undefined) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = 0.35; o.material.depthWrite = false; } }); }
   $("feed").innerHTML = ""; $("over").hidden = true; $("hint").hidden = false; state = "race"; last = performance.now(); acc = 0;
@@ -112,9 +113,13 @@ function onEvent(e) {
   switch (e.type) {
     case "go": $("count").textContent = "GO!"; $("count").classList.add("go"); $("count").hidden = false; SFX.go(); setTimeout(() => { $("count").hidden = true; $("count").classList.remove("go"); }, 700); $("hint").hidden = true; break;
     case "item": if (mine) { SFX.item(); $("hudItem").classList.add("on"); } break;
-    case "use": if (mine) $("hudItem").classList.remove("on"); if (e.item === "shell") SFX.shell(); if (e.item === "banana" && mine) SFX.banana(); break;
+    case "use": if (mine) $("hudItem").classList.remove("on"); break;
+    case "shot": if (e.kind === "hail") { SFX.hail(); if (mine) say("HAIL MARY", e.target ? `at ${e.target.name}` : "into the open field"); else if (e.target === me()) feed(`${esc(e.k.name)} threw a Hail Mary at you`, "bad"); } else if (e.kind === "slap") { if (mine || Math.random() < 0.5) SFX.slap(); if (mine) say("SLAPSHOT"); } else if (e.kind === "flag") { SFX.flag(); if (mine) say("FLAG ON THE PLAY", `on ${e.target?.name || "the leader"}`); else if (e.target === me()) { say("FLAG ON THE PLAY", "on you"); feed(`${esc(e.k.name)} threw the flag at you`, "bad"); } } break;
+    case "puddle": if (mine) { SFX.bath(); say("GATORADE BATH", "dumped behind you"); } break;
+    case "shield": if (mine) { SFX.shield(); say("O-LINE", "seven seconds of cover"); } break;
+    case "blocked": if (mine) { SFX.blocked(); say("O-LINE HELD", `the ${ITEMS[e.why]?.n || e.why} bounced off`); } else feed(`${esc(e.k.name)}'s O-Line held`); break;
     case "boost": if (mine) { SFX.boost(); if (e.from === "drift") say("DRIFT BOOST", `${e.t.toFixed(1)} s`); } break;
-    case "spin": if (mine) { SFX.spin(); feed(`You hit a ${e.why}`, "bad"); } else if (e.why === "shell") feed(`${esc(e.k.name)} took a shell`); break;
+    case "spin": { const what = { hail: "took a Hail Mary", slap: "took a slapshot", bath: "got the Gatorade bath", flag: "flag on the play" }[e.why] || e.why; if (mine) { SFX.spin(); say({ hail: "SACKED", slap: "SLAPSHOT", bath: "GATORADE BATH", flag: "FLAG ON THE PLAY" }[e.why] || "SPUN OUT", e.by ? `by ${e.by.name}` : ""); } else { feed(`${esc(e.k.name)} ${what}${e.by === me() ? " · yours" : ""}`, e.by === me() ? "me" : ""); if (e.by === me()) SFX.spin(); } break; }
     case "bump": if (e.a === me() || e.b === me()) SFX.bump(); break;
     case "wall": if (mine) SFX.bump(); break;
     case "drift": if (mine) { drifting = e.on; if (e.on) SFX.drift(); } break;
@@ -157,11 +162,12 @@ function draw(dt) {
   // sparks in a drift
   if (k.drift && Math.random() < 0.7) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), new THREE.MeshBasicMaterial({ color: Math.random() < 0.5 ? 0xffd23f : 0xff8a1c })); const side = -k.drift; s.position.set(k.p.x + Math.cos(k.yaw) * side * 0.9 - Math.sin(k.yaw) * 0.8, 0.2, k.p.z - Math.sin(k.yaw) * side * 0.9 - Math.cos(k.yaw) * 0.8); s.userData = { v: new THREE.Vector3((Math.random() - 0.5) * 6, 2 + Math.random() * 3, (Math.random() - 0.5) * 6), life: 0.5 }; scene.add(s); fx.push(s); }
   for (let i = fx.length - 1; i >= 0; i--) { const s = fx[i]; s.userData.life -= dt; s.position.addScaledVector(s.userData.v, dt); s.userData.v.y -= 12 * dt; if (s.userData.life <= 0) { scene.remove(s); s.geometry.dispose(); fx.splice(i, 1); } }
-  // shells and bananas
-  for (const sh of race.shells) { if (!shellMeshes.has(sh)) { const m = new THREE.Mesh(shellGeo, shellMat); scene.add(m); shellMeshes.set(sh, m); } const m = shellMeshes.get(sh); m.position.set(sh.x, 0.5, sh.z); m.rotation.y += 12 * dt; }
-  for (const [sh, m] of shellMeshes) if (!race.shells.includes(sh)) { scene.remove(m); shellMeshes.delete(sh); }
-  for (const b of race.bananas) { if (!bananaMeshes.has(b)) { const m = new THREE.Mesh(bananaGeo, bananaMat); m.position.set(b.x, 0.4, b.z); m.rotation.z = 0.5; scene.add(m); bananaMeshes.set(b, m); } }
-  for (const [b, m] of bananaMeshes) if (!race.bananas.includes(b)) { scene.remove(m); bananaMeshes.delete(b); }
+  // the shots, the puddles, the O-Lines
+  for (const sh of race.shots) { if (!shotMeshes.has(sh)) { const m = shotMesh(sh); scene.add(m); shotMeshes.set(sh, m); } const m = shotMeshes.get(sh); if (sh.kind === "flag") { m.position.set(sh.x, sh.y || 3, sh.z); m.rotation.y += 6 * dt; } else { m.position.set(sh.x, sh.kind === "slap" ? 0.15 : 0.9 + Math.abs(Math.sin(sh.t * 6)) * 0.8, sh.z); if (sh.kind === "hail") { const q = race.track.pts[Math.floor(sh.i) % race.track.N]; m.rotation.y = Math.atan2(q.tx, q.tz); m.rotation.x += 9 * dt; } else m.rotation.y += 14 * dt; } }
+  for (const [sh, m] of shotMeshes) if (!race.shots.includes(sh)) { scene.remove(m); shotMeshes.delete(sh); }
+  for (const b of race.puddles) { if (!puddleMeshes.has(b)) { const m = new THREE.Mesh(puddleGeo, puddleMat); m.rotation.x = -Math.PI / 2; m.position.set(b.x, 0.04, b.z); scene.add(m); puddleMeshes.set(b, m); } }
+  for (const [b, m] of puddleMeshes) if (!race.puddles.includes(b)) { scene.remove(m); puddleMeshes.delete(b); }
+  for (const kk of race.karts) { const m = meshes.get(kk); if (!m.shield) { m.shield = new THREE.Mesh(shieldGeo, shieldMat); m.shield.position.y = 0.9; m.g.add(m.shield); } m.shield.visible = kk.shield > 0; if (m.shield.visible) m.shield.scale.setScalar(1 + Math.sin(performance.now() / 120) * 0.04); }
   for (const { m, it } of itemMeshes) { m.visible = it.t <= 0; m.rotation.y += 1.6 * dt; m.rotation.x += 0.9 * dt; m.position.y = 1.1 + Math.sin(performance.now() / 400 + it.i) * 0.15; }
   ghost.draw();
   // the chase camera: behind the heading, a little higher and wider with speed
@@ -171,7 +177,7 @@ function draw(dt) {
   camera.fov += ((68 + sp * 10 + (k.boost > 0 ? 8 : 0)) - camera.fov) * Math.min(1, 6 * dt); camera.updateProjectionMatrix();
   // HUD
   $("hudLap").textContent = `LAP ${Math.min(k.lap + 1, t.laps)}/${t.laps}`; $("hudT").textContent = fmtTime(race.state === "count" ? 0 : race.t - race.started); $("hudPos").textContent = mode === "tt" ? (k.lapStart ? fmtTime(race.t - k.lapStart) : "") : ordinal(k.place || race.karts.length);
-  $("hudItemIc").textContent = k.item ? ITEMS[k.item].icon : ""; $("hudSpeed").style.width = `${Math.round(clamp(Math.abs(k.speed) / (KART.MAX * 1.3), 0, 1) * 100)}%`; $("hudSpeedN").textContent = `${Math.round(Math.abs(k.speed) * 3.6)} km/h`;
+  $("hudItemIc").textContent = k.item ? ITEMS[k.item].icon : ""; $("hudItemN").textContent = k.item ? ITEMS[k.item].n : ""; $("hudSpeed").style.width = `${Math.round(clamp(Math.abs(k.speed) / (KART.MAX * 1.3), 0, 1) * 100)}%`; $("hudSpeedN").textContent = `${Math.round(Math.abs(k.speed) * 3.6)} km/h`;
   engine(k.speed, inputFor().accel, true);
   drawMap();
 }
@@ -198,7 +204,8 @@ function drawMenu() {
   } else if (tab === "times") {
     P.innerHTML = `<h1><small>kept in this browser</small>Your times</h1><div class="res"><table>${TRACK_LIST.map((k) => { const b = best[k] || {}; return `<tr><td>${esc(TRACKS[k].name)}</td><td class="n">best lap ${fmtTime(b.lap)}</td><td class="n">best race ${fmtTime(b.total)}</td><td class="n">${b.wins || 0} wins</td></tr>`; }).join("")}</table></div><p>Online races with everyone, boards and Brass come with the room server, the way CS67's did.</p>`;
   } else if (tab === "how") {
-    P.innerHTML = `<h1><small>the wheel</small>How to drive</h1><div class="keys"><div><b>W · ↑</b>Accelerate. Hold it; there is no gear to find.</div><div><b>A D · ← →</b>Steer. The faster you go, the more a corner costs — unless you drift.</div><div><b>S · ↓</b>Brake, then reverse.</div><div><b>SPACE</b>Drift: hold it with the wheel turned. The kart slides, turns harder and charges; let go after a second for a boost, longer for a bigger one.</div><div><b>SHIFT · E</b>Use the item: 🍄 boost now, 🐢 a shell down the road at whoever is ahead, 🍌 a banana behind you.</div><div><b>R</b>Back onto the road, pointing the right way, if you are stuck.</div><div><b>ESC</b>This menu.</div><div><b>The boxes</b>What a box gives depends on where you are: the leader mostly gets bananas, the back mostly gets boosts.</div></div>`;
+    P.innerHTML = `<h1><small>the wheel</small>How to drive</h1><div class="keys"><div><b>W · ↑</b>Accelerate. Hold it; there is no gear to find.</div><div><b>A D · ← →</b>Steer. The faster you go, the more a corner costs — unless you drift.</div><div><b>S · ↓</b>Brake, then reverse.</div><div><b>SPACE</b>Drift: hold it with the wheel turned. The kart slides, turns harder and charges; let go after a second for a boost, longer for a bigger one.</div><div><b>SHIFT · E</b>Use what you picked up from a box.</div><div><b>R</b>Back onto the road, pointing the right way, if you are stuck.</div><div><b>ESC</b>This menu.</div><div><b>The boxes</b>What a box gives depends on where you are: the leader mostly gets the bath, the back gets the drill and the flag.</div></div>
+      <p class="eyebrow">The plays</p><div class="keys">${Object.values(ITEMS).map((it) => `<div><b>${it.icon} ${esc(it.n)}</b>${esc(it.line)}</div>`).join("")}</div>`;
   }
 }
 function showResults() {

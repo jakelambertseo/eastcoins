@@ -4,7 +4,7 @@
    IMPORT-FREE, like blockshot-rules.js: the page runs it for practice and a room server can run the same file later. Everything a race
    is, lives here: the kart (an arcade kart — speed, heading, a drift that charges a boost), the track (a closed spline sampled into
    points with a tangent and a normal; laps are counted by passing SECTORS in order, so a cut never counts), the items (a box every few
-   hundred metres; what you get depends on where you are in the race), the shells and bananas, and the bots (they chase a point ahead on
+   hundred metres; what you get depends on where you are in the race), the shots and the puddles, and the bots (they chase a point ahead on
    the centreline in a lane of their own, drift the corners, use what they pick up, and rubber-band a little toward the person).
    Nothing here draws or plays a sound. `stepRace(race, inputs, dt, rand)` moves the whole race one step and pushes events. */
 
@@ -13,8 +13,17 @@ export const KART = {
   ACC: 15, MAX: 23, REV_MAX: 7, COAST: 0.9, TURN: 2.4, GRIP_AT: 7, DRIFT_TURN: 1.45, DRIFT_SLIP: 2.8, SLIP: 9,
   DRIFT_MIN_S: 0.8, DRIFT_MAX_S: 2.2, BOOST_MUL: 1.3, SPIN_S: 1.1, GRASS_MUL: 0.55, WALL: 8, R: 1.15, STEP: 1 / 60, LAPS: 3, PLAYERS: 8
 };
-export const ITEMS = { boost: { n: "Boost", icon: "🍄" }, shell: { n: "Shell", icon: "🐢" }, banana: { n: "Banana", icon: "🍌" } };
-export const ITEM_RESPAWN_S = 5, SHELL_SPEED = 42, SHELL_LIFE_S = 7, PICKUP_R = 1.7, HIT_R = 1.5;
+/* THE POWER-UPS (2026-10-12, the owner: "give it some unique power ups, and make them sports related … it needs some character"). Six,
+   each a play from a sport, dealt by where you are in the race: the leader gets what slows them little, the back gets what catches up. */
+export const ITEMS = {
+  drill: { n: "Two-Minute Drill", icon: "⏱️", line: "Hurry-up offense: a burst of speed for a second and a half." },
+  hail: { n: "Hail Mary", icon: "🏈", line: "A football thrown down the field. It finds the kart ahead of you and spins it." },
+  slap: { n: "Slapshot", icon: "🏒", line: "A puck fired straight down your lane, fast. It hits whatever is in it." },
+  bath: { n: "Gatorade Bath", icon: "🪣", line: "A cooler dumped behind you. Whoever drives through the puddle spins." },
+  flag: { n: "Penalty Flag", icon: "🚩", line: "Flag on the play: it chases the leader and spins them. Never dealt to the leader." },
+  oline: { n: "O-Line", icon: "🧱", line: "A wall of linemen round your kart for seven seconds. It blocks the next hit." }
+};
+export const ITEM_RESPAWN_S = 5, SHOT = { hail: { speed: 44, life: 7 }, slap: { speed: 62, life: 4 }, flag: { speed: 50, life: 8 } }, SHIELD_S = 7, PICKUP_R = 1.7, HIT_R = 1.5;
 export const BOT_NAMES = ["Bot Dude #1", "Bot Bro #2", "Robo Ray", "Beep Boop", "NPC Nate", "Bot Betty", "Tin Man", "Autobean", "Clanker", "Mr Roboto"];
 export const KART_COLORS = [0xffd84a, 0x3ad5ff, 0xff5a8a, 0x5df28a, 0xff9f1c, 0xb06cff, 0xf2f4f8, 0xff3b4a];
 
@@ -66,12 +75,12 @@ export const progressOf = (track, k) => k.lap * track.N + k.i + (k.alongF || 0);
 /* ---------------------------------------------------------------- karts */
 export function newKart(i, name, bot, color) {
   return { i, name, bot, color, p: { x: 0, z: 0 }, yaw: 0, head: 0, speed: 0, steer: 0, drift: 0, driftT: 0, boost: 0, spin: 0, item: null, itemT: 0, i0: 0, lap: 0, sector: 0, cpNext: 1, alongF: 0,
-    lane: 0, laneT: 0, skill: 1, lapStart: 0, lapTimes: [], bestLap: 0, total: 0, finished: 0, place: 0, grass: false, lastHit: -9, onItem: -1 };
+    lane: 0, laneT: 0, skill: 1, shield: 0, lapStart: 0, lapTimes: [], bestLap: 0, total: 0, finished: 0, place: 0, grass: false, lastHit: -9, onItem: -1 };
 }
 /** Put the field on the grid: two abreast, the leader of the grid at the back of the start line, 4 m between rows. */
 export function placeOnGrid(track, karts) {
   karts.forEach((k, n) => { const row = Math.floor(n / 2), side = n % 2 ? 1 : -1, i = ((track.N - 6 - row * 5) % track.N + track.N) % track.N, q = track.pts[i];
-    k.p.x = q.x + q.nx * side * 2.4; k.p.z = q.z + q.nz * side * 2.4; k.yaw = Math.atan2(q.tx, q.tz); k.head = k.yaw; k.speed = 0; k.i = i; k.i0 = i; k.lap = 0; k.sector = Math.floor(i / track.sector); k.cpNext = 0; k.item = null; k.boost = 0; k.spin = 0; k.drift = 0; k.driftT = 0; k.finished = 0; k.lapTimes = []; k.bestLap = 0; k.total = 0; k.lane = side * 2; });
+    k.p.x = q.x + q.nx * side * 2.4; k.p.z = q.z + q.nz * side * 2.4; k.yaw = Math.atan2(q.tx, q.tz); k.head = k.yaw; k.speed = 0; k.i = i; k.i0 = i; k.lap = 0; k.sector = Math.floor(i / track.sector); k.cpNext = 0; k.item = null; k.boost = 0; k.spin = 0; k.shield = 0; k.drift = 0; k.driftT = 0; k.finished = 0; k.lapTimes = []; k.bestLap = 0; k.total = 0; k.lane = side * 2; });
 }
 
 /** One kart, one step. `inp` = {accel, brake, steer (-1..1), drift, use}. Returns nothing; pushes to `events`. */
@@ -117,25 +126,32 @@ export function stepKart(track, k, inp, dt, now, events) {
 export function rollItem(place, n, rand) {
   const f = n > 1 ? (place - 1) / (n - 1) : 0;   // 0 leader .. 1 last
   const r = rand();
-  if (f < 0.25) return r < 0.6 ? "banana" : r < 0.85 ? "shell" : "boost";
-  if (f < 0.65) return r < 0.4 ? "shell" : r < 0.75 ? "boost" : "banana";
-  return r < 0.65 ? "boost" : "shell";
+  if (place === 1) return r < 0.45 ? "bath" : r < 0.7 ? "slap" : r < 0.9 ? "oline" : "drill";
+  if (f < 0.6) return r < 0.3 ? "hail" : r < 0.5 ? "slap" : r < 0.7 ? "drill" : r < 0.85 ? "bath" : "oline";
+  return r < 0.4 ? "drill" : r < 0.65 ? "hail" : r < 0.9 ? "flag" : "oline";
 }
 export function takeItems(race, k, now, rand, events) {
   if (k.item || k.finished) return;
   for (const it of race.track.items) { if (it.t > 0) continue; const q = race.track.pts[it.i], x = q.x + q.nx * it.off, z = q.z + q.nz * it.off; if ((k.p.x - x) ** 2 + (k.p.z - z) ** 2 < PICKUP_R * PICKUP_R) { it.t = ITEM_RESPAWN_S; k.item = rollItem(k.place || 1, race.karts.length, rand); events?.push({ type: "item", k, item: k.item }); return; } }
 }
-/** Use what you hold: a boost now, a shell down the track ahead, a banana dropped behind. */
+/** Use what you hold. Shots live in `race.shots` (kind hail | slap | flag), puddles in `race.puddles`. */
 export function useItem(race, k, now, events) {
   if (!k.item || k.spin > 0 || k.finished) return false;
-  const item = k.item; k.item = null;
-  if (item === "boost") { k.boost = Math.max(k.boost, 1.5); events?.push({ type: "boost", k, from: "item", t: 1.5 }); }
-  else if (item === "shell") { race.shells.push({ i: k.i + 3, off: lateral(race.track, k.p, k.i) * 0.5, by: k.i, owner: k, t: SHELL_LIFE_S, x: k.p.x, z: k.p.z }); events?.push({ type: "shell", k }); }
-  else if (item === "banana") { race.bananas.push({ x: k.p.x - Math.sin(k.head) * 2.6, z: k.p.z - Math.cos(k.head) * 2.6, by: k.i }); events?.push({ type: "banana", k }); }
+  const item = k.item; k.item = null; const t = race.track;
+  if (item === "drill") { k.boost = Math.max(k.boost, 1.5); events?.push({ type: "boost", k, from: "item", t: 1.5 }); }
+  else if (item === "hail") { const me = progressOf(t, k); let target = null, bd = Infinity; for (const o of race.karts) { if (o === k || o.finished) continue; const d = progressOf(t, o) - me; if (d > 0 && d < 90 && d < bd) { bd = d; target = o; } } race.shots.push({ kind: "hail", i: k.i + 3, off: lateral(t, k.p, k.i), owner: k, target, t: SHOT.hail.life, x: k.p.x, z: k.p.z }); events?.push({ type: "shot", k, kind: "hail", target }); }
+  else if (item === "slap") { race.shots.push({ kind: "slap", i: k.i + 3, off: lateral(t, k.p, k.i), owner: k, target: null, t: SHOT.slap.life, x: k.p.x, z: k.p.z }); events?.push({ type: "shot", k, kind: "slap" }); }
+  else if (item === "bath") { race.puddles.push({ x: k.p.x - Math.sin(k.head) * 2.8, z: k.p.z - Math.cos(k.head) * 2.8, by: k.i }); events?.push({ type: "puddle", k }); }
+  else if (item === "flag") { const leader = race.karts.filter((o) => o !== k && !o.finished).sort((a, b) => a.place - b.place)[0]; if (leader) { race.shots.push({ kind: "flag", owner: k, target: leader, t: SHOT.flag.life, x: k.p.x, z: k.p.z + 0, y: 3 }); events?.push({ type: "shot", k, kind: "flag", target: leader }); } }
+  else if (item === "oline") { k.shield = SHIELD_S; events?.push({ type: "shield", k }); }
   events?.push({ type: "use", k, item });
   return true;
 }
-function spinOut(k, now, events, why) { if (k.spin > 0 || k.finished) return; k.spin = KART.SPIN_S; k.drift = 0; k.driftT = 0; k.boost = 0; k.item = k.item && why === "banana" ? k.item : k.item; events?.push({ type: "spin", k, why }); }
+function spinOut(k, now, events, why, by) {
+  if (k.spin > 0 || k.finished) return false;
+  if (k.shield > 0) { k.shield = 0; events?.push({ type: "blocked", k, why, by }); return true; }
+  k.spin = KART.SPIN_S; k.drift = 0; k.driftT = 0; k.boost = 0; events?.push({ type: "spin", k, why, by }); return true;
+}
 
 /* ---------------------------------------------------------------- bots */
 /** A bot chases a point a little way down the centreline, in a lane of its own, and uses what it holds when it makes sense. */
@@ -144,13 +160,13 @@ export function botInput(race, k, dt, rand) {
   k.laneT -= dt; if (k.laneT <= 0) { k.laneT = 3 + rand() * 4; k.lane = (rand() - 0.5) * (t.width - 5); }
   const look = Math.round(6 + Math.abs(k.speed) * 0.55), ti = (k.i + look) % N, q = t.pts[ti];
   // dodge a banana in the lane ahead
-  let lane = k.lane; for (const b of race.bananas) { const bi = nearest(t, b, k.i); const ahead = ((bi - k.i) % N + N) % N; if (ahead < 25) { const boff = lateral(t, b, bi); if (Math.abs(boff - lane) < 2.2) lane = boff + (boff > 0 ? -3 : 3); } }
+  let lane = k.lane; for (const b of race.puddles) { const bi = nearest(t, b, k.i); const ahead = ((bi - k.i) % N + N) % N; if (ahead < 25) { const boff = lateral(t, b, bi); if (Math.abs(boff - lane) < 2.2) lane = boff + (boff > 0 ? -3 : 3); } }
   const tx = q.x + q.nx * lane, tz = q.z + q.nz * lane;
   const want = Math.atan2(tx - k.p.x, tz - k.p.z), diff = wrapAngle(want - k.yaw);
   const steer = clamp(diff * 2.2, -1, 1), sharp = Math.abs(diff);
   const inp = { accel: true, brake: sharp > 1.25 && k.speed > 14, steer, drift: sharp > 0.32 && k.speed > 11 && !k.grass, use: false };
   if (k.item) { const me = progressOf(t, k); let aheadClose = false, behindClose = false; for (const o of race.karts) { if (o === k) continue; const d = progressOf(t, o) - me; if (d > 0 && d < 30) aheadClose = true; if (d < 0 && d > -14) behindClose = true; }
-    if (k.item === "boost") inp.use = sharp < 0.25; else if (k.item === "shell") inp.use = aheadClose || rand() < 0.002; else inp.use = behindClose || rand() < 0.003; }
+    if (k.item === "drill") inp.use = sharp < 0.25; else if (k.item === "hail") inp.use = aheadClose || rand() < 0.002; else if (k.item === "slap") inp.use = (aheadClose && sharp < 0.3) || rand() < 0.002; else if (k.item === "flag") inp.use = k.place > 1 || rand() < 0.01; else if (k.item === "oline") inp.use = behindClose || rand() < 0.003; else inp.use = behindClose || rand() < 0.003; }
   return inp;
 }
 
@@ -159,7 +175,7 @@ export function newRace(trackKey, humanName, bots = KART.PLAYERS - 1, rand = Mat
   const track = buildTrack(trackKey), karts = [newKart(0, humanName, false, KART_COLORS[0])];
   const names = BOT_NAMES.slice(); for (let b = 1; b <= bots; b++) { const k = newKart(b, names.splice(Math.floor(rand() * names.length), 1)[0], true, KART_COLORS[b % KART_COLORS.length]); k.skill = 0.93 + rand() * 0.06; karts.push(k); }
   placeOnGrid(track, karts);
-  const race = { track, karts, shells: [], bananas: [], t: 0, state: "count", countT: 3.2, started: 0 };
+  const race = { track, karts, shots: [], puddles: [], t: 0, state: "count", countT: 3.2, started: 0 };
   for (const k of karts) k.raceStart = 0;
   return race;
 }
@@ -183,11 +199,15 @@ export function stepRace(race, inputFor, dt, rand, events) {
   }
   // karts push each other apart
   for (let a = 0; a < race.karts.length; a++) for (let b = a + 1; b < race.karts.length; b++) { const A = race.karts[a], B = race.karts[b]; const dx = B.p.x - A.p.x, dz = B.p.z - A.p.z, d = Math.hypot(dx, dz), min = KART.R * 2; if (d < min && d > 0.001) { const push = (min - d) / 2, ux = dx / d, uz = dz / d; A.p.x -= ux * push; A.p.z -= uz * push; B.p.x += ux * push; B.p.z += uz * push; const va = A.speed, vb = B.speed; A.speed = va * 0.85 + vb * 0.1; B.speed = vb * 0.85 + va * 0.1; if (now - A.lastHit > 0.4 && now - B.lastHit > 0.4) { A.lastHit = B.lastHit = now; events?.push({ type: "bump", a: A, b: B }); } } }
-  // shells run down the track; bananas wait
-  for (let s = race.shells.length - 1; s >= 0; s--) { const sh = race.shells[s]; sh.t -= dt; sh.i += (SHELL_SPEED * dt) * (t.N / t.len); sh.off += (0 - sh.off) * 0.5 * dt; const q = t.pts[Math.floor(sh.i) % t.N]; sh.x = q.x + q.nx * sh.off; sh.z = q.z + q.nz * sh.off; let gone = sh.t <= 0;
-    if (!gone) for (const k of race.karts) { if (k === sh.owner && sh.t > SHELL_LIFE_S - 0.5) continue; if ((k.p.x - sh.x) ** 2 + (k.p.z - sh.z) ** 2 < HIT_R * HIT_R) { spinOut(k, now, events, "shell"); gone = true; break; } }
-    if (gone) race.shells.splice(s, 1); }
-  for (let b = race.bananas.length - 1; b >= 0; b--) { const ba = race.bananas[b]; for (const k of race.karts) { if (k.spin > 0) continue; if ((k.p.x - ba.x) ** 2 + (k.p.z - ba.z) ** 2 < 1.6 * 1.6) { spinOut(k, now, events, "banana"); race.bananas.splice(b, 1); break; } } }
+  // the shots: a Hail Mary and a slapshot run down the track (the football steers into its target's lane), a flag flies straight at the leader; puddles wait
+  for (const k of race.karts) if (k.shield > 0) k.shield -= dt;
+  for (let s = race.shots.length - 1; s >= 0; s--) { const sh = race.shots[s]; sh.t -= dt; let gone = sh.t <= 0;
+    if (sh.kind === "flag") { const tg = sh.target; if (!tg || tg.finished) gone = true; else { const dx = tg.p.x - sh.x, dz = tg.p.z - sh.z, d = Math.hypot(dx, dz) || 1, step = SHOT.flag.speed * dt; if (d <= step + 0.5) { sh.x = tg.p.x; sh.z = tg.p.z; spinOut(tg, now, events, "flag", sh.owner); gone = true; } else { sh.x += dx / d * step; sh.z += dz / d * step; sh.y = 2.5 + Math.min(4, d * 0.15); } } }
+    else { const spd = SHOT[sh.kind].speed; sh.i += (spd * dt) * (t.N / t.len); if (sh.kind === "hail" && sh.target && !sh.target.finished) sh.off += (lateral(t, sh.target.p, sh.target.i) - sh.off) * Math.min(1, 3 * dt); const q = t.pts[Math.floor(sh.i) % t.N]; sh.x = q.x + q.nx * sh.off; sh.z = q.z + q.nz * sh.off;
+      if (Math.abs(sh.off) > t.width / 2 + 1) gone = true;   // a puck into the wall is gone
+      if (!gone) for (const k of race.karts) { if (k === sh.owner && sh.t > SHOT[sh.kind].life - 0.5) continue; if ((k.p.x - sh.x) ** 2 + (k.p.z - sh.z) ** 2 < HIT_R * HIT_R) { spinOut(k, now, events, sh.kind, sh.owner); gone = true; break; } } }
+    if (gone) race.shots.splice(s, 1); }
+  for (let b = race.puddles.length - 1; b >= 0; b--) { const ba = race.puddles[b]; for (const k of race.karts) { if (k.spin > 0 || k.i === ba.by && now - (ba.at || 0) < 0) continue; if ((k.p.x - ba.x) ** 2 + (k.p.z - ba.z) ** 2 < 1.7 * 1.7) { if (spinOut(k, now, events, "bath", null)) race.puddles.splice(b, 1); break; } } }
   for (const it of t.items) if (it.t > 0) it.t -= dt;
   // the race ends when the person has finished and a moment has passed, when everyone has, or thirty seconds after the winner (nobody waits on a kart parked in the grass)
   const first = race.karts.reduce((m, k) => (k.finished && (!m || k.finished < m) ? k.finished : m), 0);
