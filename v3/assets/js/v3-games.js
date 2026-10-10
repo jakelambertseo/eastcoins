@@ -29,11 +29,11 @@
   /* The two big games. CS67's key in /api/games/home is still "blockshot"
      (its files keep that name); the card is CS67 whatever the API calls it. */
   const BIG = {
-    cs67: { title: "CS67", sub: "EastCoin's shooter", icon: "🔫", route: "cs67", art: `/v3/assets/img/games/cs67.webp?v=${ART_V}`, rgb: "26,120,200", ribbon: "Now Open",
+    cs67: { title: "CS67", sub: "EastCoin's shooter", icon: "🔫", route: "cs67", art: `/v3/assets/img/games/cs67.webp?v=${ART_V}`, rgb: "26,120,200", ribbon: "Now Open", spooky: true,   /* (2026-10-11, the owner) the glow, fog and bats moved here from EastScape */
       blurb: "",   /* (2026-10-11, the owner) no hover description */
       feats: [["Fast-paced arena shooting", "against EastCoin members, in a match that never stops"], ["Free-for-all, Gun Game and Bomb 3v3", "with friends, plus Parkour courses against the clock"], ["Spin cases for knife and gun finishes", "with Brass earned every round"], ["Levels, skins and daily challenges", "that follow your Twitch account"]] },
     eastscape: { title: "EastScape", sub: "EastCoin Casino MMO", icon: "🗺️", href: "/eastscape", art: "/v3/assets/img/casino/eastscape.webp?v=5", rgb: "255,122,26",
-      online: "/api/eastscape/online", spooky: true, blurb: "Every casino game, in a world you walk around. Fight, mine, fish and craft for ZCoins.",
+      online: "/api/eastscape/online", blurb: "Every casino game, in a world you walk around. Fight, mine, fish and craft for ZCoins.",
       feats: [["A world you walk around", "with every casino table in it"], ["Fight, mine, fish and craft", "for ZCoins and tickets"], ["Dungeons, raids and world events", "with everyone online at once"], ["Pets, rolled loot and artifacts", "to chase for the long haul"]] }
   };
 
