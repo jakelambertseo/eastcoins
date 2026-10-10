@@ -36,13 +36,13 @@ const wrapAngle = (a) => { while (a > Math.PI) a -= Math.PI * 2; while (a < -Mat
 export const TRACKS = {
   lot: { name: "The Lot Loop", blurb: "The first track: a wide figure-of-eight style loop round the lot with two hairpins and a long back straight.", width: 15, sky: 0x87ceeb, ground: 0x3e8e41,
     pts: [[0, 60], [50, 62], [85, 40], [90, 0], [70, -35], [30, -55], [-20, -58], [-60, -45], [-85, -10], [-80, 30], [-55, 58], [-30, 66]],
-    items: [0.18, 0.43, 0.7, 0.9], laps: 3 },
+    items: [0.18, 0.43, 0.7, 0.9], pads: [0.3, 0.8], laps: 3 },
   docks: { name: "Docks Circuit", blurb: "Tight and twisty between the containers: a chicane, a long sweeper over the quay and a hairpin at the cranes.", width: 13, sky: 0xf4c89a, ground: 0x6b6f78,
     pts: [[0, 50], [40, 52], [60, 30], [45, 8], [70, -10], [80, -40], [50, -62], [10, -50], [-10, -25], [-40, -40], [-75, -30], [-85, 5], [-60, 35], [-30, 25], [-15, 48]],
-    items: [0.15, 0.4, 0.62, 0.85], laps: 3 },
+    items: [0.15, 0.4, 0.62, 0.85], pads: [0.27, 0.74], laps: 3 },
   roofs: { name: "Rooftop Run", blurb: "Up on the Rooftops: long straights across the bridges, a corkscrew round the tower and a blind drop at the end.", width: 12, sky: 0xb0a0d8, ground: 0x4a4458,
     pts: [[0, 70], [60, 70], [95, 40], [95, -20], [60, -60], [10, -70], [-30, -40], [-10, -10], [-50, 10], [-95, -15], [-100, 30], [-60, 65]],
-    items: [0.2, 0.45, 0.65, 0.88], laps: 3 }
+    items: [0.2, 0.45, 0.65, 0.88], pads: [0.33, 0.77], laps: 3 }
 };
 export const TRACK_LIST = ["lot", "docks", "roofs"];
 
@@ -58,7 +58,8 @@ export function buildTrack(key) {
   for (let i = 0; i < N; i++) { const a = pts[(i - 1 + N) % N], b = pts[(i + 1) % N]; let tx = b.x - a.x, tz = b.z - a.z; const l = Math.hypot(tx, tz) || 1; tx /= l; tz /= l; const p = pts[i]; p.tx = tx; p.tz = tz; p.nx = -tz; p.nz = tx; }
   const SECTORS = 12, sector = N / SECTORS;
   const items = def.items.map((f) => [-1, 0, 1].map((lane) => ({ i: Math.round(f * N) % N, off: lane * (def.width / 2 - 2.5), t: 0 }))).flat();
-  return { key, name: def.name, blurb: def.blurb, width: def.width, sky: def.sky, ground: def.ground, laps: def.laps, pts, N, len, SECTORS, sector, items };
+  const pads = (def.pads || []).map((f) => ({ i: Math.round(f * N) % N, off: 0 }));   // (2026-10-12) boost pads: a strip across the middle of the road, a second of boost to whoever drives over it
+  return { key, name: def.name, blurb: def.blurb, width: def.width, sky: def.sky, ground: def.ground, laps: def.laps, pts, N, len, SECTORS, sector, items, pads };
 }
 /** Nearest sample to p, searching near `hint` first (a kart never jumps far in a step). */
 export function nearest(track, p, hint = 0) {
@@ -130,6 +131,13 @@ export function rollItem(place, n, rand) {
   if (f < 0.6) return r < 0.3 ? "hail" : r < 0.5 ? "slap" : r < 0.7 ? "drill" : r < 0.85 ? "bath" : "oline";
   return r < 0.4 ? "drill" : r < 0.65 ? "hail" : r < 0.9 ? "flag" : "oline";
 }
+export const PAD = { w: 4.5, len: 2.6, boost: 1.0, cd: 1.5 };
+/** A boost pad: cross its strip (PAD.w wide across the road, PAD.len along it) and the kart gets PAD.boost seconds, once per PAD.cd. */
+export function takePads(race, k, now, events) {
+  if (k.finished) return; k.padCd = Math.max(0, (k.padCd || 0) - KART.STEP);
+  if (k.padCd > 0) return;
+  for (const pd of race.track.pads) { const q = race.track.pts[pd.i], dx = k.p.x - q.x, dz = k.p.z - q.z, along = dx * q.tx + dz * q.tz, across = dx * q.nx + dz * q.nz; if (Math.abs(along) < PAD.len / 2 && Math.abs(across - pd.off) < PAD.w / 2) { k.boost = Math.max(k.boost, PAD.boost); k.padCd = PAD.cd; events?.push({ type: "boost", k, from: "pad", t: PAD.boost }); return; } }
+}
 export function takeItems(race, k, now, rand, events) {
   if (k.item || k.finished) return;
   for (const it of race.track.items) { if (it.t > 0) continue; const q = race.track.pts[it.i], x = q.x + q.nx * it.off, z = q.z + q.nz * it.off; if ((k.p.x - x) ** 2 + (k.p.z - z) ** 2 < PICKUP_R * PICKUP_R) { it.t = ITEM_RESPAWN_S; k.item = rollItem(k.place || 1, race.karts.length, rand); events?.push({ type: "item", k, item: k.item }); return; } }
@@ -195,7 +203,7 @@ export function stepRace(race, inputFor, dt, rand, events) {
     else inp = inputFor(k);
     if (inp.use) useItem(race, k, now, events);
     stepKart(t, k, inp, dt, now, events);
-    takeItems(race, k, now, rand, events);
+    takeItems(race, k, now, rand, events); takePads(race, k, now, events);
   }
   // karts push each other apart
   for (let a = 0; a < race.karts.length; a++) for (let b = a + 1; b < race.karts.length; b++) { const A = race.karts[a], B = race.karts[b]; const dx = B.p.x - A.p.x, dz = B.p.z - A.p.z, d = Math.hypot(dx, dz), min = KART.R * 2; if (d < min && d > 0.001) { const push = (min - d) / 2, ux = dx / d, uz = dz / d; A.p.x -= ux * push; A.p.z -= uz * push; B.p.x += ux * push; B.p.z += uz * push; const va = A.speed, vb = B.speed; A.speed = va * 0.85 + vb * 0.1; B.speed = vb * 0.85 + va * 0.1; if (now - A.lastHit > 0.4 && now - B.lastHit > 0.4) { A.lastHit = B.lastHit = now; events?.push({ type: "bump", a: A, b: B }); } } }
