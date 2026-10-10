@@ -49,7 +49,7 @@
   // had a chance to register. An unknown name still falls back.
   // "game" is the /g/<slug> page chat links to. It is a route, not a nav
   // item: the only way in is a link.
-  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store", "eastscape", "lounge", "climb", "cs67"];   /* (2026-10-11) cs67: the shooter, named CS67 (was blockshot) */   /* (2026-09-28) eastscape: the game in the shell, a test; (2026-10-07) lounge, climb: the arcade framed in the shell */
+  const ROUTES = ["events", "multiview", "picks", "music", "screen", "flip", "watch", "admin", "game", "profile", "dashboard", "users", "activity", "casino", "wheel", "race", "hilo", "mines", "plinko", "scratch", "grind", "roulette", "standing", "verify", "games", "helmet", "fg", "simon", "centre", "wrapped", "highlights", "store", "eastscape", "lounge", "climb", "cs67", "eastkart"];   /* (2026-10-11) cs67: the shooter, named CS67 (was blockshot) */   /* (2026-09-28) eastscape: the game in the shell, a test; (2026-10-07) lounge, climb: the arcade framed in the shell */
 
   /* ------------------------------------------------------ loading views
 
@@ -79,7 +79,7 @@
     wrapped: [...LOGOS, "v3-wrapped.js"],
     highlights: ["v3-highlights.js"],
     eastscape: ["v3-eastscape.js"],   /* (2026-09-28) the game framed inside the site, a test, not linked */
-    lounge: ["v3-arcade.js"], climb: ["v3-arcade.js"], cs67: ["v3-arcade.js"],   /* (2026-10-07) the arcade framed inside the site, a test, not linked */
+    lounge: ["v3-arcade.js"], climb: ["v3-arcade.js"], cs67: ["v3-arcade.js"], eastkart: ["v3-arcade.js"],   /* (2026-10-12) eastkart: the kart racer, unlinked while it is iterated on */   /* (2026-10-07) the arcade framed inside the site, a test, not linked */
     // The store's preview is the real profile card, so it loads the profile script too.
     store: [...LOGOS, "v3-profile.js", "v3-store.js"],
     users: ["eastcoins-music-config.js", "v3-users.js"],
@@ -295,7 +295,7 @@
     // /movie/inception and /tv/lost-s1-ep1 are the Movies & TV view.
     if (/^\/(movie|tv)\/./i.test(location.pathname)) return "screen";
     // /lounge and /climb: the arcade's short addresses (functions/lounge.js, climb.js)
-    const short = location.pathname.match(/^\/(lounge|climb|cs67)\/?$/i);
+    const short = location.pathname.match(/^\/(lounge|climb|cs67|eastkart)\/?$/i);
     if (short) return short[1].toLowerCase();
     const view = new URL(location.href).searchParams.get("view");
     return ROUTES.includes(view) ? view : "events";
@@ -309,7 +309,7 @@
     if (state.route === name) render();
   }
 
-  const SHORT_URL = new Set(["lounge", "climb", "cs67"]);   // routes with their own short address
+  const SHORT_URL = new Set(["lounge", "climb", "cs67", "eastkart"]);   // routes with their own short address
   /* (2026-10-11) CS67 keeps the Twitch rail: the owner wants the shooter "integrated into the site" with the nav and the chat, so it is
      framed beside the rail like any other view and the chat mounts there as usual; only the lounge rooms close it. */
   const RAIL_CLOSED = new Set(["lounge", "climb"]);
@@ -330,7 +330,7 @@
     wrapped: "EastCoin Wrapped",
     highlights: "Highlights — EastCoin",
     eastscape: "EastScape — EastCoin",
-    lounge: "The Lounge — EastCoin", climb: "The Climb — EastCoin", cs67: "CS67 — EastCoin",
+    lounge: "The Lounge — EastCoin", climb: "The Climb — EastCoin", cs67: "CS67 — EastCoin", eastkart: "EastKart — EastCoin",
     store: "Store — EastCoin",
     events: "EastCoin — Sports", music: "The Green Room — EastCoin", screen: "Movies & TV — EastCoin",
     multiview: "MultiView — EastCoin", picks: "Picks — EastCoin", casino: "Casino — EastCoin",

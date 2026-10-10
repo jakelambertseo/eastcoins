@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EastKart</title>
+<!-- EastKart (2026-10-12): eight beans in karts, three laps, items. Practice against seven bots and a time trial with a ghost, on the
+     shared rules (eastkart-rules.js); the room server comes next, the way CS67's did. Framed in the site at /?view=eastkart. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap">
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js" } }</script>
+<link rel="stylesheet" href="eastkart.css?v=1">
+</head>
+<body class="embed">
+<div id="stage"><canvas id="c"></canvas>
+  <div class="hud">
+    <div class="hud-top"><div class="lap" id="hudLap">LAP 1/3</div><div class="clock"><b id="hudT">0:00.00</b><small id="hudBest">best —</small></div><div class="pos" id="hudPos">8th</div></div>
+    <div class="hud-bot"><div class="item" id="hudItem"><span class="ic" id="hudItemIc"></span><small>SHIFT · use</small></div><div class="speedo"><i id="hudSpeed"></i><small id="hudSpeedN">0</small></div><canvas class="map" id="map" width="150" height="150"></canvas></div>
+    <div class="say" id="say" hidden><b id="sayT"></b><span id="sayS"></span></div>
+    <div class="feed" id="feed"></div>
+    <div class="count" id="count" hidden></div>
+    <div class="hint" id="hint">W accelerate · A D steer · S brake · SPACE drift (hold, then let go for a boost) · SHIFT item · R reset · ESC menu</div>
+  </div>
+  <div class="over" id="over"><div class="tabs"><button class="resume" id="resumeBtn" data-resume="1" hidden>◂ Back to the race</button><button class="on" data-tab="play">Race</button><button data-tab="times">Times</button><button data-tab="how">How to drive</button></div><div class="panel" id="panel"></div></div>
+</div>
+<script type="module" src="eastkart.js?v=1"></script>
+</body>
+</html>
