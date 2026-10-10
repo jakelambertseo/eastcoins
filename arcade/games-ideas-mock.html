@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>EastCoin — what to build next (mockup)</title>
+<!-- A MOCKUP FOR THINKING (2026-10-12, the owner: "lets think about what other games we could build for eastcoin. eastscape is a big
+     hit, poker will be, and cs67 will be. these fall under spun-off versions of successful games … what else would be popular?
+     somewhat easy to play, browser based, can be solo'd or teamed"). Nothing here is wired to anything: the stars are page-local. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&display=swap">
+<style>
+:root{--bg:#0e1118;--panel:#171b25;--panel2:#11151d;--line:#2a3040;--ink:#f2f4f8;--dim:#8a93a6;--you:#ffd84a;--info:#6ad0ff;--danger:#ff5a5a;--good:#5df28a;--font:"Rajdhani",system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font:600 15px/1.45 var(--font)}
+body{background:radial-gradient(1100px 600px at 8% -10%,#15223a,transparent),radial-gradient(900px 600px at 100% 30%,#2a1024,transparent),var(--bg)}
+main{max-width:1240px;margin:0 auto;padding:22px 18px 70px}
+h1{margin:0;font-size:38px;letter-spacing:3px;text-transform:uppercase}h1 small{display:block;font-size:12px;letter-spacing:3px;color:var(--info)}
+h2{margin:30px 0 10px;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--info)}
+.note{color:var(--dim);font-size:13.5px;max-width:900px}.note b{color:#cfd5de}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 4px}.filters button{padding:7px 14px;border:1px solid var(--line);background:transparent;color:var(--dim);font:800 12px var(--font);letter-spacing:2px;text-transform:uppercase;cursor:pointer}.filters button.on{border-color:var(--you);color:var(--you)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.g{display:grid;grid-template-rows:auto 1fr auto;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--c);--c:var(--info);position:relative}
+.g.hidden{display:none}
+.art{height:120px;display:flex;align-items:center;justify-content:center;font-size:54px;background:radial-gradient(ellipse at 50% 120%,rgba(var(--rgb),.45),transparent 60%),linear-gradient(180deg,#11151d,#0c0f16);border-bottom:1px solid var(--line)}
+.body{padding:12px 14px;display:grid;gap:7px;align-content:start}
+.g h3{margin:0;font-size:19px;letter-spacing:2px;text-transform:uppercase}.g h3 small{display:block;font-size:11px;letter-spacing:2px;color:var(--c);text-transform:uppercase}
+.g p{margin:0;color:#cfd5de;font-size:13.5px;line-height:1.45}.g p.dim{color:var(--dim)}
+.tags{display:flex;gap:5px;flex-wrap:wrap}.tags span{padding:2px 8px;border:1px solid var(--line);font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}.tags .solo{border-color:rgba(106,208,255,.5);color:var(--info)}.tags .team{border-color:rgba(255,216,74,.5);color:var(--you)}.tags .reuse{border-color:rgba(93,242,138,.5);color:var(--good)}
+.meter{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim)}.meter i{display:block;height:5px;background:rgba(255,255,255,.08)}.meter i s{display:block;height:100%;background:var(--c)}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}.foot small{color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.star{border:0;background:transparent;color:#5a6070;font:800 20px var(--font);cursor:pointer;letter-spacing:2px}.star.on{color:var(--you)}
+.rank{position:absolute;left:10px;top:10px;padding:3px 9px;background:var(--you);color:#1a1300;font-size:11px;letter-spacing:2px;font-weight:800}
+.picks{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.pick{padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--you)}.pick h3{margin:0 0 6px;font-size:16px;letter-spacing:2px;text-transform:uppercase}.pick p{margin:0;color:#cfd5de;font-size:13.5px;line-height:1.5}.pick b{color:var(--you)}
+.proto{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}.proto div{padding:9px 12px;background:var(--panel2);border:1px solid var(--line);font-size:13px}.proto b{display:block;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--info)}
+</style>
+</head>
+<body>
+<main>
+  <h1><small>EastCoin · mockup for thinking · stars are page-local</small>What to build next</h1>
+  <p class="note"><b>The pattern that works:</b> take a game everyone already knows how to play, make it EastCoin's — the regulars, the chat, ZCoins or tickets on the line, the bean look — and keep the first five minutes dead simple. EastScape is RuneScape, CS67 is Counter-Strike, Poker is poker. Below are the next candidates, each scored on how well it fits the crowd (95% NFL, lives in Twitch chat), how easy it is to pick up, and how much of it we already have built. <b>Star the ones you like</b>; the top three float to the summary.</p>
+
+  <div class="filters"><button class="on" data-f="all">All</button><button data-f="solo">Solo</button><button data-f="team">Team / vs</button><button data-f="reuse">Mostly built already</button><button data-f="chat">Plays with the whole chat</button></div>
+  <div class="grid" id="grid"></div>
+
+  <h2>Already prototyped in the repo · test pages nobody has seen</h2>
+  <div class="proto">
+    <div><b>franchise-test</b>Run an NFL franchise: draft, trade, play a season.</div><div><b>fishing</b>An idle fishing game.</div><div><b>crash-test</b>A multiplier that climbs until it crashes; cash out first.</div><div><b>chicken-test</b>Chicken: two drivers, one road.</div>
+    <div><b>flipcup-test</b>Flip cup, party-style timing.</div><div><b>dash-test</b>A runner.</div><div><b>driversed-test</b>Driving.</div><div><b>chip-crush-test</b>A match-three with chips.</div><div><b>bowman-test</b>Archery arcs.</div>
+  </div>
+
+  <h2>Your top three</h2>
+  <div class="picks" id="picks"><div class="pick"><p class="dim">Star some games above and they land here with the case for building them first.</p></div></div>
+</main>
+<script>
+const GAMES = [
+  { k: "trivia", n: "Monday Night Trivia", of: "Jackbox / Kahoot", ic: "🧠", rgb: "106,208,255", fit: 95, easy: 100, reuse: 55, solo: 1, team: 1, chat: 1,
+    why: "A sports trivia show the whole chat plays at once from their phones, hosted on stream. NFL-heavy questions, pictures from the games, a weekly board, tickets or ZCoins for the podium.",
+    twist: "Questions are drawn from the week's games and the community itself (who had the worst beat on Picks). Zwades can host a round live; the rest run on a schedule.",
+    build: "Reads like the Picks pages: a question bank, a timer, answers to D1, a board. The rooms server already pushes state. A week of work." },
+  { k: "royale", n: "Bean Royale", of: "Fortnite / Warzone", ic: "🪂", rgb: "255,90,90", fit: 85, easy: 70, reuse: 90, solo: 1, team: 1, chat: 0,
+    why: "Twelve beans drop onto one big map, the zone closes, last one standing. CS67's engine, maps, guns and netcode already do nine-tenths of it.",
+    twist: "Squads of three with the regulars; the final circle is always the stream's choice of the week. Brass for placement, a season title for the win.",
+    build: "A bigger map, the shrinking zone, loot on the ground (pickups exist), no respawns (bomb mode has that). Two weeks on top of CS67." },
+  { k: "kart", n: "EastKart", of: "Mario Kart", ic: "🏎️", rgb: "255,216,74", fit: 85, easy: 90, reuse: 60, solo: 1, team: 1, chat: 0,
+    why: "Eight beans in karts, three laps, items. Everyone knows it, nobody is bad at it on lap one, and it is the most 'come play with chat' game there is.",
+    twist: "Tracks are the maps you know (the Lot, the Docks, the Yard). Items are EastCoin ones: a Picks slip that reverses the leader, a Jackpot shell. Time trials with ghosts solo.",
+    build: "Kart physics on the bean engine, tracks, items, the same room server shape as CS67. Three weeks." },
+  { k: "fall", n: "Fall Beans", of: "Fall Guys", ic: "🫘", rgb: "255,159,28", fit: 80, easy: 95, reuse: 85, solo: 1, team: 1, chat: 0,
+    why: "Obstacle courses, elimination rounds, twelve beans pushing each other off. Parkour already has courses, the jump, the mantle and ghosts; this is the party version.",
+    twist: "Rounds are the Long Way, the Hop Line and the Tower with other beans in the way; the final is a tiny platform and a knife. Tickets to the winner.",
+    build: "Push-apart physics between beans (the lounge has it), round rotation, a race-start countdown. One to two weeks." },
+  { k: "golf", n: "EastCoin Mini Golf", of: "Golf With Your Friends", ic: "⛳", rgb: "93,242,138", fit: 75, easy: 100, reuse: 40, solo: 1, team: 1, chat: 0,
+    why: "Eighteen holes, eight players, one click to shoot. The calmest multiplayer there is, perfect for the stream's quiet stretches and for playing with chat.",
+    twist: "Holes themed on the site: a Plinko hole, a Wheel hole, a Jackpot hole that pays. Daily hole with a board, like Helmet Zoom.",
+    build: "A ball, holes, a simple physics step, turn order. The 3D kit exists. Two weeks." },
+  { k: "amongus", n: "Among Beans", of: "Among Us", ic: "🔪", rgb: "176,108,255", fit: 70, easy: 85, reuse: 70, solo: 0, team: 1, chat: 1,
+    why: "Six to ten beans, two impostors, tasks on a map, meetings in chat. It lives or dies on talking, and this community already lives in a chat.",
+    twist: "The map is the Lounge and the Poker room. Meetings happen in Twitch chat itself, so the stream watches the lie unfold.",
+    build: "Tasks, kill, report, vote, on the lounge's room server. Two to three weeks; needs eight people online to be good." },
+  { k: "td", n: "Tower Defense · Co-op", of: "Bloons TD", ic: "🏰", rgb: "106,208,255", fit: 65, easy: 90, reuse: 30, solo: 1, team: 1, chat: 0,
+    why: "Waves of enemies down a path, towers on the side, play alone or with three friends sharing one map. The biggest solo-or-co-op idle-ish genre in browsers.",
+    twist: "The enemies are the bots from CS67 marching on the Yard; towers are the regulars. Endless mode with a weekly board.",
+    build: "2D canvas, waves, towers, a co-op room. Two weeks; the art is the real cost." },
+  { k: "rocket", n: "Bean Ball", of: "Rocket League", ic: "⚽", rgb: "255,90,90", fit: 70, easy: 75, reuse: 70, solo: 1, team: 1, chat: 0,
+    why: "3v3, one ball, two goals, five minutes. Beans with a boost instead of cars. Instantly readable on stream.",
+    twist: "Pitch is the Lot. Boost pads are the jump pads. Seasons and a ranked ladder that mirrors Picks' leaderboard.",
+    build: "Ball physics and goals on the CS67 engine; the rooms, teams and clock exist from bomb mode. Two weeks." },
+  { k: "tetris", n: "Chip Stack 99", of: "Tetris 99 / Puyo", ic: "🧱", rgb: "93,242,138", fit: 60, easy: 95, reuse: 20, solo: 1, team: 1, chat: 0,
+    why: "Falling blocks, clear lines, send garbage to the others, last stack standing. Zero learning curve, endless replay, works on a phone.",
+    twist: "Blocks are casino chips; a cleared line pays a sliver of tickets; a weekly 99-player night on stream.",
+    build: "A 2D game and a room that relays attacks. One to two weeks." },
+  { k: "io", n: "Bean.io", of: "Agar.io / Slither", ic: "🟡", rgb: "255,216,74", fit: 60, easy: 100, reuse: 50, solo: 1, team: 0, chat: 1,
+    why: "Eat, grow, get eaten. Fifty people in one arena with no lobby and no rules to learn; the purest 'everyone in chat click this link' game.",
+    twist: "Your bean wears your skin; the biggest bean on screen is on stream. Short rounds with a board.",
+    build: "2D, one room, a tiny netcode. One week." },
+  { k: "fantasy", n: "Franchise Mode", of: "Madden franchise / Football Manager", ic: "🏈", rgb: "255,159,28", fit: 95, easy: 55, reuse: 60, solo: 1, team: 0, chat: 0,
+    why: "Run a team through a season: draft, trade, set the lineup, sim the week. The deepest fit with an NFL crowd, and a prototype already exists in the repo.",
+    twist: "The league is the community: thirty-two teams owned by regulars, a weekly sim on stream, trades argued in chat. Tickets for the title.",
+    build: "franchise-test is the start. The sim and the UI are the work; no engine needed. Three weeks for a season loop." },
+  { k: "bingo", n: "Stream Bingo", of: "Bingo", ic: "🎱", rgb: "176,108,255", fit: 85, easy: 100, reuse: 25, solo: 0, team: 0, chat: 1,
+    why: "A bingo card of things that happen on stream and in the games (a pick busts, Zwades rages, a sack). The whole chat plays passively while watching.",
+    twist: "Squares are filled by the site itself from the live scores and the ledger, so nobody argues. Tickets for a line, a Jackpot for a full card.",
+    build: "A card generator and hooks into the events the site already emits. A few days." }
+];
+let filter = "all"; const stars = new Set();
+function draw() {
+  const ranked = GAMES.slice().sort((a, b) => (b.fit + b.easy + b.reuse) - (a.fit + a.easy + a.reuse));
+  document.getElementById("grid").innerHTML = ranked.map((g, i) => `<div class="g${(filter === "solo" && !g.solo) || (filter === "team" && !g.team) || (filter === "reuse" && g.reuse < 60) || (filter === "chat" && !g.chat) ? " hidden" : ""}" style="--c:rgb(${g.rgb});--rgb:${g.rgb}"><span class="rank">#${i + 1}</span><div class="art">${g.ic}</div><div class="body"><h3>${g.n}<small>after ${g.of}</small></h3><div class="tags">${g.solo ? `<span class="solo">solo</span>` : ""}${g.team ? `<span class="team">team / vs</span>` : ""}${g.chat ? `<span>whole chat</span>` : ""}${g.reuse >= 60 ? `<span class="reuse">mostly built</span>` : ""}</div><p>${g.why}</p><p class="dim"><b style="color:var(--ink)">The EastCoin twist:</b> ${g.twist}</p><p class="dim"><b style="color:var(--ink)">To build:</b> ${g.build}</p><div class="meter"><span>crowd fit</span><i><s style="width:${g.fit}%"></s></i><span>easy to play</span><i><s style="width:${g.easy}%"></s></i><span>already built</span><i><s style="width:${g.reuse}%"></s></i></div></div><div class="foot"><small>score ${g.fit + g.easy + g.reuse}</small><button class="star${stars.has(g.k) ? " on" : ""}" data-k="${g.k}">★ ${stars.has(g.k) ? "starred" : "star it"}</button></div></div>`).join("");
+  const top = GAMES.filter((g) => stars.has(g.k)).slice(0, 3);
+  document.getElementById("picks").innerHTML = top.length ? top.map((g, i) => `<div class="pick"><h3>${i + 1}. ${g.n}</h3><p><b>Why first:</b> ${g.why}</p><p style="margin-top:6px"><b>Cost:</b> ${g.build}</p></div>`).join("") : `<div class="pick"><p class="dim">Star some games above and they land here with the case for building them first.</p></div>`;
+}
+document.getElementById("grid").addEventListener("click", (e) => { const b = e.target.closest(".star"); if (!b) return; stars.has(b.dataset.k) ? stars.delete(b.dataset.k) : stars.add(b.dataset.k); draw(); });
+for (const b of document.querySelectorAll(".filters button")) b.addEventListener("click", () => { filter = b.dataset.f; for (const x of document.querySelectorAll(".filters button")) x.classList.toggle("on", x === b); draw(); });
+draw();
+</script>
+</body>
+</html>
