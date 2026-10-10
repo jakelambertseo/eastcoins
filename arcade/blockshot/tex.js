@@ -1,4 +1,4 @@
-/* Blockshot's textures: all drawn in code, no files (2026-10-08, the owner: "free textures"). A Krunker map is flat colour with a little
+/* Blockshot's textures: all drawn in code, no files (2026-10-08, the owner: "free textures"). An arena-shooter map is flat colour with a little
    grain, so that is what these are: concrete, brick, metal panels, grass, crate wood, a hazard stripe, and the skin patterns for beans
    and guns. Every texture tiles; the map's UVs are scaled to world units (tex.js is used by maps.js's builder), so a long wall gets a
    long brick run instead of one stretched brick. */

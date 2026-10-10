@@ -1,4 +1,4 @@
-/* Blockshot — a Krunker-style free-for-all on the bean engine (2026-10-08). The owner wants it standalone in the Games section: "cleaning
+/* CS67 (files named blockshot) — a fast arena free-for-all on the bean engine (2026-10-08). The owner wants it standalone in the Games section: "cleaning
    up the game, adding some free sounds, free textures, a leveling mechanism for skins, total stat tracking (kills, kd, etc). make the
    maps larger with fewer blocks/things that break movement".
 

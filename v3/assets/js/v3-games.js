@@ -30,7 +30,7 @@
      (its files keep that name); the card is CS67 whatever the API calls it. */
   const BIG = {
     cs67: { title: "CS67", sub: "EastCoin's shooter", icon: "🔫", route: "cs67", art: `/v3/assets/img/games/cs67.webp?v=${ART_V}`, rgb: "26,120,200",
-      blurb: "Krunker-style: free-for-all, Gun Game, Bomb 3v3 and Parkour. Big maps built for slide-hopping, an Armory of finishes, levels and skins." },
+      blurb: "" },   /* (2026-10-11, the owner) no hover description */
     eastscape: { title: "EastScape", sub: "EastCoin Casino MMO", icon: "🗺️", href: "/eastscape", art: "/v3/assets/img/casino/eastscape.webp?v=5", rgb: "255,122,26", ribbon: "Now Open",
       online: "/api/eastscape/online", spooky: true, blurb: "Every casino game, in a world you walk around. Fight, mine, fish and craft for ZCoins." }
   };
