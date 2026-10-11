@@ -11,7 +11,7 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Figtree:wght@500;600;700;800&display=swap">
-<link rel="stylesheet" href="poker.css?v=1">
+<link rel="stylesheet" href="poker.css?v=2">
 </head>
 <body>
 <div class="room">
@@ -22,6 +22,8 @@
       <button id="btnAddon" hidden>Add on</button>
       <button id="btnSitout" hidden>Sit out</button>
       <button id="btnStand" hidden>Stand up</button>
+      <button id="btnBot" hidden title="Admins only: a bot to play against while the table is in testing. One per click.">+ Test bot</button>
+      <button id="btnBotOff" hidden>Remove bots</button>
       <button id="btnHow">How it works</button>
     </nav>
   </header>
@@ -57,6 +59,6 @@
     <p>The dealer is the server. Nobody's page is told a card it may not see.</p>
     <button class="go" id="howNo">Got it</button></div></div>
 </div>
-<script type="module" src="poker.js?v=1"></script>
+<script type="module" src="poker.js?v=2"></script>
 </body>
 </html>

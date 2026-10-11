@@ -13,7 +13,7 @@
    A card is 0..51: rank = c % 13 (0 = deuce .. 12 = ace), suit = floor(c / 13) (s h d c). A hand's score is one integer: category
    first, then the ranks that break ties, so two scores compare with <. */
 
-export const VERSION = 1;
+export const VERSION = 2;
 export const TABLE = { SEATS: 6, SB: 1, BB: 2, MIN_BUY: 50, MAX_BUY: 200, TURN_MS: 20000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
 export const BANK = { START: 1000, REFILL_BELOW: 50, REFILL_TO: 1000, REFILL_MS: 60 * 60 * 1000 };
 /* The launch ratios, one per table size. Blinds and buy-ins stay 1/2 and 50–200 IN CHIPS at every table; the ratio is what a chip costs. */
@@ -232,6 +232,30 @@ export function timeout(t, now) {
   if (now - h.turnAt < TABLE.TURN_MS) return null;
   const i = h.cur, s = t.seats[i]; const L = legal(t, i); if (!L) return null;
   const r = act(t, i, L.check ? "check" : "fold", 0, now); s.away += 1; return { i, did: L.check ? "check" : "fold", away: s.away };
+}
+/* ---------------------------------------------------------------- the test bots (2026-10-13, the owner: "add a bot so i can test … or a few")
+   NOT table regulars — the table is people only. An admin summons them from the page (one per click, up to the free seats) to have
+   someone to play against while the game is iterated on; the dealer stands them when the admin removes them or when nobody is
+   connected. They play plain poker: a strength from their cards (and the board, once there is one), check and call mostly, bet and
+   raise when strong, fold to a bet they cannot pay for. */
+export const isBot = (s) => Boolean(s && String(s.id).startsWith("bot:"));
+export function botStrength(hole, board) {
+  if (board.length >= 3) { const v = evalBest([...hole, ...board]); return [0.2, 0.45, 0.65, 0.8, 0.9, 0.93, 0.97, 0.99, 1][v.cat] + (v.cat <= 1 ? rankOf(v.ranks[0]) / 13 * 0.12 : 0); }
+  const [a, b] = hole.map(rankOf), suited = suitOf(hole[0]) === suitOf(hole[1]), hi = Math.max(a, b), lo = Math.min(a, b);
+  if (a === b) return 0.6 + a / 12 * 0.38;
+  let s = 0.22 + hi / 12 * 0.25 + lo / 12 * 0.12; if (suited) s += 0.05; if (hi - lo <= 2) s += 0.04; if (hi === 12) s += 0.06; return Math.min(0.72, s);
+}
+export function botAct(t, i, rand) {
+  const L = legal(t, i); if (!L) return null; const s = t.seats[i], h = t.hand;
+  const str = botStrength(s.hole, h.board), pot = L.pot, r = rand();
+  const betTo = (mult) => Math.max(L.minTo, Math.min(L.maxTo, Math.round(h.bet + (pot + L.toCall) * mult)));
+  if (L.toCall === 0) { if (str > 0.78 && r < 0.75) return { a: "raise", to: betTo(0.7) }; if (str > 0.5 && r < 0.4) return { a: "raise", to: betTo(0.5) }; if (r < 0.06 && h.board.length >= 3) return { a: "raise", to: betTo(0.6) }; return { a: "check" }; }
+  const odds = L.toCall / (pot + L.toCall);
+  if (str > 0.85 && r < 0.6) return { a: L.maxTo > h.bet ? "raise" : "call", to: betTo(1.0) };
+  if (str > 0.62 && r < 0.3) return { a: L.maxTo > h.bet ? "raise" : "call", to: betTo(0.8) };
+  if (str >= odds + 0.08 || r < 0.1) return { a: "call" };
+  if (L.toCall <= TABLE.BB && r < 0.6) return { a: "call" };
+  return { a: "fold" };
 }
 /** What a viewer may see: every seat, hole cards only their own (or shown at the showdown). */
 export function viewFor(t, viewerId, now = 0) {

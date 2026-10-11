@@ -1,6 +1,6 @@
 /* EastCoin Poker — the page (2026-10-10). A view of the table the server deals: it draws what the server says (top down, you at the
    bottom), sends what you want to do, and never decides anything. Rules shared with the server: /v3/assets/js/poker-rules.js. */
-import { TABLE, rankOf, suitOf, RANKS, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=1";
+import { TABLE, rankOf, suitOf, RANKS, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=2";
 
 const $ = (id) => document.getElementById(id);
 const DEV = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
@@ -35,7 +35,7 @@ async function connect() {
 const send = (o) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };
 
 function onMsg(m) {
-  if (m.t === "hello") { you = m.you; bank = m.bank; people = m.people || []; $("who").textContent = you.name; $("chat").innerHTML = ""; for (const c of m.chat || []) chatLine(c); $("hands").innerHTML = ""; for (const h of (m.hands || []).slice().reverse()) handLine(h); setView(m.view); feed(`Welcome, ${esc(you.name)}. ${m.view.seats.filter(Boolean).length} at the table.`, "dim"); }
+  if (m.t === "hello") { you = m.you; bank = m.bank; people = m.people || []; $("who").textContent = you.name; $("btnBot").hidden = !you.admin; $("btnBotOff").hidden = !you.admin; $("chat").innerHTML = ""; for (const c of m.chat || []) chatLine(c); $("hands").innerHTML = ""; for (const h of (m.hands || []).slice().reverse()) handLine(h); setView(m.view); feed(`Welcome, ${esc(you.name)}. ${m.view.seats.filter(Boolean).length} at the table.`, "dim"); }
   else if (m.t === "view") { bank = m.bank; setView(m.view); }
   else if (m.t === "ev") { for (const e of m.e) onEvent(e); }
   else if (m.t === "hand") { handLine(m.rec); onHand(m.rec); }
@@ -63,7 +63,7 @@ function handLine(h) { const p = document.createElement("p"); const pots = h.pot
 function onEvent(e) {
   const nm = (n) => `<b>${esc(n)}</b>`;
   switch (e.k) {
-    case "sit": feed(`${nm(e.name)} sits down with ${e.buy}.`); break;
+    case "sit": feed(`${nm(e.name)} sits down with ${e.buy}.${e.bot ? " (a test bot)" : ""}`); break;
     case "stand": feed(`${nm(e.name)} leaves with ${e.stack}${e.why === "gone" ? " (connection lost)" : ""}.`, "dim"); break;
     case "leaving": feed(`${nm(e.name)} is leaving after this hand.`, "dim"); break;
     case "deal": feed(`Hand #${e.no}. Button on ${nm(view?.seats[e.button]?.name || "?")}.`, "dim"); SFX.deal(); break;
@@ -106,7 +106,8 @@ $("buyNo").onclick = () => { $("buyin").hidden = true; };
 $("btnStand").onclick = () => send({ t: "stand" });
 $("btnSitout").onclick = () => { const me = view?.seats[view.me]; if (me) send({ t: "sitout", on: !me.sitOut }); };
 $("btnAddon").onclick = () => { const me = view?.seats[view.me]; if (!me) return; const amt = Math.min(TABLE.MAX_BUY - me.stack, bank); if (amt > 0) send({ t: "addon", amt }); };
-$("btnHow").onclick = () => { $("how").hidden = false; }; $("howNo").onclick = () => { $("how").hidden = true; };
+$("btnHow").onclick = () => { $("how").hidden = false; };
+$("btnBot").onclick = () => send({ t: "bot", n: 1 }); $("btnBotOff").onclick = () => send({ t: "bot", n: 0 }); $("howNo").onclick = () => { $("how").hidden = true; };
 $("aFold").onclick = () => send({ t: "act", a: "fold" });
 $("aCheck").onclick = () => send({ t: "act", a: view?.legal?.check ? "check" : "call" });
 $("aRaise").onclick = () => send({ t: "act", a: raiseTo >= (view?.legal?.maxTo || 0) ? "allin" : "raise", to: raiseTo });
@@ -166,6 +167,7 @@ function draw() {
     const im = avatar(s.avatar); g.save(); g.beginPath(); g.arc(p.x - pw / 2 + 27, p.y + 17, 20, 0, Math.PI * 2); g.closePath(); g.clip(); if (im) g.drawImage(im, p.x - pw / 2 + 7, p.y - 3, 40, 40); else { g.fillStyle = isMe ? "#e8c35a" : "#3b7fbf"; g.fillRect(p.x - pw / 2 + 7, p.y - 3, 40, 40); g.fillStyle = "#120d0b"; g.font = "900 16px Figtree, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(s.name).slice(0, 2).toUpperCase(), p.x - pw / 2 + 27, p.y + 17); } g.restore();
     g.textAlign = "left"; g.textBaseline = "middle"; g.font = "800 14px Figtree, sans-serif"; g.fillStyle = out ? "#a79e8f" : "#f4efe4"; g.fillText(String(s.name).slice(0, 14), p.x - pw / 2 + 54, p.y + 8);
     g.font = "900 16px Fraunces, serif"; g.fillStyle = s.stack === 0 ? "#c0392b" : "#e8c35a"; g.fillText(s.stack === 0 && s.inHand && !s.folded ? "ALL IN" : s.stack.toLocaleString(), p.x - pw / 2 + 54, p.y + 29);
+    if (String(s.id).startsWith("bot:") && !s.sitOut && !(s.folded && s.inHand)) { g.font = "700 10px Figtree, sans-serif"; g.fillStyle = "#e8c35a"; g.textAlign = "right"; g.fillText("TEST BOT", p.x + pw / 2 - 8, p.y + 29); }
     if (s.sitOut) { g.font = "700 10px Figtree, sans-serif"; g.fillStyle = "#a79e8f"; g.textAlign = "right"; g.fillText("SITTING OUT", p.x + pw / 2 - 8, p.y + 29); }
     else if (s.gone) { g.font = "700 10px Figtree, sans-serif"; g.fillStyle = "#c0392b"; g.textAlign = "right"; g.fillText("AWAY", p.x + pw / 2 - 8, p.y + 29); }
     else if (s.folded && s.inHand) { g.font = "700 10px Figtree, sans-serif"; g.fillStyle = "#a79e8f"; g.textAlign = "right"; g.fillText("FOLDED", p.x + pw / 2 - 8, p.y + 29); }
