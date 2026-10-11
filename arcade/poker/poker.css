@@ -88,3 +88,13 @@ button.small{padding:6px 10px;font-size:11px}
 .chat{position:relative}.emo-pick{position:absolute;left:10px;right:10px;bottom:52px;z-index:5;padding:8px;background:var(--panel2);border:1px solid var(--line);border-top:2px solid var(--copper);border-radius:6px;box-shadow:0 20px 50px rgba(0,0,0,.5)}.emo-pick[hidden]{display:none}
 .emo-pick input{width:100%;padding:6px 8px;margin-bottom:6px;border-radius:4px;border:1px solid var(--line);background:rgba(241,236,226,.05);color:var(--ink);font:inherit;font-size:12px}
 .emo-grid{display:flex;flex-wrap:wrap;gap:4px;max-height:150px;overflow:auto}.emo-grid button{padding:3px;border-radius:4px;border:1px solid transparent;background:transparent;cursor:pointer}.emo-grid button:hover{border-color:var(--hair);background:rgba(201,119,47,.1)}.emo-grid img{height:28px;display:block}
+
+/* the bank (2026-10-13): chips are ZCoins */
+.bank{cursor:pointer;font:inherit}.bank .zc{display:grid;margin-left:10px;padding-left:10px;border-left:1px solid var(--line)}.bank .zc small{color:var(--mute)}
+.bank-line{margin:0 0 8px;font-size:12px;color:var(--mute)}.bank-line b{color:var(--chalk);font-weight:600}
+.bank-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-weight:600;color:var(--ink)}.bank-row b{font:400 20px/1 var(--disp);color:var(--copper2)}
+.bank-form{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--ink)}.bank-form label{display:flex;align-items:center;gap:6px;font-weight:600}.bank-form input{width:58px;padding:5px 7px;border-radius:4px;border:1px solid var(--line);background:rgba(241,236,226,.05);color:var(--chalk);font:inherit}.bank-form span{flex:1;color:var(--mute)}.bank-form .go{padding:7px 12px;font-size:11px}
+.bank-note{margin:8px 0 0;font-size:12px;color:var(--win)}.bank-note.bad{color:var(--bad)}.bank-note[hidden]{display:none}
+/* the left rail never grows past its track (2026-10-13: the chat input's intrinsic width pushed the rail wide and the last-hands list ran off the edge) */
+.left,.left .panel,.left .lines{min-width:0;max-width:100%}.left .lines{overflow-x:hidden;overflow-wrap:anywhere}.left .lines p{word-break:break-word}
+#chatForm input{width:0;min-width:0;flex:1 1 0}#chatForm{min-width:0}

@@ -26,6 +26,13 @@ const SET = { vol: 0.7, four: false, hand: true, feed: true, anim: true };
 try { const s = JSON.parse(localStorage.getItem("ec_poker_set") || "{}"); Object.assign(SET, s); } catch {}
 const saveSet = () => { try { localStorage.setItem("ec_poker_set", JSON.stringify(SET)); } catch {} };
 let wait = { list: [], hold: null, free: TABLE.SEATS };
+/* THE BANK (2026-10-13): chips are ZCoins. The site keeps each member's chip bank and ZCoin balance; the dealer buys a seat's chips from
+   it and sends a stack back to it. The page only reads and asks. */
+let bankInfo = { bank: 0, balance: null, spentToday: 0, limit: 20, ratio: 200 };
+async function loadBank() { try { const r = await fetch("/api/poker/bank", { credentials: "same-origin" }); const j = await r.json(); if (!j.ok) return; bankInfo = { bank: j.bank, balance: j.balance, spentToday: j.spentToday, limit: j.tables?.nickel?.dayBuyinZc ?? 20, ratio: j.tables?.nickel?.chipsPerZc ?? 200 }; drawBank(); } catch {} }
+function drawBank() { $("bankN").textContent = bankInfo.bank.toLocaleString(); $("zcN").textContent = bankInfo.balance == null ? "—" : bankInfo.balance.toLocaleString(); $("bankChips").textContent = `${bankInfo.bank.toLocaleString()} chips`; $("bankZc").textContent = bankInfo.balance == null ? "—" : `${bankInfo.balance.toLocaleString()} ZC`; $("bankLimit").textContent = bankInfo.limit; $("bankSpent").textContent = bankInfo.spentToday; const left = Math.max(0, bankInfo.limit - bankInfo.spentToday); $("buyZc").max = String(Math.max(1, Math.min(left, bankInfo.balance ?? left))); $("outZc").max = String(Math.max(1, Math.floor(bankInfo.bank / bankInfo.ratio))); $("buyPreview").textContent = `= ${(Number($("buyZc").value) * bankInfo.ratio).toLocaleString()} chips`; $("outPreview").textContent = `= ${(Number($("outZc").value) * bankInfo.ratio).toLocaleString()} chips`; }
+/** The most a seat can be bought for right now: the chip bank, then ZCoins (whole, within the day). */
+function canBuyChips() { const left = Math.max(0, bankInfo.limit - bankInfo.spentToday); const zc = Math.max(0, Math.min(bankInfo.balance ?? 0, left)); return Math.floor((bankInfo.bank + zc * bankInfo.ratio) / 5) * 5; }
 const TEX_V = 1, TEX = {}; for (const n of ["felt", "rail", "card_back", "card_face", "chip_white", "chip_red", "chip_blue", "chip_black", "dealer_button", "pot_tray", "avatar_1", "avatar_2", "avatar_3", "avatar_4", "muck", "sitting_out", "logo_mark"]) { const im = new Image(); im.src = `tex/${n}.webp?v=${TEX_V}`; TEX[n] = im; }
 const tex = (n) => (TEX[n] && TEX[n].complete && TEX[n].naturalWidth ? TEX[n] : null); let feltPat = null, railPat = null;
 const chipFor = (amount) => (amount >= 100 ? "chip_black" : amount >= 25 ? "chip_blue" : amount >= 5 ? "chip_red" : "chip_white");
@@ -40,7 +47,7 @@ addEventListener("pointerdown", audioOn, { once: true }); addEventListener("keyd
 function status(text) { const el = $("status"); if (!text) { el.hidden = true; return; } el.hidden = false; el.textContent = text; }
 async function connect() {
   let url;
-  const PV = "16";   // this page's version, so the dealer knows it is current (older pages are asked to refresh)
+  const PV = "17";   // this page's version, so the dealer knows it is current (older pages are asked to refresh)
   if (DEV) { const as = new URLSearchParams(location.search).get("as") || "you"; url = `ws://${location.hostname}:8788/pk?dev=1&login=${encodeURIComponent(as)}&pv=${PV}`; }
   else {
     try { const r = await fetch("/api/arcade/ticket", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: "{}" }); const j = await r.json().catch(() => ({}));
@@ -57,8 +64,8 @@ async function connect() {
 const send = (o) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };
 
 function onMsg(m) {
-  if (m.t === "hello") { you = m.you; bank = m.bank; people = m.people || []; $("who").textContent = you.name; $("btnBot").hidden = !you.admin; $("btnBotOff").hidden = !you.admin; $("btnReset").hidden = !you.admin; if (m.wait) { wait = m.wait; } drawWait(); $("chat").innerHTML = ""; for (const c of m.chat || []) chatLine(c); $("hands").innerHTML = ""; for (const h of (m.hands || []).slice().reverse()) handLine(h); setView(m.view); feed(`Welcome, ${esc(you.name)}. ${m.view.seats.filter(Boolean).length} at the table.`, "dim"); peopleLine(); }
-  else if (m.t === "view") { bank = m.bank; setView(m.view); }
+  if (m.t === "hello") { you = m.you; bank = m.bank || 0; loadBank(); people = m.people || []; $("who").textContent = you.name; $("btnBot").hidden = !you.admin; $("btnBotOff").hidden = !you.admin; $("btnReset").hidden = !you.admin; if (m.wait) { wait = m.wait; } drawWait(); $("chat").innerHTML = ""; for (const c of m.chat || []) chatLine(c); $("hands").innerHTML = ""; for (const h of (m.hands || []).slice().reverse()) handLine(h); setView(m.view); feed(`Welcome, ${esc(you.name)}. ${m.view.seats.filter(Boolean).length} at the table.`, "dim"); peopleLine(); }
+  else if (m.t === "view") { setView(m.view); }
   else if (m.t === "ev") { for (const e of m.e) onEvent(e); }
   else if (m.t === "hand") { handLine(m.rec); onHand(m.rec); }
   else if (m.t === "chat") chatLine(m.m);
@@ -68,7 +75,7 @@ function onMsg(m) {
 }
 function peopleLine() { $("peopleN").textContent = `· ${people.length} here`; }
 function setView(v) {
-  lastView = view; view = v; $("bankN").textContent = bank.toLocaleString(); turnAt = performance.now() - (TABLE.TURN_MS - v.turnLeft);
+  lastView = view; view = v; turnAt = performance.now() - (TABLE.TURN_MS - v.turnLeft);
   const seated = v.seats.filter(Boolean).length; $("tableN").textContent = seated ? `${seated} seated` : "empty";
   const me = v.me >= 0 ? v.seats[v.me] : null;
   $("btnStand").hidden = !me; $("btnSitout").hidden = !me; $("btnAddon").hidden = !me || (v.phase === "hand" && me.inHand) || me.stack >= TABLE.MAX_BUY;
@@ -99,7 +106,12 @@ function drawWait() {
 }
 $("btnWait").onclick = () => send({ t: "wait", on: !wait.list.includes(you?.name) });
 /* ---------------------------------------------------------------- settings and the jukebox */
-const pops = { settings: $("settings"), juke: $("juke"), tv: $("tv") }; function pop(k) { for (const [n, el] of Object.entries(pops)) el.hidden = n === k ? !el.hidden : true; }
+const pops = { settings: $("settings"), juke: $("juke"), tv: $("tv"), bankPop: $("bankPop") };
+$("btnBank").onclick = () => { pop("bankPop"); if (!$("bankPop").hidden) loadBank(); };
+$("buyZc").oninput = drawBank; $("outZc").oninput = drawBank;
+async function bankPost(body, label) { const note = $("bankNote"); note.hidden = false; note.className = "bank-note"; note.textContent = "…"; try { const r = await fetch("/api/poker/bank", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); const j = await r.json(); if (j.ok) { note.textContent = label(j); await loadBank(); } else { note.className = "bank-note bad"; note.textContent = j.message || "That did not go through."; } } catch { note.className = "bank-note bad"; note.textContent = "The site did not answer."; } }
+$("buyForm").onsubmit = (e) => { e.preventDefault(); bankPost({ buyZc: Number($("buyZc").value) }, (j) => `Bought ${j.chips.toLocaleString()} chips for ${j.zc} ZC.`); };
+$("outForm").onsubmit = (e) => { e.preventDefault(); bankPost({ zc: Number($("outZc").value) }, (j) => `${j.chips.toLocaleString()} chips cashed out for ${j.zc} ZC.`); }; function pop(k) { for (const [n, el] of Object.entries(pops)) el.hidden = n === k ? !el.hidden : true; }
 $("btnSettings").onclick = () => pop("settings"); $("btnJuke").onclick = () => pop("juke"); $("btnTv").onclick = () => { pop("tv"); if (!$("tv").hidden) tvLoad(); };
 /* ---------------------------------------------------------------- the mini player: one stream from the site's own provider list, in a window you can drag; it stays while you play */
 let tvApi = null, tvMatches = [], tvOn = null, tvStreams = [];
@@ -160,8 +172,8 @@ function handLine(h) { const p = document.createElement("p"); const pots = h.pot
 function onEvent(e) {
   const nm = (n) => `<b>${esc(n)}</b>`;
   switch (e.k) {
-    case "sit": feed(`${nm(e.name)} sits down with ${e.buy}.${e.bot ? " (a test bot)" : ""}`); break;
-    case "stand": feed(`${nm(e.name)} leaves with ${e.stack}${e.why === "gone" ? " (connection lost)" : e.why === "nobody here" ? " (nobody here)" : ""}.`, "dim"); break;
+    case "sit": feed(`${nm(e.name)} sits down with ${e.buy}.${e.bot ? " (a test bot)" : e.zc ? ` (${e.zc} ZC)` : ""}`); if (e.name === you?.name) loadBank(); break;
+    case "stand": feed(`${nm(e.name)} leaves with ${e.stack}${e.why === "gone" ? " (connection lost)" : e.why === "nobody here" ? " (nobody here)" : e.why === "reset" ? " (reset)" : ""}${e.banked === false ? " — the bank was slow; it will arrive" : ""}.`, "dim"); if (e.name === you?.name) setTimeout(loadBank, 800); break;
     case "leaving": feed(`${nm(e.name)} is leaving after this hand.`, "dim"); break;
     case "deal": feed(`Hand #${e.no}. Button on ${nm(view?.seats[e.button]?.name || "?")}.`, "dim"); break;
     case "act": {
@@ -174,7 +186,7 @@ function onEvent(e) {
     case "timeout": feed(`${nm(e.name)} ran out of time and ${e.did === "check" ? "checks" : "folds"}${e.out ? " — sat out" : ""}.`, "warm"); lastAct[e.i] = { a: e.did, n: 0, at: performance.now(), slow: true }; break;
     case "sitout": feed(`${nm(e.name)} sits out.`, "dim"); break;
     case "back": feed(`${nm(e.name)} is back.`, "dim"); break;
-    case "addon": feed(`${nm(e.name)} adds ${e.amt}.`, "dim"); break;
+    case "addon": feed(`${nm(e.name)} adds ${e.amt}.`, "dim"); if (e.name === you?.name) loadBank(); break;
     case "waitjoin": feed(`${nm(e.name)} joins the wait list.`, "dim"); break;
     case "waitleave": feed(`${nm(e.name)} leaves the wait list.`, "dim"); break;
     case "waitup": feed(`A seat is open: it is ${nm(e.name)}'s for thirty seconds.`, "warm"); if (you && e.name === you.name) { SFX.turn(); } break;
@@ -219,13 +231,14 @@ function drawSeatButtons() {
   for (let i = 0; i < TABLE.SEATS; i++) { if (view.seats[i]) continue; const p = seatPos(i); const b = document.createElement("button"); b.textContent = "Sit here"; b.style.left = `${rect.left - st.left + p.x * sx}px`; b.style.top = `${rect.top - st.top + (p.y + 18) * sy}px`; b.onclick = () => openBuyin(i); box.append(b); }
 }
 let buySeat = -1;
-function openBuyin(i) { if (!you) return; const max = Math.min(TABLE.MAX_BUY, bank); if (max < TABLE.MIN_BUY) { feed(`You need at least ${TABLE.MIN_BUY} chips in the bank. ${bank < TABLE.MIN_BUY ? "The bank tops you up once an hour." : ""}`, "warm"); return; } buySeat = i; const r = $("buyRange"); r.min = TABLE.MIN_BUY; r.max = max; r.step = 5; r.value = max; $("buyN").textContent = max; $("buyinLine").textContent = `Buy in for ${TABLE.MIN_BUY} to ${max} chips. You have ${bank} in the bank.`; $("buyin").hidden = false; }
-$("buyRange").oninput = () => { $("buyN").textContent = $("buyRange").value; };
+function openBuyin(i) { if (!you) return; const max = Math.min(TABLE.MAX_BUY, canBuyChips()); if (max < TABLE.MIN_BUY) { feed(`A seat is at least ${TABLE.MIN_BUY} chips (1 ZC). You have ${bankInfo.bank} chips banked and ${bankInfo.balance ?? 0} ZC${bankInfo.spentToday >= bankInfo.limit ? ", and you have put in today's " + bankInfo.limit + " ZC" : ""}.`, "warm"); pop("bankPop"); return; } buySeat = i; const r = $("buyRange"); r.min = TABLE.MIN_BUY; r.max = max; r.step = 5; r.value = max; $("buyN").textContent = max; buyLine(); $("buyin").hidden = false; }
+function buyLine() { const chips = Number($("buyRange").value); const fromBank = Math.min(bankInfo.bank, chips); const zc = Math.ceil(Math.max(0, chips - fromBank) / bankInfo.ratio); $("buyinLine").textContent = `${chips} chips: ${fromBank} from your chip bank${zc ? ` and ${zc} ZC (1 ZC = ${bankInfo.ratio} chips)` : ""}. Bank ${bankInfo.bank.toLocaleString()} chips · ${bankInfo.balance ?? "—"} ZC.`; }
+$("buyRange").oninput = () => { $("buyN").textContent = $("buyRange").value; buyLine(); };
 $("buyGo").onclick = () => { send({ t: "sit", seat: buySeat, buy: Number($("buyRange").value) }); $("buyin").hidden = true; };
 $("buyNo").onclick = () => { $("buyin").hidden = true; };
 $("btnStand").onclick = () => send({ t: "stand" });
 $("btnSitout").onclick = () => { const me = view?.seats[view.me]; if (me) send({ t: "sitout", on: !me.sitOut }); };
-$("btnAddon").onclick = () => { const me = view?.seats[view.me]; if (!me) return; const amt = Math.min(TABLE.MAX_BUY - me.stack, bank); if (amt > 0) send({ t: "addon", amt }); };
+$("btnAddon").onclick = () => { const me = view?.seats[view.me]; if (!me) return; const amt = Math.floor(Math.min(TABLE.MAX_BUY - me.stack, canBuyChips()) / 5) * 5; if (amt > 0) send({ t: "addon", amt }); else { feed("Nothing to add: top up the bank first.", "warm"); pop("bankPop"); } };
 $("btnHow").onclick = () => { $("how").hidden = false; }; $("howNo").onclick = () => { $("how").hidden = true; };
 $("btnBot").onclick = () => send({ t: "bot", n: 1 }); $("btnBotOff").onclick = () => send({ t: "bot", n: 0 });
 $("aShow").onclick = () => send({ t: "show" });

@@ -30,7 +30,9 @@ export async function ensurePoker(db) {
       cashout_chips INTEGER, status TEXT NOT NULL DEFAULT 'OPEN', day TEXT NOT NULL,
       opened_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, closed_at TEXT)`),
     db.prepare(`CREATE INDEX IF NOT EXISTS idx_poker_sessions_user_day ON poker_sessions (user_id, day)`),
-    db.prepare(`CREATE TABLE IF NOT EXISTS poker_exchanges (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, chips INTEGER NOT NULL, zc INTEGER NOT NULL, op_key TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`)
+    db.prepare(`CREATE TABLE IF NOT EXISTS poker_exchanges (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, chips INTEGER NOT NULL, zc INTEGER NOT NULL, op_key TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`),
+    db.prepare(`CREATE TABLE IF NOT EXISTS poker_buys (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, zc INTEGER NOT NULL, chips INTEGER NOT NULL, day TEXT NOT NULL, op_key TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)`),
+    db.prepare(`CREATE INDEX IF NOT EXISTS idx_poker_buys_user_day ON poker_buys (user_id, day)`)
   ]);
   ready = true;
 }
@@ -44,7 +46,26 @@ export function fromDealer(context) {
 export async function bankOf(db, userId) { const r = await db.prepare(`SELECT chips FROM poker_banks WHERE user_id = ?`).bind(userId).first(); return Number(r?.chips || 0); }
 async function setBank(db, userId, chips) { await db.prepare(`INSERT INTO poker_banks (user_id, chips, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT (user_id) DO UPDATE SET chips = excluded.chips, updated_at = CURRENT_TIMESTAMP`).bind(userId, chips).run(); }
 async function userRow(db, userId) { return db.prepare(`SELECT twitch_id, twitch_login, display_name FROM users WHERE twitch_id = ?`).bind(userId).first(); }
-export async function spentToday(db, userId, day) { const r = await db.prepare(`SELECT COALESCE(SUM(buyin_zc + addon_zc), 0) AS zc FROM poker_sessions WHERE user_id = ? AND day = ?`).bind(userId, day).first(); return Number(r?.zc || 0); }
+export async function spentToday(db, userId, day) { const r = await db.prepare(`SELECT COALESCE(SUM(buyin_zc + addon_zc), 0) AS zc FROM poker_sessions WHERE user_id = ? AND day = ?`).bind(userId, day).first(); const b = await db.prepare(`SELECT COALESCE(SUM(zc), 0) AS zc FROM poker_buys WHERE user_id = ? AND day = ?`).bind(userId, day).first(); return Number(r?.zc || 0) + Number(b?.zc || 0); }
+
+/** ZCoins -> chips in the bank (the Bank panel's "Buy chips"): whole ZC, the day limit, one ledger row. */
+export async function buyChips(env, db, { userId, zc, tableKey = "nickel" }) {
+  const T = TABLES[tableKey]; zc = Math.floor(Number(zc)); if (!Number.isFinite(zc) || zc <= 0) return { ok: false, code: "BAD_ZC", message: "How many ZCoins?" };
+  const user = await userRow(db, userId); if (!user) return { ok: false, code: "NO_USER", message: "Who?" };
+  const day = chicagoDay(Date.now()); const spent = await spentToday(db, userId, day); if (spent + zc > T.dayBuyinZc) return { ok: false, code: "DAY_LIMIT", message: `The ${T.name} table takes ${T.dayBuyinZc} ZC a day and you have put in ${spent}.` };
+  const balance = await readBalance(env, user.twitch_login); if (balance === null) return { ok: false, code: "BALANCE_UNAVAILABLE", message: "Couldn't read your ZCoin balance." };
+  if (zc > balance) return { ok: false, code: "INSUFFICIENT_FUNDS", message: `That is ${zc} ZC and you have ${balance}.` };
+  const chips = zc * T.chipsPerZc, opKey = await retryKey(db, `POKER:BANK:${userId}`), opId = newId("op");
+  const begun = await beginOperation(db, { id: opId, idempotencyKey: opKey, userId, marketId: null, pickId: null, type: "WAGER_DEBIT", amount: -zc });
+  if (!begun.ok) return { ok: false, code: "DUPLICATE", message: "That purchase is already going through." };
+  const debit = await moveBalance(env, user.twitch_login, -zc);
+  if (!debit.ok) { await finishOperation(db, opId, "FAILED", { error: debit.error }); return { ok: false, code: "DEBIT_FAILED", message: "Couldn't take the ZCoins. Nothing was charged." }; }
+  const bank = await bankOf(db, userId);
+  try { await db.batch([db.prepare(`INSERT INTO poker_buys (id, user_id, zc, chips, day, op_key) VALUES (?, ?, ?, ?, ?, ?)`).bind(newId("pb"), userId, zc, chips, day, opKey), db.prepare(`INSERT INTO poker_banks (user_id, chips, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT (user_id) DO UPDATE SET chips = excluded.chips, updated_at = CURRENT_TIMESTAMP`).bind(userId, bank + chips)]); }
+  catch (error) { const refund = await moveBalance(env, user.twitch_login, zc); await finishOperation(db, opId, refund.ok ? "FAILED" : "NEEDS_RECONCILIATION", { balanceAfter: refund.ok ? refund.balance : null, error: `poker_buy_failed:${String(error?.message || "").slice(0, 120)}` }); if (refund.ok) await db.prepare(`INSERT INTO wallet_operations (id, idempotency_key, user_id, market_id, pick_id, type, amount, status, balance_after) VALUES (?, ?, ?, NULL, NULL, 'COMPENSATING_REFUND', ?, 'CONFIRMED', ?)`).bind(newId("op"), `REFUND:${opKey}`, userId, zc, refund.balance).run().catch(() => {}); return { ok: false, code: refund.ok ? "BUY_FAILED" : "NEEDS_RECONCILIATION", message: refund.ok ? "That didn't go through — your ZCoins were returned." : "Something went wrong; an admin can see it." }; }
+  await finishOperation(db, opId, "CONFIRMED", { balanceAfter: debit.balance });
+  return { ok: true, zc, chips, bank: bank + chips, balance: debit.balance };
+}
 
 /** Chips to a seat: the bank first, then whole ZCoins at the ratio (the surplus chips of the last ZC go to the bank). */
 export async function buyIn(env, db, { userId, tableKey, chips, sessionId, addon = false }) {
@@ -131,6 +152,7 @@ export async function books(db) {
   const s = await db.prepare(`SELECT COUNT(*) AS n, COALESCE(SUM(buyin_chips + addon_chips), 0) AS chips_in, COALESCE(SUM(buyin_zc + addon_zc), 0) AS zc_in, COALESCE(SUM((buyin_zc + addon_zc) * ratio), 0) AS minted, COALESCE(SUM(CASE WHEN status = 'CLOSED' THEN cashout_chips ELSE 0 END), 0) AS chips_out, SUM(CASE WHEN status = 'OPEN' THEN 1 ELSE 0 END) AS open FROM poker_sessions`).first();
   const b = await db.prepare(`SELECT COALESCE(SUM(chips), 0) AS chips FROM poker_banks`).first();
   const x = await db.prepare(`SELECT COALESCE(SUM(CASE WHEN status = 'PAID' THEN zc ELSE 0 END), 0) AS zc_out, COALESCE(SUM(CASE WHEN status = 'PAID' THEN chips ELSE 0 END), 0) AS chips_paid, COALESCE(SUM(CASE WHEN status = 'NEEDS_RECONCILIATION' THEN chips ELSE 0 END), 0) AS chips_stuck, SUM(CASE WHEN status = 'NEEDS_RECONCILIATION' THEN 1 ELSE 0 END) AS stuck FROM poker_exchanges`).first();
-  const onTable = Number(s?.chips_in || 0) - Number(s?.chips_out || 0), banks = Number(b?.chips || 0), burned = Number(x?.chips_paid || 0) + Number(x?.chips_stuck || 0), minted = Number(s?.minted || 0);
-  return { sessions: Number(s?.n || 0), open: Number(s?.open || 0), zcIn: Number(s?.zc_in || 0), zcOut: Number(x?.zc_out || 0), minted, onTable, banks, burned, stuck: Number(x?.stuck || 0), balanced: minted === onTable + banks + burned };
+  const pb = await db.prepare(`SELECT COALESCE(SUM(chips), 0) AS chips, COALESCE(SUM(zc), 0) AS zc FROM poker_buys`).first();
+  const onTable = Number(s?.chips_in || 0) - Number(s?.chips_out || 0), banks = Number(b?.chips || 0), burned = Number(x?.chips_paid || 0) + Number(x?.chips_stuck || 0), minted = Number(s?.minted || 0) + Number(pb?.chips || 0);
+  return { sessions: Number(s?.n || 0), open: Number(s?.open || 0), zcIn: Number(s?.zc_in || 0) + Number(pb?.zc || 0), zcOut: Number(x?.zc_out || 0), minted, onTable, banks, burned, stuck: Number(x?.stuck || 0), balanced: minted === onTable + banks + burned };
 }

@@ -13,14 +13,14 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@500;600;700&family=Playfair+Display:wght@900&display=swap">
-<link rel="stylesheet" href="poker.css?v=10">
+<link rel="stylesheet" href="poker.css?v=11">
 </head>
 <body>
 <div class="room">
   <header class="bar">
     <div class="brand"><i>EastCoin</i> Poker</div>
     <div class="stakes">No-limit hold'em · <b>5/10</b> · 6-max · <b id="tableN">empty</b></div>
-    <div class="me" id="meBar"><div class="bank" title="Your bank: play chips while the table is in testing"><img class="bank-img" src="tex/bank_stack.webp?v=1" alt=""><span><small>BANK</small><b id="bankN">—</b></span></div><span class="who" id="who"></span></div>
+    <div class="me" id="meBar"><button class="bank" id="btnBank" title="Your chip bank: buy chips with ZCoins, cash chips out"><img class="bank-img" src="tex/bank_stack.webp?v=1" alt=""><span><small>CHIP BANK</small><b id="bankN">—</b></span><span class="zc"><small>ZCOINS</small><b id="zcN">—</b></span></button><span class="who" id="who"></span></div>
     <nav class="tools">
       <button id="btnAddon" hidden>Add on</button>
       <button id="btnSitout" hidden>Sit out</button>
@@ -51,6 +51,13 @@
     <div class="tv-list" id="tvList"><button disabled>Loading what is on…</button></div>
   </div>
   <div class="mini" id="mini" hidden><div class="mini-head" id="miniHead"><b id="miniTitle">Stream</b><select id="miniSrv" title="Server"></select><button id="miniSize" title="Bigger / smaller">⤢</button><button id="miniOff" title="Close">×</button></div><iframe id="miniFrame" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe></div>
+  <div class="pop" id="bankPop" hidden><div class="pop-head"><b>The <i>bank</i></b><button class="x" data-close="bankPop">×</button></div>
+    <p class="bank-line">1 ZC buys <b>200</b> chips at this table. A seat is 200 to 1,000 chips (1 to 5 ZC). You can put in <b id="bankLimit">20</b> ZC a day; today <b id="bankSpent">0</b>.</p>
+    <div class="bank-row"><span>Chip bank</span><b id="bankChips">—</b></div><div class="bank-row"><span>ZCoins</span><b id="bankZc">—</b></div>
+    <form class="bank-form" id="buyForm"><label>Buy chips<input type="number" id="buyZc" min="1" max="20" step="1" value="5"> ZC</label><span id="buyPreview">= 1,000 chips</span><button class="go">Buy</button></form>
+    <form class="bank-form" id="outForm"><label>Cash out<input type="number" id="outZc" min="1" step="1" value="1"> ZC</label><span id="outPreview">= 200 chips</span><button class="go">Cash out</button></form>
+    <p class="bank-note" id="bankNote" hidden></p>
+  </div>
   <div class="pop" id="settings" hidden><div class="pop-head"><b>Settings</b><button class="x" data-close="settings">×</button></div>
     <label class="row"><span>Table sounds</span><input type="range" id="setVol" min="0" max="100" value="70"></label>
     <label class="row"><span>Four-colour deck</span><input type="checkbox" id="setFour"></label>
@@ -86,15 +93,15 @@
     <div class="signin" id="signin" hidden><b>Sign in with Twitch to sit down.</b><a class="go" href="/api/picks/auth/twitch/start?returnTo=%2Fpoker" target="_top">Sign in</a></div>
   </div>
   <div class="buyin" id="buyin" hidden><div class="card"><h2>Sit <i>down</i></h2><p id="buyinLine">Buy in for 200 to 1,000 chips.</p><input type="range" id="buyRange" min="200" max="1000" step="5" value="1000"><div class="buyrow"><b id="buyN">1000</b> chips<span class="sp"></span><button id="buyGo" class="go">Sit down</button><button id="buyNo">Not now</button></div></div></div>
-  <div class="how" id="resetBox" hidden><div class="card"><h2>Reset the <i>table</i></h2><p>The hand in progress is voided and everyone gets back what they put in. Everyone stands up with their chips in the bank, the bots go, the wait list clears, and the next two people to sit start a fresh hand.</p><label class="row"><span>Also reset every bank to 2,000</span><input type="checkbox" id="resetBanks"></label><div class="buyrow"><span class="sp"></span><button id="resetGo" class="go">Reset</button><button id="resetNo">Not now</button></div></div></div>
+  <div class="how" id="resetBox" hidden><div class="card"><h2>Reset the <i>table</i></h2><p>The hand in progress is voided and everyone gets back what they put in. Everyone stands up with their chips in the bank, the bots go, the wait list clears, and the next two people to sit start a fresh hand.</p><input type="checkbox" id="resetBanks" hidden><div class="buyrow"><span class="sp"></span><button id="resetGo" class="go">Reset</button><button id="resetNo">Not now</button></div></div></div>
   <div class="how" id="how" hidden><div class="card"><h2>How it <i>works</i></h2>
     <p><b>No-limit Texas Hold'em</b>, blinds 5 and 10, six seats, real people only. Buy in for 200 to 1,000 chips from your bank and leave whenever a hand is not running.</p>
-    <p><b>Chips are play chips for now.</b> Everyone starts with 2,000 in the bank; go broke and leave the table and the bank tops you back up once an hour. When the table goes live, chips will be bought with ZCoins at the table's rate, so a 1 ZC player and a 1,000 ZC player can sit at the same table.</p>
+    <p><b>Chips are ZCoins.</b> 1 ZC buys 200 chips. Open the bank (top bar) to buy chips with ZCoins or cash chips out; a seat is bought from your chip bank first, then ZCoins. The house takes nothing: every chip on the table came from a player and goes back to one. You can put in 20 ZC a day.</p>
     <p><b>Thirty seconds a decision.</b> Run out the clock and you check or fold; twice in a row and you are sat out until you come back. Keys: <b>F</b> fold, <b>C</b> check or call, <b>R</b> bet or raise. While you wait, <b>Check / Fold</b> and <b>Call any</b> act for you the moment it is your turn. Raise sizes land on round numbers.</p>
     <p><b>Leaving mid-hand folds you.</b> Lose your connection and the seat is held a minute, then your chips go back to the bank.</p>
     <p>The dealer is the server. Nobody's page is told a card it may not see.</p>
     <button class="go" id="howNo">Got it</button></div></div>
 </div>
-<script type="module" src="poker.js?v=16"></script>
+<script type="module" src="poker.js?v=17"></script>
 </body>
 </html>
