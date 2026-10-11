@@ -14,6 +14,9 @@ const cv = $("cv"), g = cv.getContext("2d"); const W = cv.width, H = cv.height;
 let you = null, bank = 0, view = null, people = [], ws = null, lastView = null, seenBoard = 0, boardAt = 0, showAt = 0, flash = { seat: -1, at: 0 };
 let lastAct = {}, anims = [], dealing = {}, winSet = null, lastTick = -1;
 const avatars = new Map();
+const TEX_V = 1, TEX = {}; for (const n of ["felt", "rail", "card_back", "card_face", "chip_white", "chip_red", "chip_blue", "chip_black", "dealer_button", "pot_tray"]) { const im = new Image(); im.src = `tex/${n}.webp?v=${TEX_V}`; TEX[n] = im; }
+const tex = (n) => (TEX[n] && TEX[n].complete && TEX[n].naturalWidth ? TEX[n] : null); let feltPat = null, railPat = null;
+const chipFor = (amount) => (amount >= 100 ? "chip_black" : amount >= 25 ? "chip_blue" : amount >= 5 ? "chip_red" : "chip_white");
 
 /* ---------------------------------------------------------------- sound: small tones, no files yet */
 let AC = null; const audioOn = () => { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch {} } if (AC?.state === "suspended") AC.resume(); };
@@ -159,7 +162,8 @@ function drawCard(c, x, y, w, h, faceUp, dim = false, lit = false, rot = 0) {
   g.save(); g.translate(x, y); g.rotate(rot);
   g.shadowColor = "rgba(0,0,0,.5)"; g.shadowBlur = 12; g.shadowOffsetY = 5;
   rr(-w / 2, -h / 2, w, h, 5); g.fillStyle = faceUp ? KIT.chalk : KIT.back; g.fill(); g.shadowColor = "transparent";
-  if (!faceUp) { rr(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 3); g.strokeStyle = "rgba(227,154,86,.7)"; g.lineWidth = 1.5; g.stroke(); g.fillStyle = "rgba(227,154,86,.22)"; for (let yy = -h / 2 + 11; yy < h / 2 - 9; yy += 9) for (let xx = -w / 2 + 11; xx < w / 2 - 9; xx += 9) { g.beginPath(); g.moveTo(xx, yy - 3); g.lineTo(xx + 3, yy); g.lineTo(xx, yy + 3); g.lineTo(xx - 3, yy); g.fill(); } }
+  const art = tex(faceUp ? "card_face" : "card_back"); if (art) { g.save(); rr(-w / 2, -h / 2, w, h, 5); g.clip(); g.drawImage(art, -w / 2, -h / 2, w, h); g.restore(); }
+  if (!faceUp && !art) { rr(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 3); g.strokeStyle = "rgba(227,154,86,.7)"; g.lineWidth = 1.5; g.stroke(); g.fillStyle = "rgba(227,154,86,.22)"; for (let yy = -h / 2 + 11; yy < h / 2 - 9; yy += 9) for (let xx = -w / 2 + 11; xx < w / 2 - 9; xx += 9) { g.beginPath(); g.moveTo(xx, yy - 3); g.lineTo(xx + 3, yy); g.lineTo(xx, yy + 3); g.lineTo(xx - 3, yy); g.fill(); } }
   else { const r = rankOf(c), s = suitOf(c); const ten = RANKS[r] === "T"; g.fillStyle = SUIT_RED[s] ? KIT.cardRed : KIT.cardInk; g.font = `900 ${Math.round(h * (ten ? 0.3 : 0.38))}px ${CARD}`; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(ten ? "10" : RANKS[r], -w / 2 + 5, -h / 2 + 2); g.font = `${Math.round(h * 0.26)}px serif`; g.fillText(SUIT_GLYPH[s], -w / 2 + 6, -h / 2 + 2 + h * 0.36); g.font = `${Math.round(h * 0.5)}px serif`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(SUIT_GLYPH[s], w * 0.16, h * 0.22); }
   if (lit) { rr(-w / 2 - 2, -h / 2 - 2, w + 4, h + 4, 6); g.strokeStyle = KIT.copper2; g.lineWidth = 3; g.stroke(); }
   if (dim) { rr(-w / 2, -h / 2, w, h, 5); g.fillStyle = "rgba(15,20,19,.6)"; g.fill(); }
@@ -167,7 +171,9 @@ function drawCard(c, x, y, w, h, faceUp, dim = false, lit = false, rot = 0) {
 }
 function chipStack(x, y, amount, label = true) {
   if (amount <= 0) return; const n = Math.min(8, 1 + Math.floor(Math.log2(Math.max(1, amount)))); const col = amount >= 100 ? "#1b1f1e" : amount >= 25 ? "#2d5f8a" : amount >= 5 ? "#a63a31" : "#e9e2d4";
-  for (let i = 0; i < n; i++) { g.beginPath(); g.ellipse(x, y - i * 3.2, 14, 9, 0, 0, Math.PI * 2); g.fillStyle = col; g.fill(); g.strokeStyle = "rgba(241,236,226,.6)"; g.lineWidth = 1.5; g.stroke(); g.beginPath(); g.ellipse(x, y - i * 3.2, 9, 5.5, 0, 0, Math.PI * 2); g.strokeStyle = "rgba(227,154,86,.5)"; g.stroke(); }
+  const art = tex(chipFor(amount));
+  if (art) { for (let i = 0; i < n; i++) { g.save(); g.translate(x, y - i * 3.4); g.scale(1, 0.62); g.drawImage(art, -15, -15, 30, 30); g.restore(); } }
+  else for (let i = 0; i < n; i++) { g.beginPath(); g.ellipse(x, y - i * 3.2, 14, 9, 0, 0, Math.PI * 2); g.fillStyle = col; g.fill(); g.strokeStyle = "rgba(241,236,226,.6)"; g.lineWidth = 1.5; g.stroke(); g.beginPath(); g.ellipse(x, y - i * 3.2, 9, 5.5, 0, 0, Math.PI * 2); g.strokeStyle = "rgba(227,154,86,.5)"; g.stroke(); }
   if (label) { g.font = `600 12px ${SANS}`; g.textAlign = "center"; g.textBaseline = "middle"; rr(x - 24, y + 12, 48, 18, 3); g.fillStyle = "rgba(15,20,19,.85)"; g.fill(); g.strokeStyle = "rgba(201,119,47,.5)"; g.lineWidth = 1; g.stroke(); g.fillStyle = KIT.chalk; g.fillText(amount, x, y + 21); }
 }
 function chipIcon(x, y, alpha = 1) { g.save(); g.globalAlpha = alpha; g.beginPath(); g.arc(x, y, 7, 0, Math.PI * 2); g.fillStyle = KIT.copper; g.fill(); g.strokeStyle = KIT.chalk; g.lineWidth = 1.5; g.setLineDash([2.2, 2.2]); g.stroke(); g.setLineDash([]); g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.fillStyle = KIT.copper2; g.fill(); g.restore(); }
@@ -178,14 +184,18 @@ function draw() {
   // the rail and the felt
   g.save(); g.shadowColor = "rgba(0,0,0,.65)"; g.shadowBlur = 44; g.shadowOffsetY = 18; g.beginPath(); g.ellipse(CX, CY, RX + 40, RY + 40, 0, 0, Math.PI * 2); g.fillStyle = KIT.rail; g.fill(); g.restore();
   g.beginPath(); g.ellipse(CX, CY, RX + 40, RY + 40, 0, 0, Math.PI * 2); const wg = g.createLinearGradient(0, CY - RY, 0, CY + RY); wg.addColorStop(0, "#342a22"); wg.addColorStop(1, "#1b1512"); g.fillStyle = wg; g.fill();
+  if (!railPat && tex("rail")) railPat = g.createPattern(tex("rail"), "repeat"); if (railPat) { g.save(); g.beginPath(); g.ellipse(CX, CY, RX + 40, RY + 40, 0, 0, Math.PI * 2); g.clip(); g.fillStyle = railPat; g.globalAlpha = 0.9; g.fillRect(CX - RX - 40, CY - RY - 40, (RX + 40) * 2, (RY + 40) * 2); g.restore(); }
   g.beginPath(); g.ellipse(CX, CY, RX + 22, RY + 22, 0, 0, Math.PI * 2); g.strokeStyle = "rgba(201,119,47,.35)"; g.lineWidth = 1; g.setLineDash([3, 5]); g.stroke(); g.setLineDash([]);   // the stitch
-  g.beginPath(); g.ellipse(CX, CY, RX, RY, 0, 0, Math.PI * 2); const fg = g.createRadialGradient(CX, CY - 30, 40, CX, CY, RX); fg.addColorStop(0, "#136b66"); fg.addColorStop(1, KIT.felt2); g.fillStyle = fg; g.fill(); g.strokeStyle = "rgba(201,119,47,.45)"; g.lineWidth = 2; g.stroke();
+  g.beginPath(); g.ellipse(CX, CY, RX, RY, 0, 0, Math.PI * 2); const fg = g.createRadialGradient(CX, CY - 30, 40, CX, CY, RX); fg.addColorStop(0, "#136b66"); fg.addColorStop(1, KIT.felt2); g.fillStyle = fg; g.fill();
+  if (!feltPat && tex("felt")) feltPat = g.createPattern(tex("felt"), "repeat"); if (feltPat) { g.save(); g.beginPath(); g.ellipse(CX, CY, RX, RY, 0, 0, Math.PI * 2); g.clip(); g.fillStyle = feltPat; g.fillRect(CX - RX, CY - RY, RX * 2, RY * 2); const vg = g.createRadialGradient(CX, CY - 30, 60, CX, CY, RX); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.42)"); g.fillStyle = vg; g.fillRect(CX - RX, CY - RY, RX * 2, RY * 2); g.restore(); }
+  g.beginPath(); g.ellipse(CX, CY, RX, RY, 0, 0, Math.PI * 2); g.strokeStyle = "rgba(201,119,47,.45)"; g.lineWidth = 2; g.stroke();
+  if (tex("pot_tray")) g.drawImage(tex("pot_tray"), CX - 100, CY - 118, 200, 100);
   g.beginPath(); g.ellipse(CX, CY, RX - 72, RY - 62, 0, 0, Math.PI * 2); g.strokeStyle = "rgba(241,236,226,.1)"; g.lineWidth = 1.5; g.stroke();
   g.font = `italic 400 46px ${DISP}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "rgba(241,236,226,.07)"; g.fillText("EastCoin", CX, CY + 96);
   if (!view) return;
   const v = view; const me = v.me;
   // the pot and the board
-  if (v.pot > 0 || v.phase === "showdown") { g.font = `600 10px ${SANS}`; g.fillStyle = "rgba(241,236,226,.55)"; g.fillText("POT", CX, CY - 96); g.font = `400 30px ${DISP}`; g.fillStyle = KIT.chalk; g.fillText(v.pot.toLocaleString(), CX, CY - 72); if (v.pot > 0 && v.phase === "hand") chipStack(CX + 64, CY - 68, v.pot, false); }
+  if (v.pot > 0 || v.phase === "showdown") { g.font = `600 10px ${SANS}`; g.fillStyle = "rgba(241,236,226,.55)"; g.fillText("POT", CX, CY - 90); g.font = `400 30px ${DISP}`; g.fillStyle = KIT.chalk; g.fillText(v.pot.toLocaleString(), CX, CY - 66); if (v.pot > 0 && v.phase === "hand") chipStack(CX + 62, CY - 64, v.pot, false); }
   const cw = 64, ch = 90;
   for (let i = 0; i < 5; i++) { const x = CX + (i - 2) * (cw + 10), y = CY + 10; if (i < v.board.length) { const pop = i >= (lastView?.board.length ?? 0) ? Math.min(1, (now - boardAt) / 200) : 1; const lit = winSet ? winSet.has(v.board[i]) : false, dim = winSet ? !winSet.has(v.board[i]) : false; g.save(); g.translate(x, y); g.scale(0.86 + ease(pop) * 0.14, 0.86 + ease(pop) * 0.14); g.translate(-x, -y); drawCard(v.board[i], x, y, cw, ch, true, dim, lit); g.restore(); } else { rr(x - cw / 2, y - ch / 2, cw, ch, 5); g.strokeStyle = "rgba(241,236,226,.12)"; g.lineWidth = 1.5; g.setLineDash([6, 5]); g.stroke(); g.setLineDash([]); } }
   if (v.phase === "waiting") { g.font = `italic 400 20px ${DISP}`; g.fillStyle = "rgba(241,236,226,.75)"; const n = v.seats.filter((s) => s && !s.sitOut && s.stack > 0).length; g.fillText(n < TABLE.MIN_PLAYERS ? (n === 0 ? "Waiting for players. Take a seat." : "Waiting for one more player…") : "Shuffling up…", CX, CY + 76); }
@@ -209,7 +219,7 @@ function draw() {
     else if (s.gone) tag(p.x, p.y + ph + 2, "AWAY", KIT.bad);
     else if (lastAct[i]) { const a = lastAct[i]; const text = a.a === "fold" ? "FOLD" : a.a === "check" ? "CHECK" : a.a === "call" ? `CALL ${a.n}` : a.a === "allin" ? `ALL IN ${a.n}` : `RAISE ${a.n}`; const col = a.a === "fold" ? KIT.mute : a.a === "allin" ? KIT.bad : a.a === "raise" ? KIT.copper2 : KIT.chalk; const age = Math.min(1, (now - a.at) / 160); g.save(); g.globalAlpha = age; tag(p.x, p.y + ph + 2 - (1 - age) * 6, text + (a.slow ? " · SLOW" : ""), col); g.restore(); }
     // the dealer button, this street's bet
-    if (v.button === i) { const b = betPos(i); g.beginPath(); g.arc(b.x + 44, b.y - 16, 12, 0, Math.PI * 2); g.fillStyle = KIT.chalk; g.fill(); g.strokeStyle = KIT.copper; g.lineWidth = 2; g.stroke(); g.font = `400 14px ${DISP}`; g.fillStyle = KIT.bg; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("D", b.x + 44, b.y - 16); }
+    if (v.button === i) { const b = betPos(i); if (tex("dealer_button")) g.drawImage(tex("dealer_button"), b.x + 30, b.y - 30, 28, 28); else { g.beginPath(); g.arc(b.x + 44, b.y - 16, 12, 0, Math.PI * 2); g.fillStyle = KIT.chalk; g.fill(); g.strokeStyle = KIT.copper; g.lineWidth = 2; g.stroke(); g.font = `400 14px ${DISP}`; g.fillStyle = KIT.bg; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("D", b.x + 44, b.y - 16); } }
     if (s.bet > 0) { const b = betPos(i); chipStack(b.x, b.y, s.bet); }
     if (v.phase === "showdown" && s.won > 0) { const t = Math.min(1, Math.max(0, (now - showAt - 900) / 400)); if (t > 0) { g.font = `400 22px ${DISP}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = `rgba(127,209,169,${t})`; g.fillText(`+${s.won}`, p.x + pw / 2 + 28, p.y + 18 - t * 4); } }
   }
