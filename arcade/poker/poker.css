@@ -98,3 +98,6 @@ button.small{padding:6px 10px;font-size:11px}
 /* the left rail never grows past its track (2026-10-13: the chat input's intrinsic width pushed the rail wide and the last-hands list ran off the edge) */
 .left,.left .panel,.left .lines{min-width:0;max-width:100%}.left .lines{overflow-x:hidden;overflow-wrap:anywhere}.left .lines p{word-break:break-word}
 #chatForm input{width:0;min-width:0;flex:1 1 0}#chatForm{min-width:0}
+/* the bank button's numbers: a <button> does not inherit colour, so say it (2026-10-13: they rendered black on the bar) */
+.bank b{color:var(--chalk)}.bank .zc b{color:var(--copper2)}.bank:hover{border-color:var(--copper2)}
+.bank{background:transparent}   /* a <button> brings the browser's light-grey background; chalk on it was invisible (2026-10-13) */

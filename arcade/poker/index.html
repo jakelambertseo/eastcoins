@@ -13,14 +13,14 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@500;600;700&family=Playfair+Display:wght@900&display=swap">
-<link rel="stylesheet" href="poker.css?v=11">
+<link rel="stylesheet" href="poker.css?v=12">
 </head>
 <body>
 <div class="room">
   <header class="bar">
     <div class="brand"><i>EastCoin</i> Poker</div>
     <div class="stakes">No-limit hold'em · <b>5/10</b> · 6-max · <b id="tableN">empty</b></div>
-    <div class="me" id="meBar"><button class="bank" id="btnBank" title="Your chip bank: buy chips with ZCoins, cash chips out"><img class="bank-img" src="tex/bank_stack.webp?v=1" alt=""><span><small>CHIP BANK</small><b id="bankN">—</b></span><span class="zc"><small>ZCOINS</small><b id="zcN">—</b></span></button><span class="who" id="who"></span></div>
+    <div class="me" id="meBar"><button class="bank" id="btnBank" title="Your chip bank: buy chips with ZCoins, cash chips out"><img class="bank-img" src="tex/bank_stack.webp?v=1" alt=""><span><small>CHIP BANK</small><b id="bankN">0</b></span><span class="zc"><small>ZCOINS</small><b id="zcN">—</b></span></button><span class="who" id="who"></span></div>
     <nav class="tools">
       <button id="btnAddon" hidden>Add on</button>
       <button id="btnSitout" hidden>Sit out</button>
@@ -102,6 +102,6 @@
     <p>The dealer is the server. Nobody's page is told a card it may not see.</p>
     <button class="go" id="howNo">Got it</button></div></div>
 </div>
-<script type="module" src="poker.js?v=17"></script>
+<script type="module" src="poker.js?v=18"></script>
 </body>
 </html>
