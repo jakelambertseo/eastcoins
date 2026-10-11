@@ -13,7 +13,7 @@
    A card is 0..51: rank = c % 13 (0 = deuce .. 12 = ace), suit = floor(c / 13) (s h d c). A hand's score is one integer: category
    first, then the ranks that break ties, so two scores compare with <. */
 
-export const VERSION = 8;
+export const VERSION = 9;
 /* (2026-10-13, the owner: "minimum antes need to be in 5s as well ie 5,10") blinds 5/10, buy in 200–1,000 (20–100 big blinds), so every number on the felt is a multiple of five */
 export const TABLE = { SEATS: 6, CHIP: 5, SB: 5, BB: 10, MIN_BUY: 200, MAX_BUY: 1000, TURN_MS: 30000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
 export const BANK = { START: 2000, REFILL_BELOW: 200, REFILL_TO: 2000, REFILL_MS: 60 * 60 * 1000 };
@@ -220,11 +220,17 @@ export function showdown(t, now) {
     result.pots.push({ amount: p.amount, winners: order, hand: alive.length > 1 ? handName(scores[order[0]]) : null, cards: alive.length > 1 ? scores[order[0]].cards : null });
   }
   if (alive.length > 1) { for (const i of alive) { t.seats[i].show = true; result.shows.push({ i, hole: t.seats[i].hole.slice(), name: handName(scores[i]), score: scores[i].score }); } }
-  else if (alive.length === 1) { const i = alive[0]; t.seats[i].show = true; const cards = [...t.seats[i].hole, ...h.board]; result.shows.push({ i, hole: t.seats[i].hole.slice(), name: cards.length >= 5 ? handName(evalBest(cards)) : "", score: 0, byFold: true }); }   /* (2026-10-13, the owner) the winner by a fold shows their hand */
+  else if (alive.length === 1) { result.mayShow = alive[0]; }   /* (2026-10-13) the winner by a fold MAY show: showHand(), their choice, during the showdown pause */
   for (const s of t.seats) if (s) { s.put = 0; s.bet = 0; }
   h.result = result; h.cur = -1; t.phase = "showdown"; t.endAt = now + (alive.length > 1 ? TABLE.SHOW_MS : TABLE.GAP_MS); t.last = { handNo: t.handNo, result, button: t.button, log: h.log.slice() };
   h.log.push({ a: "end", pots: result.pots });
   return result;
+}
+/** During the showdown pause, a seat that was in the hand and is not already shown may turn its cards over (the winner by a fold, or a loser who wants to). */
+export function showHand(t, i) {
+  const s = t.seats[i]; if (!s || t.phase !== "showdown" || !s.inHand || s.show || !t.hand?.result) return null;
+  s.show = true; const cards = [...s.hole, ...t.hand.board]; const rec = { i, hole: s.hole.slice(), name: cards.length >= 5 ? handName(evalBest(cards)) : "", score: 0, chosen: true };
+  t.hand.result.shows.push(rec); return rec;
 }
 /** After the showdown pause: seats that were leaving go, the broke sit out, back to waiting (the dealer starts the next hand). */
 /** An admin reset mid-hand: every chip put in this hand goes back to whoever put it, the hand is void, the table waits. */
@@ -276,7 +282,7 @@ export function viewFor(t, viewerId, now = 0) {
     phase: t.phase, handNo: t.handNo, button: t.button, me, pot: h ? potOf(t) : 0,
     board: h ? h.board : [], street: h ? h.street : 0, cur: h ? h.cur : -1, bet: h ? h.bet : 0,
     turnLeft: h && h.cur >= 0 ? Math.max(0, TABLE.TURN_MS - (now - h.turnAt)) : 0, endIn: t.phase === "showdown" ? Math.max(0, t.endAt - now) : 0,
-    seats: t.seats.map((s, i) => s ? { i, id: s.id, login: s.login, name: s.name, avatar: s.avatar, stack: s.stack, bet: s.bet, put: s.put, inHand: s.inHand, folded: s.folded, allIn: s.allIn, sitOut: s.sitOut, leaving: s.leaving, gone: Boolean(s.gone), won: s.won, cards: s.inHand && !s.folded ? (i === me || s.show ? s.hole : s.hole.map(() => -1)) : [] } : null),
-    legal: me >= 0 ? legal(t, me) : null, last: t.last ? { handNo: t.last.handNo, result: t.last.result } : null
+    seats: t.seats.map((s, i) => s ? { i, id: s.id, login: s.login, name: s.name, avatar: s.avatar, stack: s.stack, bet: s.bet, put: s.put, inHand: s.inHand, folded: s.folded, allIn: s.allIn, sitOut: s.sitOut, leaving: s.leaving, gone: Boolean(s.gone), won: s.won, cards: s.inHand ? (i === me || s.show ? s.hole : (s.folded ? [] : s.hole.map(() => -1))) : [] } : null),
+    legal: me >= 0 ? legal(t, me) : null, mayShow: t.phase === "showdown" && me >= 0 && t.seats[me]?.inHand && !t.seats[me].show, last: t.last ? { handNo: t.last.handNo, result: t.last.result } : null
   };
 }

@@ -13,7 +13,7 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@500;600;700&family=Playfair+Display:wght@900&display=swap">
-<link rel="stylesheet" href="poker.css?v=7">
+<link rel="stylesheet" href="poker.css?v=10">
 </head>
 <body>
 <div class="room">
@@ -29,13 +29,14 @@
       <button id="btnBotOff" hidden>Remove bots</button>
       <button id="btnReset" class="warm" hidden title="Admins only: void the hand, stand everyone, clear the bots">Reset table</button>
       <button id="btnHow">How it works</button>
+      <button id="btnTv" class="icon" title="Watch a stream while you play">📺</button>
       <button id="btnJuke" class="icon" title="Jukebox">♪</button>
       <button id="btnSettings" class="icon" title="Settings">⚙</button>
     </nav>
   </header>
   <aside class="left">
     <div class="panel feed"><h3>Dealer</h3><div class="lines" id="feed"></div></div>
-    <div class="panel chat"><h3>Table talk <span id="peopleN"></span></h3><div class="lines" id="chat"></div><form id="chatForm"><input id="chatIn" maxlength="140" placeholder="Say something…" autocomplete="off"><button>Send</button></form></div>
+    <div class="panel chat"><h3>Table talk <span id="peopleN"></span></h3><div class="lines" id="chat"></div><form id="chatForm"><button type="button" id="emoBtn" class="emo-btn" title="Channel emotes">☺</button><input id="chatIn" maxlength="140" placeholder="Say something…" autocomplete="off"><button>Send</button></form><div class="emo-pick" id="emoPick" hidden><input id="emoQ" placeholder="Find an emote…" autocomplete="off"><div class="emo-grid" id="emoGrid"></div></div></div>
     <div class="panel hands"><h3>Last hands</h3><div class="lines" id="hands"></div></div>
   </aside>
   <div class="waitbox" id="waitbox" hidden><h3>Wait list <span id="waitN"></span></h3><div id="waitList" class="waitlist"></div><button id="btnWait" class="go small">Join the wait list</button><p id="waitNote" class="waitnote" hidden></p></div>
@@ -45,6 +46,11 @@
     <div class="juke-list" id="jukeList"></div>
     <div class="juke-now"><button id="jukeStop" class="small">Stop</button><span id="jukeNow">Nothing playing</span><input type="range" id="jukeVol" min="0" max="100" value="60" title="Jukebox volume"></div>
   </div>
+  <div class="pop" id="tv" hidden><div class="pop-head"><b>Watch</b><button class="x" data-close="tv">×</button></div>
+    <input id="tvQ" class="tv-q" placeholder="Filter live games…" autocomplete="off">
+    <div class="tv-list" id="tvList"><button disabled>Loading what is on…</button></div>
+  </div>
+  <div class="mini" id="mini" hidden><div class="mini-head" id="miniHead"><b id="miniTitle">Stream</b><select id="miniSrv" title="Server"></select><button id="miniSize" title="Bigger / smaller">⤢</button><button id="miniOff" title="Close">×</button></div><iframe id="miniFrame" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="no-referrer"></iframe></div>
   <div class="pop" id="settings" hidden><div class="pop-head"><b>Settings</b><button class="x" data-close="settings">×</button></div>
     <label class="row"><span>Table sounds</span><input type="range" id="setVol" min="0" max="100" value="70"></label>
     <label class="row"><span>Four-colour deck</span><input type="checkbox" id="setFour"></label>
@@ -66,6 +72,7 @@
         <button class="pill check" id="aCheck"><i></i>Check</button>
         <button class="pill raise" id="aRaise"><i></i><span id="aRaiseL">Raise </span><b id="aRaiseN">4</b></button>
       </div>
+      <div class="acts-row" id="showRow" hidden><button class="pill" id="aShow"><i></i>Show my hand</button></div>
       <div class="raisepop" id="raisePop" hidden>
         <div class="sizes"><button data-size="min">Min</button><button data-size="half">½ pot</button><button data-size="pot">Pot</button><button data-size="all">All in</button></div>
         <div class="sizes"><input type="range" id="aSlider" min="0" max="100" value="0"><b id="aTo">4</b></div>
@@ -73,6 +80,8 @@
       </div>
     </div>
     <div class="banner" id="banner" hidden></div>
+    <div class="turnflash" id="turnFlash" hidden>Your turn!</div>
+    <div class="flash" id="flash"></div>
     <div class="status" id="status">Connecting…</div>
     <div class="signin" id="signin" hidden><b>Sign in with Twitch to sit down.</b><a class="go" href="/api/picks/auth/twitch/start?returnTo=%2Fpoker" target="_top">Sign in</a></div>
   </div>
@@ -86,6 +95,6 @@
     <p>The dealer is the server. Nobody's page is told a card it may not see.</p>
     <button class="go" id="howNo">Got it</button></div></div>
 </div>
-<script type="module" src="poker.js?v=12"></script>
+<script type="module" src="poker.js?v=16"></script>
 </body>
 </html>

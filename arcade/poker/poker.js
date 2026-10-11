@@ -2,7 +2,7 @@
    what the server says (top down, you at the bottom), sends what you want to do, and never decides anything. Rules shared with the
    server: /v3/assets/js/poker-rules.js. What moves: cards fly out at the deal, bets sweep into the pot at the end of a street, the pot
    slides to whoever won it, the winning five light up, the clock ticks in its last five seconds. */
-import { TABLE, rankOf, suitOf, RANKS, RANK_NAMES, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=8";
+import { TABLE, rankOf, suitOf, RANKS, RANK_NAMES, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=9";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -14,6 +14,11 @@ const SUIT_GLYPH = ["♠", "♥", "♦", "♣"], SUIT_RED = [false, true, true, 
 const cv = $("cv"), g = cv.getContext("2d"); const W = cv.width, H = cv.height;
 let you = null, bank = 0, view = null, people = [], ws = null, lastView = null, seenBoard = 0, boardAt = 0, showAt = 0, flash = { seat: -1, at: 0 };
 let lastAct = {}, anims = [], dealing = {}, winSet = null, lastTick = -1, turnAt = 0;
+let parts = [], glow = { seat: -1, until: 0, color: "#7fd1a9" }, streak = { name: "", n: 0 }, turnFlashT = 0;
+/** YOUR TURN: the words flash over your seat and the plate glows while the action is on you. */
+function showTurn() { const el = $("turnFlash"); if (!view || view.me < 0) return; const p = seatPos(view.me); const rect = cv.getBoundingClientRect(), st = $("stage").getBoundingClientRect(); el.style.left = `${rect.left - st.left + p.x * rect.width / W}px`; el.style.top = `${rect.top - st.top + (p.y - 150) * rect.height / H}px`; el.hidden = false; el.classList.remove("on"); void el.offsetWidth; el.classList.add("on"); clearTimeout(turnFlashT); turnFlashT = setTimeout(() => { el.hidden = true; }, 2500); }
+function burst(x, y, n = 60) { const cols = ["#e39a56", "#f1ece2", "#7fd1a9", "#c9772f", "#0e5c58"]; for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, sp = 120 + Math.random() * 260; parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 140, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 12, life: 1.2 + Math.random() * 0.8, max: 2, w: 5 + Math.random() * 5, h: 3 + Math.random() * 4, c: cols[i % cols.length] }); } }
+function drawParts(dt) { for (let i = parts.length - 1; i >= 0; i--) { const p = parts[i]; p.life -= dt; if (p.life <= 0) { parts.splice(i, 1); continue; } p.vy += 420 * dt; p.vx *= 0.985; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; g.save(); g.globalAlpha = Math.min(1, p.life); g.translate(p.x, p.y); g.rotate(p.rot); g.fillStyle = p.c; g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); g.restore(); } }
 const turnLeft = () => (view && view.phase === "hand" && view.cur >= 0 ? Math.max(0, TABLE.TURN_MS - (performance.now() - turnAt)) : 0);   // the clock runs on the page between pushes
 const avatars = new Map();
 /* ---------------------------------------------------------------- settings (localStorage ec_poker_*): sound, four-colour deck, hand label, the dealer's log, animations */
@@ -35,10 +40,11 @@ addEventListener("pointerdown", audioOn, { once: true }); addEventListener("keyd
 function status(text) { const el = $("status"); if (!text) { el.hidden = true; return; } el.hidden = false; el.textContent = text; }
 async function connect() {
   let url;
-  if (DEV) { const as = new URLSearchParams(location.search).get("as") || "you"; url = `ws://${location.hostname}:8788/pk?dev=1&login=${encodeURIComponent(as)}`; }
+  const PV = "16";   // this page's version, so the dealer knows it is current (older pages are asked to refresh)
+  if (DEV) { const as = new URLSearchParams(location.search).get("as") || "you"; url = `ws://${location.hostname}:8788/pk?dev=1&login=${encodeURIComponent(as)}&pv=${PV}`; }
   else {
     try { const r = await fetch("/api/arcade/ticket", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: "{}" }); const j = await r.json().catch(() => ({}));
-      if (!j.ok) { status(""); $("signin").hidden = false; return; } url = `${j.ws.replace(/\/ws$/, "/pk")}?ticket=${j.ticket}`; }
+      if (!j.ok) { status(""); $("signin").hidden = false; return; } url = `${j.ws.replace(/\/ws$/, "/pk")}?ticket=${j.ticket}&pv=${PV}`; }
     catch { status("The site did not answer. Try again in a moment."); return; }
   }
   status("Finding the table…");
@@ -76,7 +82,7 @@ function setView(v) {
   if (v.board.length !== seenBoard) { if (v.board.length > seenBoard && v.phase === "hand") SFX.deal(); seenBoard = v.board.length; boardAt = now; }
   if (v.phase === "showdown" && (!lastView || lastView.phase !== "showdown")) { showAt = now; const pots = v.last?.result?.pots || []; winSet = pots[0]?.cards ? new Set(pots[0].cards) : null; for (let i = 0; i < TABLE.SEATS; i++) { const s = v.seats[i]; if (s && s.won > 0) anims.push({ kind: "chips", from: { x: CX, y: CY - 44 }, to: { x: seatPos(i).x, y: seatPos(i).y + 18 }, t0: now + 700, dur: 420, amount: s.won }); } }
   if (v.phase !== "showdown" && lastView?.phase === "showdown") { $("banner").hidden = true; winSet = null; }
-  if (v.legal && (!lastView || !lastView.legal || lastView.handNo !== v.handNo || lastView.street !== v.street)) { SFX.turn(); raiseTo = 0; lastTick = -1; }
+  if (v.legal && (!lastView || !lastView.legal || lastView.handNo !== v.handNo || lastView.street !== v.street)) { SFX.turn(); raiseTo = 0; lastTick = -1; if (SET.anim) showTurn(); }
   if (v.phase !== "hand" || (lastView && lastView.handNo !== v.handNo)) pre = null;
   if (v.legal && pre) { const L = v.legal; const a = pre === "cf" ? (L.check ? "check" : "fold") : pre === "ck" ? (L.check ? "check" : null) : (L.toCall > 0 ? "call" : "check"); const label = pre === "cf" ? "Check / Fold" : pre === "ck" ? "Check" : "Call any"; pre = null; if (a) { send({ t: "act", a }); feed(`You had <b>${label}</b> set: ${a === "call" ? `called ${L.call}` : a === "check" ? "checked" : "folded"}.`, "dim"); } else feed(`You had <b>Check</b> set, but there is a bet to you.`, "dim"); }
   drawActs(); drawSeatButtons(); drawWait();
@@ -93,8 +99,37 @@ function drawWait() {
 }
 $("btnWait").onclick = () => send({ t: "wait", on: !wait.list.includes(you?.name) });
 /* ---------------------------------------------------------------- settings and the jukebox */
-const pops = { settings: $("settings"), juke: $("juke") }; function pop(k) { for (const [n, el] of Object.entries(pops)) el.hidden = n === k ? !el.hidden : true; }
-$("btnSettings").onclick = () => pop("settings"); $("btnJuke").onclick = () => pop("juke"); for (const b of document.querySelectorAll("[data-close]")) b.onclick = () => { pops[b.dataset.close].hidden = true; };
+const pops = { settings: $("settings"), juke: $("juke"), tv: $("tv") }; function pop(k) { for (const [n, el] of Object.entries(pops)) el.hidden = n === k ? !el.hidden : true; }
+$("btnSettings").onclick = () => pop("settings"); $("btnJuke").onclick = () => pop("juke"); $("btnTv").onclick = () => { pop("tv"); if (!$("tv").hidden) tvLoad(); };
+/* ---------------------------------------------------------------- the mini player: one stream from the site's own provider list, in a window you can drag; it stays while you play */
+let tvApi = null, tvMatches = [], tvOn = null, tvStreams = [];
+const TV_KEY = "ec_poker_tv";
+function tvScript() { if (tvApi || window.EastcoinStreamedAPI) { tvApi = window.EastcoinStreamedAPI; return Promise.resolve(); } return new Promise((res, rej) => { const s = document.createElement("script"); s.src = "/assets/eastcoins-streamed-api.js?v=1"; s.onload = () => { tvApi = window.EastcoinStreamedAPI; res(); }; s.onerror = rej; document.head.append(s); }); }
+async function tvLoad() {
+  const list = $("tvList"); try { await tvScript(); } catch { list.innerHTML = `<button disabled>The stream list did not load.</button>`; return; }
+  if (!tvApi?.getLive) { list.innerHTML = `<button disabled>No stream provider on this site.</button>`; return; }
+  try { const unwrap = (r) => (Array.isArray(r) ? r : r?.data) || []; const [live, today] = await Promise.all([tvApi.getLive().catch(() => []), tvApi.getToday().catch(() => [])]); const seen = new Set(); tvMatches = [...unwrap(live).map((m) => ({ ...m, _live: true })), ...unwrap(today)].filter((m) => m && m.id && !seen.has(m.id) && seen.add(m.id)); if (window.ECV3Sports?.withoutCopies) tvMatches = window.ECV3Sports.withoutCopies(tvMatches); } catch { tvMatches = []; }
+  tvDraw();
+}
+function tvDraw() {
+  const q = $("tvQ").value.trim().toLowerCase(); const list = $("tvList"); const rows = tvMatches.filter((m) => !q || String(m.title || "").toLowerCase().includes(q) || String(m.category || "").toLowerCase().includes(q)).slice(0, 60);
+  list.innerHTML = rows.map((m) => `<button data-id="${esc(m.id)}" class="${tvOn?.id === m.id ? "on" : ""}">${m._live ? "<i>LIVE</i>" : ""}<span>${esc(m.title || "")}</span><small>${esc(String(m.category || "").replace(/-/g, " "))}</small></button>`).join("") || `<button disabled>${tvMatches.length ? "Nothing matches." : "Nothing is on right now."}</button>`;
+  for (const b of list.querySelectorAll("button[data-id]")) b.onclick = () => tvPick(tvMatches.find((m) => m.id === b.dataset.id));
+}
+$("tvQ").oninput = tvDraw;
+async function tvPick(m, srv = 0) {
+  if (!m) return; tvOn = m; tvDraw(); $("miniTitle").textContent = m.title || "Stream"; $("mini").hidden = false; $("miniSrv").innerHTML = `<option>Loading…</option>`;
+  let streams = []; try { const r = await tvApi.getStreams(m); streams = ((Array.isArray(r) ? r : r?.data) || []).filter((s) => s?.embedUrl); } catch {}
+  tvStreams = streams; if (!streams.length) { $("miniSrv").innerHTML = `<option>No servers</option>`; $("miniFrame").removeAttribute("src"); return; }
+  $("miniSrv").innerHTML = streams.map((s, i) => `<option value="${i}">Server ${i + 1}</option>`).join(""); $("miniSrv").value = String(Math.min(srv, streams.length - 1)); tvPlay();
+  try { localStorage.setItem(TV_KEY, JSON.stringify({ id: m.id, srv: Number($("miniSrv").value) })); } catch {}
+}
+function tvPlay() { const s = tvStreams[Number($("miniSrv").value)]; if (!s) return; $("miniFrame").src = s.embedUrl; try { localStorage.setItem(TV_KEY, JSON.stringify({ id: tvOn?.id, srv: Number($("miniSrv").value) })); } catch {} }
+$("miniSrv").onchange = tvPlay; $("miniSize").onclick = () => $("mini").classList.toggle("big"); $("miniOff").onclick = () => { $("mini").hidden = true; $("miniFrame").removeAttribute("src"); tvOn = null; tvDraw(); try { localStorage.removeItem(TV_KEY); } catch {} };
+// drag it by its head
+{ const head = $("miniHead"), box = $("mini"); let drag = null; head.addEventListener("pointerdown", (e) => { if (e.target.tagName === "SELECT" || e.target.tagName === "BUTTON") return; const r = box.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top }; head.setPointerCapture(e.pointerId); }); head.addEventListener("pointermove", (e) => { if (!drag) return; const r = box.getBoundingClientRect(); box.style.left = `${Math.max(0, Math.min(innerWidth - r.width, e.clientX - drag.dx))}px`; box.style.top = `${Math.max(0, Math.min(innerHeight - r.height, e.clientY - drag.dy))}px`; box.style.right = "auto"; box.style.bottom = "auto"; }); head.addEventListener("pointerup", () => { drag = null; }); }
+// the stream you had on last time comes back
+try { const last = JSON.parse(localStorage.getItem(TV_KEY) || "null"); if (last?.id) tvLoad().then(() => { const m = tvMatches.find((x) => x.id === last.id); if (m) tvPick(m, last.srv || 0); }); } catch {} for (const b of document.querySelectorAll("[data-close]")) b.onclick = () => { pops[b.dataset.close].hidden = true; };
 $("setVol").value = Math.round(SET.vol * 100); $("setFour").checked = SET.four; $("setHand").checked = SET.hand; $("setFeed").checked = SET.feed; $("setAnim").checked = SET.anim;
 const applySet = () => { document.querySelector(".panel.feed").style.display = SET.feed ? "" : "none"; };
 $("setVol").oninput = () => { SET.vol = Number($("setVol").value) / 100; saveSet(); }; $("setFour").onchange = () => { SET.four = $("setFour").checked; saveSet(); }; $("setHand").onchange = () => { SET.hand = $("setHand").checked; saveSet(); }; $("setFeed").onchange = () => { SET.feed = $("setFeed").checked; saveSet(); applySet(); }; $("setAnim").onchange = () => { SET.anim = $("setAnim").checked; saveSet(); }; applySet();
@@ -111,7 +146,15 @@ $("jukeStop").onclick = () => { jukeOn = null; jukeAudio.pause(); jukeAudio.remo
 
 /* ---------------------------------------------------------------- the dealer's lines, table talk, the last hands */
 function feed(html, cls = "") { const p = document.createElement("p"); p.className = cls; p.innerHTML = html; const el = $("feed"); el.append(p); while (el.children.length > 80) el.firstChild.remove(); el.scrollTop = el.scrollHeight; }
-function chatLine(c) { const p = document.createElement("p"); p.innerHTML = `${c.avatar ? `<img class="av" src="${esc(c.avatar)}" alt="">` : ""}<b>${esc(c.name)}</b> ${esc(c.text)}`; const el = $("chat"); el.append(p); while (el.children.length > 80) el.firstChild.remove(); el.scrollTop = el.scrollHeight; }
+/* CHANNEL EMOTES IN TABLE TALK (2026-10-13): the same list EastScape's chat uses (/api/eastscape/emotes, the channel's 7TV and BetterTTV
+   boiled down by the site once an hour), fetched the first time talk is drawn. A WORD that is exactly an emote's name becomes its
+   picture; everything else goes in as a text node, so nothing a player types is ever read as HTML. Lines that arrived before the
+   list did are redrawn when it lands. */
+let EMO = null; const emoLoad = () => (emoLoad.p ||= fetch("/api/eastscape/emotes").then((r) => r.json()).then((j) => { EMO = new Map((j?.emotes || []).map((e) => [e[0], e])); document.querySelectorAll("#chat span[data-t]").forEach((s) => { const t = s.dataset.t; s.textContent = ""; emoWords(s, t); }); emoGrid(); }).catch(() => { EMO = new Map(); }));
+function emoWords(span, text) { if (!EMO?.size) { span.append(text); return; } for (const part of String(text).split(/(\s+)/)) { const e = EMO.get(part); if (!e) { span.append(part); continue; } const im = document.createElement("img"); im.src = e[1]; im.alt = im.title = e[0]; im.className = "emo" + (e[2] ? " wide" : ""); im.loading = "lazy"; span.append(im); } }
+function chatLine(c) { emoLoad(); const p = document.createElement("p"); if (c.avatar) { const av = document.createElement("img"); av.className = "av"; av.src = c.avatar; av.alt = ""; p.append(av); } const b = document.createElement("b"); b.textContent = c.name; p.append(b, " "); const span = document.createElement("span"); span.dataset.t = c.text; emoWords(span, c.text); p.append(span); const el = $("chat"); el.append(p); while (el.children.length > 80) el.firstChild.remove(); el.scrollTop = el.scrollHeight; }
+function emoGrid() { const q = $("emoQ").value.trim().toLowerCase(); const grid = $("emoGrid"); if (!EMO) { grid.innerHTML = "<span class='dim'>Loading the channel's emotes…</span>"; return; } const rows = [...EMO.values()].filter((e) => !q || e[0].toLowerCase().includes(q)).slice(0, 160); grid.innerHTML = rows.map((e) => `<button type="button" data-n="${esc(e[0])}" title="${esc(e[0])}"><img src="${esc(e[1])}" alt="${esc(e[0])}" loading="lazy"></button>`).join("") || "<span class='dim'>Nothing matches.</span>"; for (const b of grid.querySelectorAll("button")) b.onclick = () => { const i = $("chatIn"); i.value = (i.value ? i.value.replace(/\s*$/, " ") : "") + b.dataset.n + " "; i.focus(); }; }
+$("emoBtn").onclick = () => { const p = $("emoPick"); p.hidden = !p.hidden; $("emoBtn").classList.toggle("on", !p.hidden); if (!p.hidden) { emoLoad(); emoGrid(); $("emoQ").focus(); } }; $("emoQ").oninput = emoGrid;
 const pretty = (cs) => cs.map((c) => c.replace(/s$/, "♠").replace(/h$/, "♥").replace(/d$/, "♦").replace(/c$/, "♣").replace(/^T/, "10")).join(" ");
 function handLine(h) { const p = document.createElement("p"); const pots = h.pots.map((p) => `<b>${esc(p.winners.join(" & "))}</b> ${p.amount}${p.hand ? ` · ${esc(p.hand)}` : ""}`).join("; "); p.innerHTML = `<span class="dim">#${h.no}</span> ${pots}${h.board.length ? ` <span class="cards">${pretty(h.board)}</span>` : ""}`; const el = $("hands"); el.prepend(p); while (el.children.length > 12) el.lastChild.remove(); }
 function onEvent(e) {
@@ -124,6 +167,8 @@ function onEvent(e) {
     case "act": {
       const v = e.a === "fold" ? "folds" : e.a === "check" ? "checks" : e.a === "call" ? `calls ${e.v}${e.allIn ? " (all in)" : ""}` : e.a === "allin" ? `is ALL IN for ${e.to}` : `raises to ${e.to}`;
       feed(`${nm(e.name)} ${v}.`); if (e.a === "fold") SFX.fold(); else if (e.a === "check") SFX.check(); else SFX.chip();
+      if (e.a === "fold" && SET.anim && e.i !== view?.me) { const now = performance.now(); for (let k = 0; k < 2; k++) { const from = cardPos(e.i, k); anims.push({ kind: "toss", from, to: { x: from.x + (k - 0.5) * 30, y: from.y + 22 }, t0: now + k * 40, dur: 420 }); } }
+      if (e.a === "allin" || (e.a === "call" && e.allIn)) { const f = $("flash"); f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }
       lastAct[e.i] = { a: e.a === "call" && e.allIn ? "allin" : e.a, n: e.a === "call" ? e.v : e.to, at: performance.now() };
       if (e.a === "allin" || (e.a === "call" && e.allIn) || (e.a === "raise" && e.to >= 40)) flash = { seat: e.i, at: performance.now() }; break; }
     case "timeout": feed(`${nm(e.name)} ran out of time and ${e.did === "check" ? "checks" : "folds"}${e.out ? " — sat out" : ""}.`, "warm"); lastAct[e.i] = { a: e.did, n: 0, at: performance.now(), slow: true }; break;
@@ -134,6 +179,7 @@ function onEvent(e) {
     case "waitleave": feed(`${nm(e.name)} leaves the wait list.`, "dim"); break;
     case "waitup": feed(`A seat is open: it is ${nm(e.name)}'s for thirty seconds.`, "warm"); if (you && e.name === you.name) { SFX.turn(); } break;
     case "waitmiss": feed(`${nm(e.name)} did not take the seat.`, "dim"); break;
+    case "show": feed(`${nm(e.name)} shows ${pretty(e.hole)}${e.hand ? ` — ${esc(e.hand)}` : ""}.`, e.name === you?.name ? "dim" : "warm"); break;
     case "reset": feed(`${nm(e.name)} reset the table${e.banks ? " and every bank" : ""}. Sit down to start again.`, "warm"); lastAct = {}; anims = []; $("banner").hidden = true; pre = null; break;
   }
 }
@@ -141,7 +187,10 @@ function onHand(rec) {
   const me = you && view?.me >= 0 ? view.seats[view.me] : null;
   const won = rec.pots.filter((p) => me && p.winners.includes(me.name)).reduce((n, p) => n + p.amount, 0);
   const first = rec.pots[0];
-  if (first) { const b = $("banner"); b.hidden = false; b.innerHTML = `<i>${esc(first.winners.join(" & "))}</i> ${first.winners.length > 1 ? "split" : "takes"} ${rec.pots.reduce((n, p) => n + p.amount, 0)}<small>${first.hand ? esc(first.hand) : "everyone folded"}</small>`; }
+  const total = rec.pots.reduce((n, p) => n + p.amount, 0);
+  if (first && first.winners.length === 1) { streak = streak.name === first.winners[0] ? { name: streak.name, n: streak.n + 1 } : { name: first.winners[0], n: 1 }; } else streak = { name: "", n: 0 };
+  if (first) { const b = $("banner"); b.hidden = false; b.classList.remove("pop"); void b.offsetWidth; b.classList.add("pop"); b.innerHTML = `<i>${esc(first.winners.join(" & "))}</i> ${first.winners.length > 1 ? "split" : "takes"} ${total}<small>${streak.n >= 3 ? `on a heater · ${streak.n} in a row` : first.hand ? esc(first.hand) : "everyone folded"}</small>`; if (streak.n === 3) feed(`${esc(streak.name)} is on a heater: three in a row.`, "warm"); }
+  if (SET.anim && view) for (let i = 0; i < TABLE.SEATS; i++) { const s = view.seats[i]; if (s && first && first.winners.includes(s.name)) { const p = seatPos(i); setTimeout(() => burst(p.x, p.y + 10, total >= 500 ? 110 : 60), 500); glow = { seat: i, until: performance.now() + 4000, color: "#7fd1a9" }; } }
   if (won > 0) SFX.win();
   feed(rec.pots.map((p) => `${p.winners.map((n) => `<b>${esc(n)}</b>`).join(" & ")} ${p.winners.length > 1 ? "split" : "take"}${p.winners.length > 1 ? "" : "s"} ${p.amount}${p.hand ? ` with ${esc(p.hand)}` : ""}.`).join(" "), won > 0 ? "win" : "");
   for (const s of rec.shows) feed(`${esc(s.name)} shows ${pretty(s.hole)} — ${esc(s.hand)}.`, "dim");
@@ -154,8 +203,8 @@ function snap(x, L) { if (x >= L.maxTo) return L.maxTo; if (x <= L.minTo) return
 function fit(text, maxW) { if (g.measureText(text).width <= maxW) return text; let t = text; while (t.length > 1 && g.measureText(t + "…").width > maxW) t = t.slice(0, -1); return t + "…"; }
 function drawActs() {
   const L = view?.legal; const box = $("acts"); const me = view && view.me >= 0 ? view.seats[view.me] : null;
-  const waiting = !L && me && view.phase === "hand" && me.inHand && !me.folded && !me.allIn;
-  box.classList.toggle("off", !L && !waiting); $("pre").hidden = !waiting; $("actsMain").hidden = !L; if (!L) $("raisePop").hidden = true;
+  const waiting = !L && me && view.phase === "hand" && me.inHand && !me.folded && !me.allIn; const mayShow = Boolean(view?.mayShow);
+  box.classList.toggle("off", !L && !waiting && !mayShow); $("pre").hidden = !waiting; $("actsMain").hidden = !L; $("showRow").hidden = !mayShow; if (!L) $("raisePop").hidden = true;
   $("preCK").classList.toggle("on", pre === "ck"); $("preCF").classList.toggle("on", pre === "cf"); $("preCA").classList.toggle("on", pre === "ca");
   if (waiting) { const toCall = Math.max(0, view.bet - me.bet); $("preCA").lastChild.textContent = toCall > 0 ? `Call any · ${Math.min(toCall, me.stack)}` : "Call any"; }
   if (!L) return;
@@ -179,6 +228,7 @@ $("btnSitout").onclick = () => { const me = view?.seats[view.me]; if (me) send({
 $("btnAddon").onclick = () => { const me = view?.seats[view.me]; if (!me) return; const amt = Math.min(TABLE.MAX_BUY - me.stack, bank); if (amt > 0) send({ t: "addon", amt }); };
 $("btnHow").onclick = () => { $("how").hidden = false; }; $("howNo").onclick = () => { $("how").hidden = true; };
 $("btnBot").onclick = () => send({ t: "bot", n: 1 }); $("btnBotOff").onclick = () => send({ t: "bot", n: 0 });
+$("aShow").onclick = () => send({ t: "show" });
 $("btnReset").onclick = () => { $("resetBox").hidden = false; }; $("resetNo").onclick = () => { $("resetBox").hidden = true; }; $("resetGo").onclick = () => { send({ t: "reset", banks: $("resetBanks").checked }); $("resetBox").hidden = true; };
 $("aFold").onclick = () => send({ t: "act", a: "fold" });
 $("aCheck").onclick = () => send({ t: "act", a: view?.legal?.check ? "check" : "call" });
@@ -187,7 +237,7 @@ $("aRaise").onclick = () => { $("raisePop").hidden = !$("raisePop").hidden; }; $
 $("aSlider").oninput = () => { const L = view?.legal; raiseTo = L ? snap(Number($("aSlider").value), L) : Number($("aSlider").value); $("aTo").textContent = raiseTo; $("aRaiseN").textContent = raiseTo; drawActs(); };
 $("preCF").onclick = () => { pre = pre === "cf" ? null : "cf"; drawActs(); }; $("preCA").onclick = () => { pre = pre === "ca" ? null : "ca"; drawActs(); }; $("preCK").onclick = () => { pre = pre === "ck" ? null : "ck"; drawActs(); };
 for (const b of document.querySelectorAll("[data-size]")) b.onclick = () => { const L = view?.legal; if (!L) return; const pot = L.pot + L.toCall; const k = b.dataset.size; raiseTo = k === "min" ? L.minTo : k === "half" ? Math.round(view.bet + L.toCall + pot / 2) : k === "pot" ? Math.round(view.bet + L.toCall + pot) : L.maxTo; raiseTo = snap(raiseTo, L); drawActs(); };
-$("chatForm").onsubmit = (e) => { e.preventDefault(); const t = $("chatIn").value.trim(); if (t) send({ t: "chat", text: t }); $("chatIn").value = ""; };
+$("chatForm").onsubmit = (e) => { e.preventDefault(); const t = $("chatIn").value.trim(); if (t) send({ t: "chat", text: t }); $("chatIn").value = ""; $("emoPick").hidden = true; $("emoBtn").classList.remove("on"); };
 addEventListener("keydown", (e) => { if (e.target.tagName === "INPUT") return; if (!view?.legal) return; if (e.code === "KeyF") $("aFold").click(); if (e.code === "KeyC") $("aCheck").click(); if (e.code === "KeyR") { if ($("raisePop").hidden) $("aRaise").click(); else raiseNow(); } if (e.code === "Escape") $("raisePop").hidden = true; });
 addEventListener("resize", drawSeatButtons);
 
@@ -239,7 +289,7 @@ function draw() {
   if (!view) return;
   const v = view; const me = v.me;
   // the pot and the board
-  if (v.pot > 0 || v.phase === "showdown") { g.font = `600 10px ${SANS}`; g.fillStyle = "rgba(241,236,226,.55)"; g.fillText("POT", CX, CY - 90); g.font = `400 30px ${DISP}`; g.fillStyle = KIT.chalk; g.fillText(v.pot.toLocaleString(), CX, CY - 66); if (v.pot > 0 && v.phase === "hand") chipStack(CX + 62, CY - 64, v.pot, false); }
+  if (v.pot > 0 || v.phase === "showdown") { g.font = `600 10px ${SANS}`; g.fillStyle = "rgba(241,236,226,.55)"; g.fillText("POT", CX, CY - 90); g.font = `400 30px ${DISP}`; g.fillStyle = KIT.chalk; g.fillText(v.pot.toLocaleString(), CX, CY - 66); if (v.pot > 0 && v.phase === "hand") chipStack(CX + 62, CY - 64, v.pot, false); if (v.pot >= 500 && v.phase === "hand") { g.save(); g.globalAlpha = 0.7 + Math.sin(now / 220) * 0.3; tag(CX, CY - 44, "BIG POT", KIT.copper2); g.restore(); } }
   const cw = 64, ch = 90;
   for (let i = 0; i < 5; i++) { const x = CX + (i - 2) * (cw + 10), y = CY + 10; if (i < v.board.length) { const pop = i >= (lastView?.board.length ?? 0) ? Math.min(1, (now - boardAt) / 200) : 1; const lit = winSet ? winSet.has(v.board[i]) : false, dim = winSet ? !winSet.has(v.board[i]) : false; g.save(); g.translate(x, y); g.scale(0.86 + ease(pop) * 0.14, 0.86 + ease(pop) * 0.14); g.translate(-x, -y); drawCard(v.board[i], x, y, cw, ch, true, dim, lit); g.restore(); } else { rr(x - cw / 2, y - ch / 2, cw, ch, 5); g.strokeStyle = "rgba(241,236,226,.12)"; g.lineWidth = 1.5; g.setLineDash([6, 5]); g.stroke(); g.setLineDash([]); } }
   if (v.phase === "waiting") { g.font = `italic 400 20px ${DISP}`; g.fillStyle = "rgba(241,236,226,.75)"; const n = v.seats.filter((s) => s && !s.sitOut && s.stack > 0).length; g.fillText(n < TABLE.MIN_PLAYERS ? (n === 0 ? "Waiting for players. Take a seat." : "Waiting for one more player…") : "Shuffling up…", CX, CY + 76); }
@@ -247,11 +297,12 @@ function draw() {
   for (let i = 0; i < TABLE.SEATS; i++) {
     const s = v.seats[i], p = seatPos(i), isMe = i === me; if (!s) continue;
     const acting = v.phase === "hand" && v.cur === i; const out = !s.inHand || s.folded || s.sitOut; const isBot = String(s.id).startsWith("bot:");
-    if (s.inHand && s.folded && tex("muck")) { const cp = cardPos(i, 0); g.save(); g.globalAlpha = 0.8; g.drawImage(tex("muck"), cp.x - 24, cp.y - 20, 56, 42); g.restore(); }
+    if (s.inHand && s.folded && !isMe && tex("muck")) { const cp = cardPos(i, 0); g.save(); g.globalAlpha = 0.8; g.drawImage(tex("muck"), cp.x - 24, cp.y - 20, 56, 42); g.restore(); }
     if (s.sitOut && tex("sitting_out")) { const cp = cardPos(i, 0); g.save(); g.globalAlpha = 0.9; g.drawImage(tex("sitting_out"), cp.x - 28, cp.y - 20, 60, 30); g.restore(); }
     if (s.cards.length && !(dealing[i] > now)) { const big = isMe; const w = big ? 74 : 42, h = big ? 104 : 58; for (let k = 0; k < 2; k++) { const faceUp = s.cards[k] >= 0; const cp = cardPos(i, k); const lit = faceUp && winSet && s.won > 0 && winSet.has(s.cards[k]); const dim = s.folded || (faceUp && winSet && s.won > 0 && !winSet.has(s.cards[k])); drawCard(faceUp ? s.cards[k] : 0, cp.x, cp.y, w, h, faceUp, dim, lit, big ? (k - 0.5) * 0.12 : (p.x < CX ? 1 : -1) * (0.1 + k * 0.1)); } }
     // the plate: avatar, name, stack
     const pw = 164, ph = 52; g.save(); g.shadowColor = "rgba(0,0,0,.55)"; g.shadowBlur = 16; g.shadowOffsetY = 7; rr(p.x - pw / 2, p.y - 8, pw, ph, 26); g.fillStyle = out ? "rgba(20,27,25,.86)" : KIT.panel2; g.fill(); g.restore();
+    if ((acting && isMe) || (glow.seat === i && now < glow.until)) { const mine = acting && isMe; const k = 0.6 + Math.sin(now / 180) * 0.4; g.save(); g.shadowColor = mine ? KIT.copper2 : glow.color; g.shadowBlur = 18 + k * 16; rr(p.x - pw / 2, p.y - 8, pw, ph, 26); g.strokeStyle = mine ? `rgba(227,154,86,${0.5 + k * 0.5})` : glow.color; g.lineWidth = 3; g.stroke(); g.restore(); }
     rr(p.x - pw / 2, p.y - 8, pw, ph, 26); g.strokeStyle = acting ? KIT.copper2 : isMe ? "rgba(201,119,47,.45)" : "rgba(241,236,226,.12)"; g.lineWidth = acting ? 2 : 1; g.stroke();
     if (acting) { const leftMs = turnLeft(); const left = leftMs / TABLE.TURN_MS; const col = left < 0.25 ? KIT.bad : KIT.copper2; g.save(); rr(p.x - pw / 2, p.y - 8, pw, ph, 26); g.clip(); rr(p.x - pw / 2 + 8, p.y + ph - 14, (pw - 16) * left, 3, 2); g.fillStyle = col; g.fill(); g.restore(); if (isMe && leftMs < 5000) { const sec = Math.ceil(leftMs / 1000); if (sec !== lastTick) { lastTick = sec; SFX.tick(); } } }
     if (flash.seat === i && now - flash.at < 900) { rr(p.x - pw / 2 - 4, p.y - 12, pw + 8, ph + 8, 30); g.strokeStyle = `rgba(227,154,86,${1 - (now - flash.at) / 900})`; g.lineWidth = 3; g.stroke(); }
@@ -274,8 +325,9 @@ function draw() {
   if (SET.hand && me >= 0 && v.seats[me]?.cards.length === 2 && v.seats[me].cards[0] >= 0 && !v.seats[me].folded && !(dealing[me] > now)) { const hole = v.seats[me].cards, pr = rankOf(hole[0]) === rankOf(hole[1]) ? RANK_NAMES[rankOf(hole[0])] : null; const best = v.board.length >= 3 ? handName(evalBest([...hole, ...v.board])) : (pr ? `Pair of ${pr === "Six" ? "Sixes" : pr + "s"}` : null); if (best && !lastAct[me]) tag(seatPos(me).x, seatPos(me).y + 56, best.toUpperCase(), KIT.copper2); else if (best) tag(seatPos(me).x, seatPos(me).y + 78, best.toUpperCase(), "rgba(241,236,226,.55)"); }
   // what moves: cards dealt, chips to the pot, the pot to the winner
   for (let k = anims.length - 1; k >= 0; k--) { const a = anims[k]; if (now < a.t0) continue; const t = Math.min(1, (now - a.t0) / a.dur); const e = ease(t); const x = a.from.x + (a.to.x - a.from.x) * e, y = a.from.y + (a.to.y - a.from.y) * e - Math.sin(t * Math.PI) * (a.kind === "card" ? 30 : 18);
-    if (a.kind === "card") drawCard(0, x, y, 46, 64, false, false, false, (1 - e) * 0.8); else chipStack(x, y, a.amount, t > 0.9);
+    if (a.kind === "card") drawCard(0, x, y, 46, 64, false, false, false, (1 - e) * 0.8); else if (a.kind === "toss") { g.save(); g.globalAlpha = 1 - e; drawCard(0, x, y, 42, 58, false, false, false, e * 1.6); g.restore(); } else chipStack(x, y, a.amount, t > 0.9);
     if (t >= 1) { anims.splice(k, 1); if (a.kind === "chips") SFX.chip(); } }
+  drawParts(1 / 60);
 }
 requestAnimationFrame(draw);
 connect();
