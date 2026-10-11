@@ -13,7 +13,7 @@
    A card is 0..51: rank = c % 13 (0 = deuce .. 12 = ace), suit = floor(c / 13) (s h d c). A hand's score is one integer: category
    first, then the ranks that break ties, so two scores compare with <. */
 
-export const VERSION = 7;
+export const VERSION = 8;
 /* (2026-10-13, the owner: "minimum antes need to be in 5s as well ie 5,10") blinds 5/10, buy in 200–1,000 (20–100 big blinds), so every number on the felt is a multiple of five */
 export const TABLE = { SEATS: 6, CHIP: 5, SB: 5, BB: 10, MIN_BUY: 200, MAX_BUY: 1000, TURN_MS: 30000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
 export const BANK = { START: 2000, REFILL_BELOW: 200, REFILL_TO: 2000, REFILL_MS: 60 * 60 * 1000 };
@@ -227,6 +227,12 @@ export function showdown(t, now) {
   return result;
 }
 /** After the showdown pause: seats that were leaving go, the broke sit out, back to waiting (the dealer starts the next hand). */
+/** An admin reset mid-hand: every chip put in this hand goes back to whoever put it, the hand is void, the table waits. */
+export function cancelHand(t) {
+  if (!t.hand) return false;
+  for (const s of t.seats) if (s) { s.stack += s.put + s.bet; s.put = 0; s.bet = 0; s.inHand = false; s.hole = []; s.folded = true; s.allIn = false; s.show = false; s.won = 0; }
+  t.hand = null; t.phase = "waiting"; t.last = null; return true;
+}
 export function finishHand(t) {
   const back = [];
   for (let i = 0; i < TABLE.SEATS; i++) { const s = t.seats[i]; if (!s) continue; s.inHand = false; s.hole = []; s.show = false; if (s.leaving) { back.push({ id: s.id, name: s.name, stack: s.stack, why: "left" }); t.seats[i] = null; continue; } /* a GONE seat is held for the dealer's minute (2026-10-13: a refresh used to stand you up here) */ if (s.stack <= 0) s.sitOut = true; if (s.away >= TABLE.AWAY_AFTER) s.sitOut = true; }

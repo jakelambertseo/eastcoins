@@ -2,7 +2,7 @@
    what the server says (top down, you at the bottom), sends what you want to do, and never decides anything. Rules shared with the
    server: /v3/assets/js/poker-rules.js. What moves: cards fly out at the deal, bets sweep into the pot at the end of a street, the pot
    slides to whoever won it, the winning five light up, the clock ticks in its last five seconds. */
-import { TABLE, rankOf, suitOf, RANKS, RANK_NAMES, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=7";
+import { TABLE, rankOf, suitOf, RANKS, RANK_NAMES, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=8";
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -51,7 +51,7 @@ async function connect() {
 const send = (o) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)); };
 
 function onMsg(m) {
-  if (m.t === "hello") { you = m.you; bank = m.bank; people = m.people || []; $("who").textContent = you.name; $("btnBot").hidden = !you.admin; $("btnBotOff").hidden = !you.admin; if (m.wait) { wait = m.wait; } drawWait(); $("chat").innerHTML = ""; for (const c of m.chat || []) chatLine(c); $("hands").innerHTML = ""; for (const h of (m.hands || []).slice().reverse()) handLine(h); setView(m.view); feed(`Welcome, ${esc(you.name)}. ${m.view.seats.filter(Boolean).length} at the table.`, "dim"); peopleLine(); }
+  if (m.t === "hello") { you = m.you; bank = m.bank; people = m.people || []; $("who").textContent = you.name; $("btnBot").hidden = !you.admin; $("btnBotOff").hidden = !you.admin; $("btnReset").hidden = !you.admin; if (m.wait) { wait = m.wait; } drawWait(); $("chat").innerHTML = ""; for (const c of m.chat || []) chatLine(c); $("hands").innerHTML = ""; for (const h of (m.hands || []).slice().reverse()) handLine(h); setView(m.view); feed(`Welcome, ${esc(you.name)}. ${m.view.seats.filter(Boolean).length} at the table.`, "dim"); peopleLine(); }
   else if (m.t === "view") { bank = m.bank; setView(m.view); }
   else if (m.t === "ev") { for (const e of m.e) onEvent(e); }
   else if (m.t === "hand") { handLine(m.rec); onHand(m.rec); }
@@ -134,6 +134,7 @@ function onEvent(e) {
     case "waitleave": feed(`${nm(e.name)} leaves the wait list.`, "dim"); break;
     case "waitup": feed(`A seat is open: it is ${nm(e.name)}'s for thirty seconds.`, "warm"); if (you && e.name === you.name) { SFX.turn(); } break;
     case "waitmiss": feed(`${nm(e.name)} did not take the seat.`, "dim"); break;
+    case "reset": feed(`${nm(e.name)} reset the table${e.banks ? " and every bank" : ""}. Sit down to start again.`, "warm"); lastAct = {}; anims = []; $("banner").hidden = true; pre = null; break;
   }
 }
 function onHand(rec) {
@@ -178,6 +179,7 @@ $("btnSitout").onclick = () => { const me = view?.seats[view.me]; if (me) send({
 $("btnAddon").onclick = () => { const me = view?.seats[view.me]; if (!me) return; const amt = Math.min(TABLE.MAX_BUY - me.stack, bank); if (amt > 0) send({ t: "addon", amt }); };
 $("btnHow").onclick = () => { $("how").hidden = false; }; $("howNo").onclick = () => { $("how").hidden = true; };
 $("btnBot").onclick = () => send({ t: "bot", n: 1 }); $("btnBotOff").onclick = () => send({ t: "bot", n: 0 });
+$("btnReset").onclick = () => { $("resetBox").hidden = false; }; $("resetNo").onclick = () => { $("resetBox").hidden = true; }; $("resetGo").onclick = () => { send({ t: "reset", banks: $("resetBanks").checked }); $("resetBox").hidden = true; };
 $("aFold").onclick = () => send({ t: "act", a: "fold" });
 $("aCheck").onclick = () => send({ t: "act", a: view?.legal?.check ? "check" : "call" });
 const raiseNow = () => { send({ t: "act", a: raiseTo >= (view?.legal?.maxTo || 0) ? "allin" : "raise", to: raiseTo }); $("raisePop").hidden = true; };

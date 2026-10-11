@@ -27,6 +27,7 @@
       <button id="btnStand" hidden>Stand up</button>
       <button id="btnBot" class="warm" hidden title="Admins only: a bot to play against while the table is in testing. One per click.">+ Test bot</button>
       <button id="btnBotOff" hidden>Remove bots</button>
+      <button id="btnReset" class="warm" hidden title="Admins only: void the hand, stand everyone, clear the bots">Reset table</button>
       <button id="btnHow">How it works</button>
       <button id="btnJuke" class="icon" title="Jukebox">♪</button>
       <button id="btnSettings" class="icon" title="Settings">⚙</button>
@@ -76,6 +77,7 @@
     <div class="signin" id="signin" hidden><b>Sign in with Twitch to sit down.</b><a class="go" href="/api/picks/auth/twitch/start?returnTo=%2Fpoker" target="_top">Sign in</a></div>
   </div>
   <div class="buyin" id="buyin" hidden><div class="card"><h2>Sit <i>down</i></h2><p id="buyinLine">Buy in for 200 to 1,000 chips.</p><input type="range" id="buyRange" min="200" max="1000" step="5" value="1000"><div class="buyrow"><b id="buyN">1000</b> chips<span class="sp"></span><button id="buyGo" class="go">Sit down</button><button id="buyNo">Not now</button></div></div></div>
+  <div class="how" id="resetBox" hidden><div class="card"><h2>Reset the <i>table</i></h2><p>The hand in progress is voided and everyone gets back what they put in. Everyone stands up with their chips in the bank, the bots go, the wait list clears, and the next two people to sit start a fresh hand.</p><label class="row"><span>Also reset every bank to 2,000</span><input type="checkbox" id="resetBanks"></label><div class="buyrow"><span class="sp"></span><button id="resetGo" class="go">Reset</button><button id="resetNo">Not now</button></div></div></div>
   <div class="how" id="how" hidden><div class="card"><h2>How it <i>works</i></h2>
     <p><b>No-limit Texas Hold'em</b>, blinds 5 and 10, six seats, real people only. Buy in for 200 to 1,000 chips from your bank and leave whenever a hand is not running.</p>
     <p><b>Chips are play chips for now.</b> Everyone starts with 2,000 in the bank; go broke and leave the table and the bank tops you back up once an hour. When the table goes live, chips will be bought with ZCoins at the table's rate, so a 1 ZC player and a 1,000 ZC player can sit at the same table.</p>
@@ -84,6 +86,6 @@
     <p>The dealer is the server. Nobody's page is told a card it may not see.</p>
     <button class="go" id="howNo">Got it</button></div></div>
 </div>
-<script type="module" src="poker.js?v=11"></script>
+<script type="module" src="poker.js?v=12"></script>
 </body>
 </html>
