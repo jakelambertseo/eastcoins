@@ -1,6 +1,6 @@
 /* EastCoin Poker — the page (2026-10-10). A view of the table the server deals: it draws what the server says (top down, you at the
    bottom), sends what you want to do, and never decides anything. Rules shared with the server: /v3/assets/js/poker-rules.js. */
-import { TABLE, rankOf, suitOf, RANKS, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=2";
+import { TABLE, rankOf, suitOf, RANKS, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=3";
 
 const $ = (id) => document.getElementById(id);
 const DEV = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);

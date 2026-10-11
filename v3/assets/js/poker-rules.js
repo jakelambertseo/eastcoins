@@ -13,7 +13,7 @@
    A card is 0..51: rank = c % 13 (0 = deuce .. 12 = ace), suit = floor(c / 13) (s h d c). A hand's score is one integer: category
    first, then the ranks that break ties, so two scores compare with <. */
 
-export const VERSION = 2;
+export const VERSION = 3;
 export const TABLE = { SEATS: 6, SB: 1, BB: 2, MIN_BUY: 50, MAX_BUY: 200, TURN_MS: 20000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
 export const BANK = { START: 1000, REFILL_BELOW: 50, REFILL_TO: 1000, REFILL_MS: 60 * 60 * 1000 };
 /* The launch ratios, one per table size. Blinds and buy-ins stay 1/2 and 50–200 IN CHIPS at every table; the ratio is what a chip costs. */
@@ -223,7 +223,7 @@ export function showdown(t, now) {
 /** After the showdown pause: seats that were leaving go, the broke sit out, back to waiting (the dealer starts the next hand). */
 export function finishHand(t) {
   const back = [];
-  for (let i = 0; i < TABLE.SEATS; i++) { const s = t.seats[i]; if (!s) continue; s.inHand = false; s.hole = []; s.show = false; if (s.leaving || s.gone) { back.push({ id: s.id, stack: s.stack, why: s.leaving ? "left" : "gone" }); t.seats[i] = null; continue; } if (s.stack <= 0) s.sitOut = true; if (s.away >= TABLE.AWAY_AFTER) s.sitOut = true; }
+  for (let i = 0; i < TABLE.SEATS; i++) { const s = t.seats[i]; if (!s) continue; s.inHand = false; s.hole = []; s.show = false; if (s.leaving || s.gone) { back.push({ id: s.id, name: s.name, stack: s.stack, why: s.leaving ? "left" : "gone" }); t.seats[i] = null; continue; } if (s.stack <= 0) s.sitOut = true; if (s.away >= TABLE.AWAY_AFTER) s.sitOut = true; }
   t.hand = null; t.phase = "waiting"; return back;
 }
 /** The clock ran out on the seat to act: check if they can, else fold; twice in a row sits them out. */
@@ -262,7 +262,7 @@ export function viewFor(t, viewerId, now = 0) {
   const me = seatOf(t, viewerId); const h = t.hand;
   return {
     phase: t.phase, handNo: t.handNo, button: t.button, me, pot: h ? potOf(t) : 0,
-    board: h ? h.board : (t.last?.result.board || []), street: h ? h.street : 0, cur: h ? h.cur : -1, bet: h ? h.bet : 0,
+    board: h ? h.board : [], street: h ? h.street : 0, cur: h ? h.cur : -1, bet: h ? h.bet : 0,
     turnLeft: h && h.cur >= 0 ? Math.max(0, TABLE.TURN_MS - (now - h.turnAt)) : 0, endIn: t.phase === "showdown" ? Math.max(0, t.endAt - now) : 0,
     seats: t.seats.map((s, i) => s ? { i, id: s.id, login: s.login, name: s.name, avatar: s.avatar, stack: s.stack, bet: s.bet, put: s.put, inHand: s.inHand, folded: s.folded, allIn: s.allIn, sitOut: s.sitOut, leaving: s.leaving, gone: Boolean(s.gone), won: s.won, cards: s.inHand && !s.folded ? (i === me || s.show ? s.hole : s.hole.map(() => -1)) : [] } : null),
     legal: me >= 0 ? legal(t, me) : null, last: t.last ? { handNo: t.last.handNo, result: t.last.result } : null
