@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Poker — EastCoin</title>
+<!-- EastCoin Poker (2026-10-10): one 6-max no-limit hold'em cash table, top down, people only, dealt by the arcade worker (poker.js on the
+     server, /v3/assets/js/poker-rules.js shared). Play chips while it is iterated on. ?embed=1 frames it on eastcoin.vip (/?view=poker, shown
+     as /poker). Local: http://localhost:4321/tools/poker/index.html?as=name against `wrangler dev --port 8788 --var DEV:1`. -->
+<script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Figtree:wght@500;600;700;800&display=swap">
+<link rel="stylesheet" href="poker.css?v=1">
+</head>
+<body>
+<div class="room">
+  <header class="bar">
+    <div class="brand">EASTCOIN <i>POKER</i><small>no-limit hold'em · 1/2 · 6-max</small></div>
+    <div class="me" id="meBar"><span class="bank" id="bank" title="Your bank: play chips while the table is in testing">🪙 <b id="bankN">—</b></span><span class="who" id="who"></span></div>
+    <nav class="tools">
+      <button id="btnAddon" hidden>Add on</button>
+      <button id="btnSitout" hidden>Sit out</button>
+      <button id="btnStand" hidden>Stand up</button>
+      <button id="btnHow">How it works</button>
+    </nav>
+  </header>
+  <div class="stage" id="stage">
+    <canvas id="cv" width="1280" height="760" aria-label="The table, top down"></canvas>
+    <div class="seatbtns" id="seatBtns"></div>
+    <div class="acts" id="acts" hidden>
+      <div class="acts-row">
+        <button class="act fold" id="aFold">Fold</button>
+        <button class="act check" id="aCheck">Check</button>
+        <button class="act raise" id="aRaise">Raise to <b id="aRaiseN">4</b></button>
+      </div>
+      <div class="acts-row sizes">
+        <button data-size="min">Min</button><button data-size="half">½ pot</button><button data-size="pot">Pot</button><button data-size="all">All in</button>
+        <input type="range" id="aSlider" min="0" max="100" value="0"><b id="aTo">4</b>
+      </div>
+    </div>
+    <div class="banner" id="banner" hidden></div>
+    <div class="status" id="status">Connecting…</div>
+    <div class="signin" id="signin" hidden><b>Sign in with Twitch to sit down.</b><a class="go" href="/api/picks/auth/twitch/start?returnTo=%2Fpoker" target="_top">Sign in →</a></div>
+  </div>
+  <aside class="side">
+    <div class="panel feed"><h3>The dealer</h3><div class="lines" id="feed"></div></div>
+    <div class="panel chat"><h3>Table talk <span id="peopleN"></span></h3><div class="lines" id="chat"></div><form id="chatForm"><input id="chatIn" maxlength="140" placeholder="Say something…" autocomplete="off"><button>Send</button></form></div>
+    <div class="panel hands"><h3>Last hands</h3><div class="lines" id="hands"></div></div>
+  </aside>
+  <div class="buyin" id="buyin" hidden><div class="card"><h2>Sit down</h2><p id="buyinLine">Buy in for 50 to 200 chips.</p><input type="range" id="buyRange" min="50" max="200" value="200"><div class="buyrow"><b id="buyN">200</b> chips<span class="sp"></span><button id="buyGo" class="go">Sit down</button><button id="buyNo">Not now</button></div></div></div>
+  <div class="how" id="how" hidden><div class="card"><h2>How it works</h2>
+    <p><b>No-limit Texas Hold'em</b>, blinds 1 and 2, six seats, real people only. Buy in for 50 to 200 chips from your bank and leave whenever a hand is not running.</p>
+    <p><b>Chips are play chips for now.</b> Everyone starts with 1,000 in the bank; if you go broke and leave the table, the bank tops you back up once an hour. When the table goes live, chips will be bought with ZCoins at the table's rate, so a 1 ZC player and a 1,000 ZC player can sit at the same table.</p>
+    <p><b>Twenty seconds a decision.</b> Run out the clock and you check or fold; twice in a row and you are sat out until you come back.</p>
+    <p><b>Leaving mid-hand folds you.</b> Lose your connection and the seat is held a minute, then your chips go back to the bank.</p>
+    <p>The dealer is the server. Nobody's page is told a card it may not see.</p>
+    <button class="go" id="howNo">Got it</button></div></div>
+</div>
+<script type="module" src="poker.js?v=1"></script>
+</body>
+</html>

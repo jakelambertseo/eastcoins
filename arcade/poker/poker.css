@@ -1,0 +1,32 @@
+/* EastCoin Poker — the card room kit (2026-10-10). Walnut and felt, cream type, a little gold. Fraunces for display, Figtree for text.
+   Not the kart's poster kit, not CS67's HUD. */
+:root{--bg:#120d0b;--wood:#3a2416;--wood2:#241610;--felt:#1f6b47;--felt2:#14503a;--cream:#f4efe4;--ink:#efe9dc;--dim:#a79e8f;--gold:#e8c35a;--red:#c0392b;--green:#3fbf7f;--panel:#1b1512;--line:rgba(244,239,228,.12);--disp:"Fraunces",Georgia,serif;--font:"Figtree",system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:500 14px/1.4 var(--font)}
+button{font:inherit;cursor:pointer}
+.room{display:grid;grid-template-rows:auto 1fr;grid-template-columns:minmax(0,1fr) 300px;height:100vh;height:100dvh;min-height:560px}
+.bar{grid-column:1/-1;display:flex;align-items:center;gap:18px;padding:8px 16px;background:linear-gradient(#2a1a12,#1a110c);border-bottom:1px solid var(--line)}
+.brand{font:900 20px/1 var(--disp);letter-spacing:-.02em;color:var(--cream)}.brand i{font-style:italic;color:var(--gold)}.brand small{display:block;margin-top:3px;font:700 10px/1 var(--font);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.me{display:flex;align-items:center;gap:12px;margin-left:auto}.bank{padding:6px 12px;border-radius:999px;background:rgba(232,195,90,.14);color:var(--gold);font-weight:800}.who{color:var(--dim)}
+.tools{display:flex;gap:6px}.tools button{padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);font-weight:700}.tools button:hover{background:rgba(255,255,255,.06)}
+.stage{position:relative;min-width:0;background:radial-gradient(ellipse at 50% 40%,#2b1b13 0,#120d0b 70%);display:grid;place-items:center;overflow:hidden}
+#cv{display:block;max-width:100%;max-height:100%;aspect-ratio:1280/760}
+.seatbtns button{position:absolute;transform:translate(-50%,-50%);padding:9px 16px;border-radius:999px;border:2px dashed rgba(244,239,228,.35);background:rgba(0,0,0,.35);color:var(--cream);font:800 13px var(--font);letter-spacing:.04em}.seatbtns button:hover{border-style:solid;background:rgba(232,195,90,.18);border-color:var(--gold)}
+.acts{position:absolute;right:16px;bottom:14px;display:grid;gap:8px;padding:12px 14px;background:rgba(18,13,11,.92);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(6px)}.acts[hidden]{display:none}
+.acts-row{display:flex;gap:8px;align-items:center;justify-content:center}
+.act{min-width:132px;padding:12px 18px;border-radius:12px;border:0;font:800 15px var(--font);letter-spacing:.02em;color:#120d0b}.act.fold{background:#c9c0b2}.act.check{background:var(--cream)}.act.raise{background:var(--gold)}.act:hover{filter:brightness(1.08)}.act:disabled{opacity:.4;cursor:default}
+.sizes button{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--dim);font-weight:700;font-size:12px}.sizes button:hover{color:var(--cream);border-color:var(--cream)}
+.sizes input[type=range]{width:200px;accent-color:var(--gold)}.sizes b{min-width:44px;text-align:right;color:var(--gold)}
+.banner{position:absolute;left:50%;top:18%;transform:translateX(-50%);padding:10px 24px;border-radius:999px;background:var(--cream);color:#120d0b;font:900 24px/1 var(--disp);letter-spacing:-.02em;box-shadow:0 14px 40px rgba(0,0,0,.5);pointer-events:none;white-space:nowrap}.banner small{display:block;margin-top:6px;font:700 11px/1 var(--font);letter-spacing:.16em;text-transform:uppercase;color:#6b5a3a}.banner[hidden]{display:none}
+.status{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 18px;border-radius:999px;background:rgba(0,0,0,.6);color:var(--cream);font-weight:700;pointer-events:none}.status[hidden]{display:none}
+.signin{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:12px;background:rgba(18,13,11,.8);font-size:16px}.signin[hidden]{display:none}
+.go{display:inline-block;padding:10px 22px;border-radius:999px;border:0;background:var(--gold);color:#120d0b;font:800 14px var(--font);text-decoration:none}
+.side{display:grid;grid-template-rows:1fr 1.2fr auto;gap:0;background:var(--panel);border-left:1px solid var(--line);min-height:0}
+.panel{display:grid;grid-template-rows:auto 1fr auto;min-height:0;border-bottom:1px solid var(--line)}.panel h3{margin:0;padding:10px 14px 6px;font:800 11px/1 var(--font);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}.panel h3 span{color:var(--gold)}
+.lines{overflow:auto;padding:0 14px 10px;font-size:13px;color:var(--ink)}.lines p{margin:0 0 5px}.lines p.dim{color:var(--dim)}.lines p.gold{color:var(--gold)}.lines p b{color:var(--cream)}.lines .av{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:-3px;margin-right:4px;background:#3a2416;object-fit:cover}
+.hands .lines{max-height:150px}.hands p{font-size:12px}
+#chatForm{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line)}#chatForm input{flex:1;min-width:0;padding:8px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font:inherit}#chatForm button{padding:8px 12px;border-radius:999px;border:0;background:var(--cream);color:#120d0b;font-weight:800}
+.buyin,.how{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);z-index:5}.buyin[hidden],.how[hidden]{display:none}
+.card{width:min(440px,92vw);padding:22px 24px;border-radius:18px;background:#1f1612;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.6)}.card h2{margin:0 0 6px;font:900 26px/1 var(--disp);color:var(--cream)}.card p{margin:8px 0;color:var(--ink)}.card p b{color:var(--cream)}
+.card input[type=range]{width:100%;accent-color:var(--gold);margin:10px 0}.buyrow{display:flex;align-items:center;gap:10px}.buyrow b{font:900 26px/1 var(--disp);color:var(--gold)}.sp{flex:1}.card button:not(.go){padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--dim)}
+html.embed .bar .brand small{display:none}
+@media (max-width:900px){.room{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}.side{grid-template-rows:none;grid-template-columns:1fr 1fr;max-height:200px;border-left:0;border-top:1px solid var(--line)}.hands{display:none}}

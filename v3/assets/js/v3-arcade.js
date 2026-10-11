@@ -20,7 +20,8 @@
   const ROOMS = { lounge: { title: "The Lounge", local: "/tools/lounge3d-mock/index.html", live: "/arcade/lounge3d-mock/" },
     climb: { title: "The Climb", local: "/tools/climb3d-mock/index.html", live: "/arcade/climb3d-mock/" },
     cs67: { title: "CS67", local: "/tools/blockshot/index.html", live: "/arcade/blockshot/" },
-    eastkart: { title: "EastKart", local: "/tools/eastkart/index.html", live: "/arcade/eastkart/" } };   // (2026-10-12) the kart racer; unlinked until the owner has iterated on it   // (2026-10-08) the shooter, named CS67 since 2026-10-11 (its files keep the blockshot name): a standalone in the Games section, not a lounge room
+    eastkart: { title: "EastKart", local: "/tools/eastkart/index.html", live: "/arcade/eastkart/" },
+    poker: { title: "Poker", local: "/tools/poker/index.html", live: "/arcade/poker/" } };   // (2026-10-13) the hold'em table; unlinked while the owner iterates   // (2026-10-12) the kart racer; unlinked until the owner has iterated on it   // (2026-10-08) the shooter, named CS67 since 2026-10-11 (its files keep the blockshot name): a standalone in the Games section, not a lounge room
   let frame = null, onMsg = null;
   const CSS_ID = "css-arcade-embed";
   function needCss() {
@@ -38,7 +39,7 @@ body.arcade-on .arcade-frame{display:block;width:100%;height:100%;border:0;backg
     return {
       mount(container) {
         needCss();
-        document.body.classList.add("arcade-on"); document.body.classList.toggle("arcade-chat", room === "cs67" || room === "eastkart");   // (2026-10-11) the shooter keeps the Twitch rail beside it
+        document.body.classList.add("arcade-on"); document.body.classList.toggle("arcade-chat", room === "cs67" || room === "eastkart" || room === "poker");   // (2026-10-11) the shooter keeps the Twitch rail beside it
         // an old ?view=lounge link shows the short address (/lounge), keeping anything else on the query
         const q = new URLSearchParams(location.search);
         if (q.get("view") === room) { q.delete("view"); history.replaceState(history.state, "", `/${room}${q.size ? `?${q}` : ""}${location.hash}`); }
