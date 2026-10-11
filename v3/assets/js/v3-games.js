@@ -17,7 +17,7 @@
 
   const K = window.ECCasino;
   const POLL_MS = 45000;
-  const ART_V = 1;
+  const ART_V = 2;   /* 2 (2026-10-13): the Poker card wears a frame of the real table (the owner: "the new, real image of our poker game") */
   const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   const ARCADE = LOCAL ? "http://localhost:8788" : "https://arcade.eastcoin.vip";
   let root = null;
