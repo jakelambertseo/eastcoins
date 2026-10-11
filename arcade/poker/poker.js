@@ -2,12 +2,13 @@
    what the server says (top down, you at the bottom), sends what you want to do, and never decides anything. Rules shared with the
    server: /v3/assets/js/poker-rules.js. What moves: cards fly out at the deal, bets sweep into the pot at the end of a street, the pot
    slides to whoever won it, the winning five light up, the clock ticks in its last five seconds. */
-import { TABLE, rankOf, suitOf, RANKS, RANK_NAMES, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=3";
+import { TABLE, rankOf, suitOf, RANKS, RANK_NAMES, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=4";
 
 const $ = (id) => document.getElementById(id);
 const DEV = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const KIT = { bg: "#0f1413", panel: "#141b19", panel2: "#1a2321", rail: "#2a211c", rail2: "#1b1512", felt: "#0e5c58", felt2: "#0a4542", chalk: "#f1ece2", ink: "#dfe6e2", mute: "#8f9c98", copper: "#c9772f", copper2: "#e39a56", win: "#7fd1a9", bad: "#d9534f", cardInk: "#1b1f1e", cardRed: "#c4453b", back: "#1f3b3a" };
-const DISP = "'Instrument Serif', Georgia, serif", SANS = "'Instrument Sans', system-ui, sans-serif";
+const DISP = "'Instrument Serif', Georgia, serif", SANS = "'Instrument Sans', system-ui, sans-serif", CARD = "'Playfair Display', 'Times New Roman', serif";   // the card face: a traditional heavy roman, easy to read small (the owner, 2026-10-13)
+try { document.fonts?.load("900 40px 'Playfair Display'"); document.fonts?.load("400 20px 'Instrument Serif'"); } catch {}
 const SUIT_GLYPH = ["♠", "♥", "♦", "♣"], SUIT_RED = [false, true, true, false];
 const cv = $("cv"), g = cv.getContext("2d"); const W = cv.width, H = cv.height;
 let you = null, bank = 0, view = null, people = [], ws = null, lastView = null, seenBoard = 0, boardAt = 0, showAt = 0, flash = { seat: -1, at: 0 };
@@ -149,7 +150,7 @@ function drawCard(c, x, y, w, h, faceUp, dim = false, lit = false, rot = 0) {
   g.shadowColor = "rgba(0,0,0,.5)"; g.shadowBlur = 12; g.shadowOffsetY = 5;
   rr(-w / 2, -h / 2, w, h, 5); g.fillStyle = faceUp ? KIT.chalk : KIT.back; g.fill(); g.shadowColor = "transparent";
   if (!faceUp) { rr(-w / 2 + 4, -h / 2 + 4, w - 8, h - 8, 3); g.strokeStyle = "rgba(227,154,86,.7)"; g.lineWidth = 1.5; g.stroke(); g.fillStyle = "rgba(227,154,86,.22)"; for (let yy = -h / 2 + 11; yy < h / 2 - 9; yy += 9) for (let xx = -w / 2 + 11; xx < w / 2 - 9; xx += 9) { g.beginPath(); g.moveTo(xx, yy - 3); g.lineTo(xx + 3, yy); g.lineTo(xx, yy + 3); g.lineTo(xx - 3, yy); g.fill(); } }
-  else { const r = rankOf(c), s = suitOf(c); g.fillStyle = SUIT_RED[s] ? KIT.cardRed : KIT.cardInk; g.font = `400 ${Math.round(h * 0.36)}px ${DISP}`; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(RANKS[r] === "T" ? "10" : RANKS[r], -w / 2 + 6, -h / 2 + 3); g.font = `${Math.round(h * 0.22)}px serif`; g.fillText(SUIT_GLYPH[s], -w / 2 + 7, -h / 2 + 4 + h * 0.34); g.font = `${Math.round(h * 0.46)}px serif`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(SUIT_GLYPH[s], w * 0.14, h * 0.2); }
+  else { const r = rankOf(c), s = suitOf(c); const ten = RANKS[r] === "T"; g.fillStyle = SUIT_RED[s] ? KIT.cardRed : KIT.cardInk; g.font = `900 ${Math.round(h * (ten ? 0.3 : 0.38))}px ${CARD}`; g.textAlign = "left"; g.textBaseline = "top"; g.fillText(ten ? "10" : RANKS[r], -w / 2 + 5, -h / 2 + 2); g.font = `${Math.round(h * 0.26)}px serif`; g.fillText(SUIT_GLYPH[s], -w / 2 + 6, -h / 2 + 2 + h * 0.36); g.font = `${Math.round(h * 0.5)}px serif`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(SUIT_GLYPH[s], w * 0.16, h * 0.22); }
   if (lit) { rr(-w / 2 - 2, -h / 2 - 2, w + 4, h + 4, 6); g.strokeStyle = KIT.copper2; g.lineWidth = 3; g.stroke(); }
   if (dim) { rr(-w / 2, -h / 2, w, h, 5); g.fillStyle = "rgba(15,20,19,.6)"; g.fill(); }
   g.restore();

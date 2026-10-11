@@ -13,8 +13,8 @@
    A card is 0..51: rank = c % 13 (0 = deuce .. 12 = ace), suit = floor(c / 13) (s h d c). A hand's score is one integer: category
    first, then the ranks that break ties, so two scores compare with <. */
 
-export const VERSION = 3;
-export const TABLE = { SEATS: 6, SB: 1, BB: 2, MIN_BUY: 50, MAX_BUY: 200, TURN_MS: 20000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
+export const VERSION = 4;
+export const TABLE = { SEATS: 6, SB: 1, BB: 2, MIN_BUY: 50, MAX_BUY: 200, TURN_MS: 30000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
 export const BANK = { START: 1000, REFILL_BELOW: 50, REFILL_TO: 1000, REFILL_MS: 60 * 60 * 1000 };
 /* The launch ratios, one per table size. Blinds and buy-ins stay 1/2 and 50–200 IN CHIPS at every table; the ratio is what a chip costs. */
 export const RATIOS = [
