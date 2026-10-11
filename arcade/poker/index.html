@@ -13,14 +13,14 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@500;600;700&family=Playfair+Display:wght@900&display=swap">
-<link rel="stylesheet" href="poker.css?v=4">
+<link rel="stylesheet" href="poker.css?v=5">
 </head>
 <body>
 <div class="room">
   <header class="bar">
     <div class="brand"><i>EastCoin</i> Poker</div>
-    <div class="stakes">No-limit hold'em · <b>1/2</b> · 6-max · <b id="tableN">empty</b></div>
-    <div class="me" id="meBar"><div class="bank" title="Your bank: play chips while the table is in testing"><small>BANK</small><b id="bankN">—</b></div><span class="who" id="who"></span></div>
+    <div class="stakes">No-limit hold'em · <b>5/10</b> · 6-max · <b id="tableN">empty</b></div>
+    <div class="me" id="meBar"><div class="bank" title="Your bank: play chips while the table is in testing"><img class="bank-img" src="tex/bank_stack.webp?v=1" alt=""><span><small>BANK</small><b id="bankN">—</b></span></div><span class="who" id="who"></span></div>
     <nav class="tools">
       <button id="btnAddon" hidden>Add on</button>
       <button id="btnSitout" hidden>Sit out</button>
@@ -58,15 +58,15 @@
     <div class="status" id="status">Connecting…</div>
     <div class="signin" id="signin" hidden><b>Sign in with Twitch to sit down.</b><a class="go" href="/api/picks/auth/twitch/start?returnTo=%2Fpoker" target="_top">Sign in</a></div>
   </div>
-  <div class="buyin" id="buyin" hidden><div class="card"><h2>Sit <i>down</i></h2><p id="buyinLine">Buy in for 50 to 200 chips.</p><input type="range" id="buyRange" min="50" max="200" value="200"><div class="buyrow"><b id="buyN">200</b> chips<span class="sp"></span><button id="buyGo" class="go">Sit down</button><button id="buyNo">Not now</button></div></div></div>
+  <div class="buyin" id="buyin" hidden><div class="card"><h2>Sit <i>down</i></h2><p id="buyinLine">Buy in for 200 to 1,000 chips.</p><input type="range" id="buyRange" min="200" max="1000" step="5" value="1000"><div class="buyrow"><b id="buyN">1000</b> chips<span class="sp"></span><button id="buyGo" class="go">Sit down</button><button id="buyNo">Not now</button></div></div></div>
   <div class="how" id="how" hidden><div class="card"><h2>How it <i>works</i></h2>
-    <p><b>No-limit Texas Hold'em</b>, blinds 1 and 2, six seats, real people only. Buy in for 50 to 200 chips from your bank and leave whenever a hand is not running.</p>
-    <p><b>Chips are play chips for now.</b> Everyone starts with 1,000 in the bank; go broke and leave the table and the bank tops you back up once an hour. When the table goes live, chips will be bought with ZCoins at the table's rate, so a 1 ZC player and a 1,000 ZC player can sit at the same table.</p>
+    <p><b>No-limit Texas Hold'em</b>, blinds 5 and 10, six seats, real people only. Buy in for 200 to 1,000 chips from your bank and leave whenever a hand is not running.</p>
+    <p><b>Chips are play chips for now.</b> Everyone starts with 2,000 in the bank; go broke and leave the table and the bank tops you back up once an hour. When the table goes live, chips will be bought with ZCoins at the table's rate, so a 1 ZC player and a 1,000 ZC player can sit at the same table.</p>
     <p><b>Thirty seconds a decision.</b> Run out the clock and you check or fold; twice in a row and you are sat out until you come back. Keys: <b>F</b> fold, <b>C</b> check or call, <b>R</b> bet or raise. While you wait, <b>Check / Fold</b> and <b>Call any</b> act for you the moment it is your turn. Raise sizes land on round numbers.</p>
     <p><b>Leaving mid-hand folds you.</b> Lose your connection and the seat is held a minute, then your chips go back to the bank.</p>
     <p>The dealer is the server. Nobody's page is told a card it may not see.</p>
     <button class="go" id="howNo">Got it</button></div></div>
 </div>
-<script type="module" src="poker.js?v=8"></script>
+<script type="module" src="poker.js?v=9"></script>
 </body>
 </html>

@@ -13,14 +13,15 @@
    A card is 0..51: rank = c % 13 (0 = deuce .. 12 = ace), suit = floor(c / 13) (s h d c). A hand's score is one integer: category
    first, then the ranks that break ties, so two scores compare with <. */
 
-export const VERSION = 5;
-export const TABLE = { SEATS: 6, SB: 1, BB: 2, MIN_BUY: 50, MAX_BUY: 200, TURN_MS: 30000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
-export const BANK = { START: 1000, REFILL_BELOW: 50, REFILL_TO: 1000, REFILL_MS: 60 * 60 * 1000 };
+export const VERSION = 6;
+/* (2026-10-13, the owner: "minimum antes need to be in 5s as well ie 5,10") blinds 5/10, buy in 200–1,000 (20–100 big blinds), so every number on the felt is a multiple of five */
+export const TABLE = { SEATS: 6, SB: 5, BB: 10, MIN_BUY: 200, MAX_BUY: 1000, TURN_MS: 30000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
+export const BANK = { START: 2000, REFILL_BELOW: 200, REFILL_TO: 2000, REFILL_MS: 60 * 60 * 1000 };
 /* The launch ratios, one per table size. Blinds and buy-ins stay 1/2 and 50–200 IN CHIPS at every table; the ratio is what a chip costs. */
 export const RATIOS = [
-  { key: "nickel", name: "Nickel", chipsPerZc: 100, line: "1 ZC buys 100 chips: a full buy-in is 2 ZC. Anyone can sit." },
-  { key: "dime", name: "Dime", chipsPerZc: 10, line: "1 ZC buys 10 chips: a full buy-in is 20 ZC." },
-  { key: "dollar", name: "Dollar", chipsPerZc: 1, line: "A chip is a ZCoin: a full buy-in is 200 ZC. The big table." }
+  { key: "nickel", name: "Nickel", chipsPerZc: 200, line: "1 ZC buys 200 chips: a full buy-in is 5 ZC, the minimum 1 ZC. Anyone can sit." },
+  { key: "dime", name: "Dime", chipsPerZc: 20, line: "1 ZC buys 20 chips: a full buy-in is 50 ZC." },
+  { key: "dollar", name: "Dollar", chipsPerZc: 2, line: "1 ZC buys 2 chips: a full buy-in is 500 ZC. The big table." }
 ];
 
 export const RANKS = "23456789TJQKA", SUITS = "shdc", SUIT_NAMES = ["spades", "hearts", "diamonds", "clubs"], RANK_NAMES = ["Deuce", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace"];
