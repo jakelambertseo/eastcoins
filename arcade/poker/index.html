@@ -13,7 +13,7 @@
 <script>if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@500;600;700&family=Playfair+Display:wght@900&display=swap">
-<link rel="stylesheet" href="poker.css?v=5">
+<link rel="stylesheet" href="poker.css?v=7">
 </head>
 <body>
 <div class="room">
@@ -28,6 +28,8 @@
       <button id="btnBot" class="warm" hidden title="Admins only: a bot to play against while the table is in testing. One per click.">+ Test bot</button>
       <button id="btnBotOff" hidden>Remove bots</button>
       <button id="btnHow">How it works</button>
+      <button id="btnJuke" class="icon" title="Jukebox">♪</button>
+      <button id="btnSettings" class="icon" title="Settings">⚙</button>
     </nav>
   </header>
   <aside class="left">
@@ -35,23 +37,38 @@
     <div class="panel chat"><h3>Table talk <span id="peopleN"></span></h3><div class="lines" id="chat"></div><form id="chatForm"><input id="chatIn" maxlength="140" placeholder="Say something…" autocomplete="off"><button>Send</button></form></div>
     <div class="panel hands"><h3>Last hands</h3><div class="lines" id="hands"></div></div>
   </aside>
+  <div class="waitbox" id="waitbox" hidden><h3>Wait list <span id="waitN"></span></h3><div id="waitList" class="waitlist"></div><button id="btnWait" class="go small">Join the wait list</button><p id="waitNote" class="waitnote" hidden></p></div>
+  <div class="pop" id="juke" hidden><div class="pop-head"><b>Jukebox</b><button class="x" data-close="juke">×</button></div>
+    <div class="juke-genres" id="jukeGenres"></div>
+    <form id="jukeForm"><input id="jukeQ" placeholder="Search stations…" autocomplete="off"><button>Find</button></form>
+    <div class="juke-list" id="jukeList"></div>
+    <div class="juke-now"><button id="jukeStop" class="small">Stop</button><span id="jukeNow">Nothing playing</span><input type="range" id="jukeVol" min="0" max="100" value="60" title="Jukebox volume"></div>
+  </div>
+  <div class="pop" id="settings" hidden><div class="pop-head"><b>Settings</b><button class="x" data-close="settings">×</button></div>
+    <label class="row"><span>Table sounds</span><input type="range" id="setVol" min="0" max="100" value="70"></label>
+    <label class="row"><span>Four-colour deck</span><input type="checkbox" id="setFour"></label>
+    <label class="row"><span>Show what I have</span><input type="checkbox" id="setHand" checked></label>
+    <label class="row"><span>Dealer's log in the rail</span><input type="checkbox" id="setFeed" checked></label>
+    <label class="row"><span>Card animations</span><input type="checkbox" id="setAnim" checked></label>
+  </div>
   <div class="stage" id="stage">
     <div class="felt"><canvas id="cv" width="1280" height="760" aria-label="The table, top down"></canvas></div>
     <div class="seatbtns" id="seatBtns"></div>
     <div class="acts off" id="acts">
       <div class="acts-row pre" id="pre" hidden>
-        <span class="prelabel">While you wait</span>
-        <button class="pre-btn" id="preCF">Check / Fold</button>
-        <button class="pre-btn" id="preCA">Call any</button>
+        <button class="pill" id="preCK"><i></i>Check</button>
+        <button class="pill" id="preCF"><i></i>Check / Fold</button>
+        <button class="pill" id="preCA"><i></i>Call any</button>
       </div>
       <div class="acts-row main" id="actsMain">
-        <button class="act fold" id="aFold">Fold<kbd>F</kbd></button>
-        <button class="act check" id="aCheck">Check<kbd>C</kbd></button>
-        <button class="act raise" id="aRaise"><span id="aRaiseL">Raise to </span><b id="aRaiseN">4</b><kbd>R</kbd></button>
+        <button class="pill fold" id="aFold"><i></i>Fold</button>
+        <button class="pill check" id="aCheck"><i></i>Check</button>
+        <button class="pill raise" id="aRaise"><i></i><span id="aRaiseL">Raise </span><b id="aRaiseN">4</b></button>
       </div>
-      <div class="acts-row sizes" id="actsSizes">
-        <button data-size="min">Min</button><button data-size="half">½ pot</button><button data-size="pot">Pot</button><button data-size="all">All in</button>
-        <input type="range" id="aSlider" min="0" max="100" value="0"><b id="aTo">4</b>
+      <div class="raisepop" id="raisePop" hidden>
+        <div class="sizes"><button data-size="min">Min</button><button data-size="half">½ pot</button><button data-size="pot">Pot</button><button data-size="all">All in</button></div>
+        <div class="sizes"><input type="range" id="aSlider" min="0" max="100" value="0"><b id="aTo">4</b></div>
+        <button class="pill raise go-raise" id="aGo"><i></i><span id="aGoL">Raise to</span> <b id="aGoN">4</b></button>
       </div>
     </div>
     <div class="banner" id="banner" hidden></div>
@@ -67,6 +84,6 @@
     <p>The dealer is the server. Nobody's page is told a card it may not see.</p>
     <button class="go" id="howNo">Got it</button></div></div>
 </div>
-<script type="module" src="poker.js?v=9"></script>
+<script type="module" src="poker.js?v=11"></script>
 </body>
 </html>

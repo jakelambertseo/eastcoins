@@ -13,9 +13,9 @@
    A card is 0..51: rank = c % 13 (0 = deuce .. 12 = ace), suit = floor(c / 13) (s h d c). A hand's score is one integer: category
    first, then the ranks that break ties, so two scores compare with <. */
 
-export const VERSION = 6;
+export const VERSION = 7;
 /* (2026-10-13, the owner: "minimum antes need to be in 5s as well ie 5,10") blinds 5/10, buy in 200–1,000 (20–100 big blinds), so every number on the felt is a multiple of five */
-export const TABLE = { SEATS: 6, SB: 5, BB: 10, MIN_BUY: 200, MAX_BUY: 1000, TURN_MS: 30000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
+export const TABLE = { SEATS: 6, CHIP: 5, SB: 5, BB: 10, MIN_BUY: 200, MAX_BUY: 1000, TURN_MS: 30000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
 export const BANK = { START: 2000, REFILL_BELOW: 200, REFILL_TO: 2000, REFILL_MS: 60 * 60 * 1000 };
 /* The launch ratios, one per table size. Blinds and buy-ins stay 1/2 and 50–200 IN CHIPS at every table; the ratio is what a chip costs. */
 export const RATIOS = [
@@ -24,6 +24,10 @@ export const RATIOS = [
   { key: "dollar", name: "Dollar", chipsPerZc: 2, line: "1 ZC buys 2 chips: a full buy-in is 500 ZC. The big table." }
 ];
 
+/* FIVES (2026-10-13, the owner: "all money, bets, raises, starts, etc should be in multiples of 5"): every buy-in, raise and bot bet is
+   rounded to a multiple of CHIP; a split pot is shared in multiples of CHIP with the remainder to the first winner after the button.
+   Because every amount that goes in is a multiple of CHIP, every stack stays one. */
+const r5 = (x) => Math.round(x / TABLE.CHIP) * TABLE.CHIP;
 export const RANKS = "23456789TJQKA", SUITS = "shdc", SUIT_NAMES = ["spades", "hearts", "diamonds", "clubs"], RANK_NAMES = ["Deuce", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King", "Ace"];
 export const rankOf = (c) => c % 13, suitOf = (c) => Math.floor(c / 13);
 export const cardStr = (c) => RANKS[rankOf(c)] + SUITS[suitOf(c)];
@@ -89,7 +93,7 @@ export const seatOf = (t, id) => t.seats.findIndex((s) => s && s.id === id);
 export function sit(t, i, p, buy) {
   if (i < 0 || i >= TABLE.SEATS || t.seats[i]) return { ok: false, err: "That seat is taken." };
   if (seatOf(t, p.id) >= 0) return { ok: false, err: "You are already at the table." };
-  buy = Math.floor(Number(buy)); if (!Number.isFinite(buy) || buy < TABLE.MIN_BUY || buy > TABLE.MAX_BUY) return { ok: false, err: `Buy in for ${TABLE.MIN_BUY} to ${TABLE.MAX_BUY}.` };
+  buy = Math.floor(Number(buy) / TABLE.CHIP) * TABLE.CHIP; if (!Number.isFinite(buy) || buy < TABLE.MIN_BUY || buy > TABLE.MAX_BUY) return { ok: false, err: `Buy in for ${TABLE.MIN_BUY} to ${TABLE.MAX_BUY}.` };
   t.seats[i] = newSeat(p, buy); return { ok: true, seat: t.seats[i] };
 }
 /** Leave: at once between hands; during a hand the seat folds and goes when the hand ends. Returns the chips coming back (now or later). */
@@ -143,7 +147,7 @@ export function act(t, i, action, amount, now) {
   else if (action === "raise" || action === "allin") {
     let to = action === "allin" ? L.maxTo : Math.floor(Number(amount));
     if (!Number.isFinite(to)) return { ok: false, err: "Raise to what?" };
-    if (to > L.maxTo) to = L.maxTo;
+    if (to > L.maxTo) to = L.maxTo; if (to !== L.maxTo) { to = r5(to); if (to > L.maxTo) to = L.maxTo; }   /* a size off the fives is rounded; one under the minimum is still refused below */
     if (to <= h.bet) { if (to === L.maxTo && to > s.bet) { const v = pay(to - s.bet); line = { a: "call", i, v, allIn: true }; } else return { ok: false, err: "That is not a raise." }; }
     else {
       if (to < L.minTo && to !== L.maxTo) return { ok: false, err: `Minimum raise is to ${L.minTo}.` };
@@ -210,12 +214,13 @@ export function showdown(t, now) {
   for (const p of merged) {
     let best = -1; for (const i of p.elig) if (best < 0 || scores[i].score > best) best = scores[i].score;
     const winners = p.elig.filter((i) => scores[i].score === best);
-    const share = Math.floor(p.amount / winners.length); let odd = p.amount - share * winners.length;
+    const share = Math.floor(p.amount / winners.length / TABLE.CHIP) * TABLE.CHIP; let odd = p.amount - share * winners.length;
     const order = []; for (let k = 1; k <= TABLE.SEATS; k++) { const i = (t.button + k) % TABLE.SEATS; if (winners.includes(i)) order.push(i); }
-    for (const i of order) { const v = share + (odd > 0 ? 1 : 0); if (odd > 0) odd--; t.seats[i].stack += v; t.seats[i].won += v; }
+    for (const i of order) { const v = share + odd; odd = 0; t.seats[i].stack += v; t.seats[i].won += v; }
     result.pots.push({ amount: p.amount, winners: order, hand: alive.length > 1 ? handName(scores[order[0]]) : null, cards: alive.length > 1 ? scores[order[0]].cards : null });
   }
   if (alive.length > 1) { for (const i of alive) { t.seats[i].show = true; result.shows.push({ i, hole: t.seats[i].hole.slice(), name: handName(scores[i]), score: scores[i].score }); } }
+  else if (alive.length === 1) { const i = alive[0]; t.seats[i].show = true; const cards = [...t.seats[i].hole, ...h.board]; result.shows.push({ i, hole: t.seats[i].hole.slice(), name: cards.length >= 5 ? handName(evalBest(cards)) : "", score: 0, byFold: true }); }   /* (2026-10-13, the owner) the winner by a fold shows their hand */
   for (const s of t.seats) if (s) { s.put = 0; s.bet = 0; }
   h.result = result; h.cur = -1; t.phase = "showdown"; t.endAt = now + (alive.length > 1 ? TABLE.SHOW_MS : TABLE.GAP_MS); t.last = { handNo: t.handNo, result, button: t.button, log: h.log.slice() };
   h.log.push({ a: "end", pots: result.pots });
@@ -249,7 +254,7 @@ export function botStrength(hole, board) {
 export function botAct(t, i, rand) {
   const L = legal(t, i); if (!L) return null; const s = t.seats[i], h = t.hand;
   const str = botStrength(s.hole, h.board), pot = L.pot, r = rand();
-  const betTo = (mult) => Math.max(L.minTo, Math.min(L.maxTo, Math.round(h.bet + (pot + L.toCall) * mult)));
+  const betTo = (mult) => { let to = r5(h.bet + (pot + L.toCall) * mult); if (to < L.minTo) to = Math.ceil(L.minTo / TABLE.CHIP) * TABLE.CHIP; return Math.min(L.maxTo, to); };
   if (L.toCall === 0) { if (str > 0.78 && r < 0.75) return { a: "raise", to: betTo(0.7) }; if (str > 0.5 && r < 0.4) return { a: "raise", to: betTo(0.5) }; if (r < 0.06 && h.board.length >= 3) return { a: "raise", to: betTo(0.6) }; return { a: "check" }; }
   const odds = L.toCall / (pot + L.toCall);
   if (str > 0.85 && r < 0.6) return { a: L.maxTo > h.bet ? "raise" : "call", to: betTo(1.0) };
