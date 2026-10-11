@@ -13,7 +13,7 @@
    A card is 0..51: rank = c % 13 (0 = deuce .. 12 = ace), suit = floor(c / 13) (s h d c). A hand's score is one integer: category
    first, then the ranks that break ties, so two scores compare with <. */
 
-export const VERSION = 4;
+export const VERSION = 5;
 export const TABLE = { SEATS: 6, SB: 1, BB: 2, MIN_BUY: 50, MAX_BUY: 200, TURN_MS: 30000, SHOW_MS: 6500, GAP_MS: 3000, MIN_PLAYERS: 2, AWAY_AFTER: 2, DISCONNECT_MS: 60000 };
 export const BANK = { START: 1000, REFILL_BELOW: 50, REFILL_TO: 1000, REFILL_MS: 60 * 60 * 1000 };
 /* The launch ratios, one per table size. Blinds and buy-ins stay 1/2 and 50–200 IN CHIPS at every table; the ratio is what a chip costs. */
@@ -98,7 +98,7 @@ export function stand(t, i) {
   if (t.phase === "hand" && s.inHand) { s.leaving = true; return { ok: true, later: true, stack: s.stack }; }
   t.seats[i] = null; return { ok: true, later: false, stack: s.stack };
 }
-export const eligible = (t) => t.seats.map((s, i) => (s && !s.sitOut && !s.leaving && s.stack > 0 ? i : -1)).filter((i) => i >= 0);
+export const eligible = (t) => t.seats.map((s, i) => (s && !s.sitOut && !s.leaving && !s.gone && s.stack > 0 ? i : -1)).filter((i) => i >= 0);
 export const canStart = (t) => eligible(t).length >= TABLE.MIN_PLAYERS;
 const nextSeat = (t, from, pred) => { for (let k = 1; k <= TABLE.SEATS; k++) { const i = (from + k) % TABLE.SEATS; const s = t.seats[i]; if (s && pred(s, i)) return i; } return -1; };
 const active = (s) => s.inHand && !s.folded;
@@ -223,7 +223,7 @@ export function showdown(t, now) {
 /** After the showdown pause: seats that were leaving go, the broke sit out, back to waiting (the dealer starts the next hand). */
 export function finishHand(t) {
   const back = [];
-  for (let i = 0; i < TABLE.SEATS; i++) { const s = t.seats[i]; if (!s) continue; s.inHand = false; s.hole = []; s.show = false; if (s.leaving || s.gone) { back.push({ id: s.id, name: s.name, stack: s.stack, why: s.leaving ? "left" : "gone" }); t.seats[i] = null; continue; } if (s.stack <= 0) s.sitOut = true; if (s.away >= TABLE.AWAY_AFTER) s.sitOut = true; }
+  for (let i = 0; i < TABLE.SEATS; i++) { const s = t.seats[i]; if (!s) continue; s.inHand = false; s.hole = []; s.show = false; if (s.leaving) { back.push({ id: s.id, name: s.name, stack: s.stack, why: "left" }); t.seats[i] = null; continue; } /* a GONE seat is held for the dealer's minute (2026-10-13: a refresh used to stand you up here) */ if (s.stack <= 0) s.sitOut = true; if (s.away >= TABLE.AWAY_AFTER) s.sitOut = true; }
   t.hand = null; t.phase = "waiting"; return back;
 }
 /** The clock ran out on the seat to act: check if they can, else fold; twice in a row sits them out. */

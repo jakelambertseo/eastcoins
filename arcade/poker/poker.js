@@ -2,7 +2,7 @@
    what the server says (top down, you at the bottom), sends what you want to do, and never decides anything. Rules shared with the
    server: /v3/assets/js/poker-rules.js. What moves: cards fly out at the deal, bets sweep into the pot at the end of a street, the pot
    slides to whoever won it, the winning five light up, the clock ticks in its last five seconds. */
-import { TABLE, rankOf, suitOf, RANKS, RANK_NAMES, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=4";
+import { TABLE, rankOf, suitOf, RANKS, RANK_NAMES, handName, evalBest } from "/v3/assets/js/poker-rules.js?v=5";
 
 const $ = (id) => document.getElementById(id);
 const DEV = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
@@ -66,6 +66,8 @@ function setView(v) {
   if (v.phase === "showdown" && (!lastView || lastView.phase !== "showdown")) { showAt = now; const pots = v.last?.result?.pots || []; winSet = pots[0]?.cards ? new Set(pots[0].cards) : null; for (let i = 0; i < TABLE.SEATS; i++) { const s = v.seats[i]; if (s && s.won > 0) anims.push({ kind: "chips", from: { x: CX, y: CY - 44 }, to: { x: seatPos(i).x, y: seatPos(i).y + 18 }, t0: now + 700, dur: 420, amount: s.won }); } }
   if (v.phase !== "showdown" && lastView?.phase === "showdown") { $("banner").hidden = true; winSet = null; }
   if (v.legal && (!lastView || !lastView.legal || lastView.handNo !== v.handNo || lastView.street !== v.street)) { SFX.turn(); raiseTo = 0; lastTick = -1; }
+  if (v.phase !== "hand" || (lastView && lastView.handNo !== v.handNo)) pre = null;
+  if (v.legal && pre) { const L = v.legal; const a = pre === "cf" ? (L.check ? "check" : "fold") : (L.toCall > 0 ? "call" : "check"); pre = null; send({ t: "act", a }); feed(`You had <b>${a === "fold" ? "Check / Fold" : "Call any"}</b> set: ${a === "call" ? `called ${L.call}` : a === "check" ? "checked" : "folded"}.`, "dim"); }
   drawActs(); drawSeatButtons();
 }
 
@@ -104,12 +106,19 @@ function onHand(rec) {
 }
 
 /* ---------------------------------------------------------------- the action bar and the seat buttons */
-let raiseTo = 0;
+let raiseTo = 0, pre = null;   // pre: "cf" (check or fold) | "ca" (call any), armed while waiting
+/** Raise sizes land on round numbers: fives to 50, tens to 200, twenty-fives past that — the minimum raise and all in are always allowed as they are. */
+function snap(x, L) { if (x >= L.maxTo) return L.maxTo; if (x <= L.minTo) return L.minTo; const step = x <= 50 ? 5 : x <= 200 ? 10 : 25; const r = Math.round(x / step) * step; return Math.max(L.minTo, Math.min(L.maxTo, r)); }
 function drawActs() {
-  const L = view?.legal; const box = $("acts"); box.classList.toggle("off", !L); if (!L) return;
+  const L = view?.legal; const box = $("acts"); const me = view && view.me >= 0 ? view.seats[view.me] : null;
+  const waiting = !L && me && view.phase === "hand" && me.inHand && !me.folded && !me.allIn;
+  box.classList.toggle("off", !L && !waiting); $("pre").hidden = !waiting; $("actsMain").hidden = !L; $("actsSizes").hidden = !L;
+  $("preCF").classList.toggle("on", pre === "cf"); $("preCA").classList.toggle("on", pre === "ca");
+  if (waiting) { const toCall = Math.max(0, view.bet - me.bet); $("preCA").textContent = toCall > 0 ? `Call any (${Math.min(toCall, me.stack)} now)` : "Call any"; $("preCF").textContent = toCall > 0 ? "Check / Fold" : "Check / Fold"; }
+  if (!L) return;
   $("aCheck").firstChild.textContent = L.check ? "Check" : `Call ${L.call}${L.allIn ? " · all in" : ""}`;
   const canRaise = L.maxTo > view.bet; $("aRaise").disabled = !canRaise;
-  const sl = $("aSlider"); sl.min = L.minTo; sl.max = L.maxTo; if (raiseTo < L.minTo || raiseTo > L.maxTo || !raiseTo) raiseTo = L.minTo; sl.value = raiseTo; $("aTo").textContent = raiseTo; $("aRaiseN").textContent = raiseTo;
+  const sl = $("aSlider"); sl.min = L.minTo; sl.max = L.maxTo; if (raiseTo < L.minTo || raiseTo > L.maxTo || !raiseTo) raiseTo = L.minTo; raiseTo = snap(raiseTo, L); sl.value = raiseTo; $("aTo").textContent = raiseTo; $("aRaiseN").textContent = raiseTo;
   $("aRaiseL").textContent = raiseTo >= L.maxTo ? "All in " : (view.bet > 0 ? "Raise to " : "Bet ");
 }
 function drawSeatButtons() {
@@ -130,8 +139,9 @@ $("btnBot").onclick = () => send({ t: "bot", n: 1 }); $("btnBotOff").onclick = (
 $("aFold").onclick = () => send({ t: "act", a: "fold" });
 $("aCheck").onclick = () => send({ t: "act", a: view?.legal?.check ? "check" : "call" });
 $("aRaise").onclick = () => send({ t: "act", a: raiseTo >= (view?.legal?.maxTo || 0) ? "allin" : "raise", to: raiseTo });
-$("aSlider").oninput = () => { raiseTo = Number($("aSlider").value); $("aTo").textContent = raiseTo; $("aRaiseN").textContent = raiseTo; drawActs(); };
-for (const b of document.querySelectorAll("[data-size]")) b.onclick = () => { const L = view?.legal; if (!L) return; const pot = L.pot + L.toCall; const k = b.dataset.size; raiseTo = k === "min" ? L.minTo : k === "half" ? Math.round(view.bet + L.toCall + pot / 2) : k === "pot" ? Math.round(view.bet + L.toCall + pot) : L.maxTo; raiseTo = Math.max(L.minTo, Math.min(L.maxTo, raiseTo)); drawActs(); };
+$("aSlider").oninput = () => { const L = view?.legal; raiseTo = L ? snap(Number($("aSlider").value), L) : Number($("aSlider").value); $("aTo").textContent = raiseTo; $("aRaiseN").textContent = raiseTo; drawActs(); };
+$("preCF").onclick = () => { pre = pre === "cf" ? null : "cf"; drawActs(); }; $("preCA").onclick = () => { pre = pre === "ca" ? null : "ca"; drawActs(); };
+for (const b of document.querySelectorAll("[data-size]")) b.onclick = () => { const L = view?.legal; if (!L) return; const pot = L.pot + L.toCall; const k = b.dataset.size; raiseTo = k === "min" ? L.minTo : k === "half" ? Math.round(view.bet + L.toCall + pot / 2) : k === "pot" ? Math.round(view.bet + L.toCall + pot) : L.maxTo; raiseTo = snap(raiseTo, L); drawActs(); };
 $("chatForm").onsubmit = (e) => { e.preventDefault(); const t = $("chatIn").value.trim(); if (t) send({ t: "chat", text: t }); $("chatIn").value = ""; };
 addEventListener("keydown", (e) => { if (e.target.tagName === "INPUT") return; if (!view?.legal) return; if (e.code === "KeyF") $("aFold").click(); if (e.code === "KeyC") $("aCheck").click(); if (e.code === "KeyR") $("aRaise").click(); });
 addEventListener("resize", drawSeatButtons);
@@ -160,6 +170,7 @@ function chipStack(x, y, amount, label = true) {
   for (let i = 0; i < n; i++) { g.beginPath(); g.ellipse(x, y - i * 3.2, 14, 9, 0, 0, Math.PI * 2); g.fillStyle = col; g.fill(); g.strokeStyle = "rgba(241,236,226,.6)"; g.lineWidth = 1.5; g.stroke(); g.beginPath(); g.ellipse(x, y - i * 3.2, 9, 5.5, 0, 0, Math.PI * 2); g.strokeStyle = "rgba(227,154,86,.5)"; g.stroke(); }
   if (label) { g.font = `600 12px ${SANS}`; g.textAlign = "center"; g.textBaseline = "middle"; rr(x - 24, y + 12, 48, 18, 3); g.fillStyle = "rgba(15,20,19,.85)"; g.fill(); g.strokeStyle = "rgba(201,119,47,.5)"; g.lineWidth = 1; g.stroke(); g.fillStyle = KIT.chalk; g.fillText(amount, x, y + 21); }
 }
+function chipIcon(x, y, alpha = 1) { g.save(); g.globalAlpha = alpha; g.beginPath(); g.arc(x, y, 7, 0, Math.PI * 2); g.fillStyle = KIT.copper; g.fill(); g.strokeStyle = KIT.chalk; g.lineWidth = 1.5; g.setLineDash([2.2, 2.2]); g.stroke(); g.setLineDash([]); g.beginPath(); g.arc(x, y, 3.5, 0, Math.PI * 2); g.fillStyle = KIT.copper2; g.fill(); g.restore(); }
 function tag(x, y, text, color, fill = "rgba(15,20,19,.9)") { g.font = `600 10px ${SANS}`; g.textAlign = "center"; g.textBaseline = "middle"; const w = g.measureText(text).width + 16; rr(x - w / 2, y - 9, w, 18, 3); g.fillStyle = fill; g.fill(); g.strokeStyle = color; g.lineWidth = 1; g.stroke(); g.fillStyle = color; g.fillText(text, x, y + 0.5); }
 function draw() {
   requestAnimationFrame(draw); if (document.hidden && !DEV) return;
@@ -190,8 +201,10 @@ function draw() {
     if (flash.seat === i && now - flash.at < 900) { rr(p.x - pw / 2 - 4, p.y - 14, pw + 8, ph + 8, 8); g.strokeStyle = `rgba(227,154,86,${1 - (now - flash.at) / 900})`; g.lineWidth = 3; g.stroke(); }
     const im = avatar(s.avatar); g.save(); rr(p.x - pw / 2 + 8, p.y - 2, 40, 40, 4); g.clip(); if (im) g.drawImage(im, p.x - pw / 2 + 8, p.y - 2, 40, 40); else { g.fillStyle = isMe ? KIT.copper : isBot ? "#3a4a47" : "#2d5f8a"; g.fillRect(p.x - pw / 2 + 8, p.y - 2, 40, 40); g.fillStyle = KIT.chalk; g.font = `400 18px ${DISP}`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(s.name).slice(0, 2).toUpperCase(), p.x - pw / 2 + 28, p.y + 18); } g.restore();
     g.textAlign = "left"; g.textBaseline = "middle"; g.font = `600 13px ${SANS}`; g.fillStyle = out ? KIT.mute : KIT.chalk; g.fillText(String(s.name).slice(0, 14), p.x - pw / 2 + 56, p.y + 7);
-    g.font = `400 19px ${DISP}`; g.fillStyle = s.stack === 0 && s.inHand && !s.folded ? KIT.bad : KIT.copper2; g.fillText(s.stack === 0 && s.inHand && !s.folded ? "ALL IN" : s.stack.toLocaleString(), p.x - pw / 2 + 56, p.y + 30);
-    if (isBot && !s.sitOut) { g.font = `600 9px ${SANS}`; g.fillStyle = KIT.mute; g.textAlign = "right"; g.fillText("TEST BOT", p.x + pw / 2 - 8, p.y + 32); }
+    const allIn = s.stack === 0 && s.inHand && !s.folded; if (!allIn) chipIcon(p.x - pw / 2 + 62, p.y + 30, out ? 0.5 : 1);
+    g.font = `400 19px ${DISP}`; g.textAlign = "left"; g.fillStyle = allIn ? KIT.bad : KIT.copper2; g.fillText(allIn ? "ALL IN" : s.stack.toLocaleString(), p.x - pw / 2 + (allIn ? 56 : 72), p.y + 30);
+    if (acting) { const secs = Math.ceil(v.turnLeft / 1000); g.font = `600 11px ${SANS}`; g.textAlign = "right"; g.fillStyle = secs <= 5 ? KIT.bad : "rgba(241,236,226,.42)"; g.fillText(`0:${String(secs).padStart(2, "0")}`, p.x + pw / 2 - 8, p.y + 7); }
+    if (isBot && !s.sitOut) { g.font = `600 9px ${SANS}`; g.fillStyle = KIT.mute; g.textAlign = "right"; g.fillText("BOT", p.x + pw / 2 - 8, p.y + 32); }
     if (s.sitOut) tag(p.x, p.y + ph + 2, "SITTING OUT", KIT.mute);
     else if (s.gone) tag(p.x, p.y + ph + 2, "AWAY", KIT.bad);
     else if (lastAct[i]) { const a = lastAct[i]; const text = a.a === "fold" ? "FOLD" : a.a === "check" ? "CHECK" : a.a === "call" ? `CALL ${a.n}` : a.a === "allin" ? `ALL IN ${a.n}` : `RAISE ${a.n}`; const col = a.a === "fold" ? KIT.mute : a.a === "allin" ? KIT.bad : a.a === "raise" ? KIT.copper2 : KIT.chalk; const age = Math.min(1, (now - a.at) / 160); g.save(); g.globalAlpha = age; tag(p.x, p.y + ph + 2 - (1 - age) * 6, text + (a.slow ? " · SLOW" : ""), col); g.restore(); }
