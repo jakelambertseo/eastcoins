@@ -703,6 +703,7 @@
         ["/?view=picks", "Picks"],
         ["/?view=casino", "Casino"],
         ["/?view=cs67", "CS67"],
+        ["/?view=poker", "Poker"],
         ["/?view=games", "Games"],
         ["/?view=music", "Green Room"],
         ["/", "Sports"],

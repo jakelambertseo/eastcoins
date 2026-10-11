@@ -34,16 +34,15 @@
       feats: [["Fast-paced arena shooting", "against EastCoin members"], ["Free-for-all, Gun Game, Bomb 3v3", "and Parkour with friends"], ["Spin cases for knife and gun finishes", "with Brass you earn"], ["Levels, skins and daily challenges", "on your Twitch account"]] },
     eastscape: { title: "EastScape", sub: "EastCoin Casino MMO", icon: "🗺️", href: "/eastscape", art: "/v3/assets/img/casino/eastscape.webp?v=5", rgb: "255,122,26",
       online: "/api/eastscape/online", blurb: "Every casino game, in a world you walk around. Fight, mine, fish and craft for ZCoins.",
-      feats: [["A world you walk around", "with every casino table in it"], ["Fight, mine, fish and craft", "for ZCoins and tickets"], ["Dungeons, raids and world events", "with everyone online at once"], ["Pets, rolled loot and artifacts", "to chase for the long haul"]] }
+      feats: [["A world you walk around", "with every casino table in it"], ["Fight, mine, fish and craft", "for ZCoins and tickets"], ["Dungeons, raids and world events", "with everyone online at once"], ["Pets, rolled loot and artifacts", "to chase for the long haul"]] },
+    /* POKER (2026-10-13, the owner: "publish the poker game on the games page, remove the coming soon text"): the third world. Its live
+       line reads the dealer's /pk/state (who is seated); Blackjack is still to come and is not promised here. */
+    poker: { title: "Poker", sub: "EastCoin's card room", icon: "🃏", route: "poker", art: `/v3/assets/img/games/poker.webp?v=${ART_V}`, rgb: "201,119,47", ribbon: "New",
+      blurb: "",
+      feats: [["No-limit Texas Hold'em", "6-max, blinds 5/10, against EastCoin members"], ["Chips are ZCoins", "1 ZC buys 200 chips at the Nickel table"], ["Dealt by the room server", "you only ever see your own cards"], ["Table talk, emotes and a stream", "to watch while you play"]] }
   };
 
-  /* COMING SOON (2026-10-11, the owner: "add another section with Coming Soon and add poker to the games section as a card … there
-     will be Texas Hold Em, BlackJack"). A card with a ribbon and no link; the picture is the Lounge's poker table mid-hand. */
-  const SOON = {
-    poker: { title: "Poker", sub: "Cards for tickets", icon: "🃏", art: `/v3/assets/img/games/poker.webp?v=${ART_V}`, rgb: "214,40,110", ribbon: "Coming Soon", soon: true,
-      blurb: "Coming soon: Sit down at a table in the lounge and play the regulars for ZCoins.",
-      feats: [["Texas Hold 'Em", "sit-and-go tables against EastCoin members"], ["Blackjack", "against the house, hand after hand"], ["Tickets on the table", "ZCoins become tickets at the cashier"], ["Dealt by the room server", "you are only ever shown your own cards"]] }
-  };
+  /* (The "Coming soon" section that held Poker from 2026-10-11 went when Poker opened, 2026-10-13. Blackjack is still to come.) */
   function go(route) {
     history.pushState({ view: route }, "", `/?view=${route}`);
     window.ECV3?.go(route, { push: false });
@@ -92,7 +91,7 @@
 
     const head = el("div", "viewhead cas-head");
     const copy = el("div");
-    copy.append(el("h1", null, "Games"), el("p", null, "Two worlds: Counterstrike 67 and EastScape - Poker nights coming soon."));
+    copy.append(el("h1", null, "Games"), el("p", null, "Three worlds: Counterstrike 67, EastScape and the Poker room."));
     head.append(copy);
     page.append(head);
 
@@ -101,16 +100,11 @@
     for (const [key, g] of Object.entries(BIG)) {
       const c = card(key, g, { big: true });
       if (key === "cs67") { refs.cs67 = c.live; c.live.append(el("i", "cas-card-dot"), el("span", "cas-card-phase", "Looking for the rooms…")); }
+      if (key === "poker") { refs.poker = c.live; c.live.append(el("i", "cas-card-dot"), el("span", "cas-card-phase", "Looking for the table…")); }
       if (g.online) { const on = el("div", "cas-card-online"); on.hidden = true; c.live.replaceWith(on); refs.online = { el: on, url: g.online }; }   // in the live line's place, above the features, so both columns line up
       refs.big.append(c.tile);
     }
     page.append(refs.big);
-
-    // coming soon
-    page.append(el("p", "games-eyebrow", "Coming soon"));
-    const soon = el("div", "cas-cards games-cards");
-    for (const [key, g] of Object.entries(SOON)) { const c = card(key, g, { big: true }); c.tile.classList.add("soon"); c.live.classList.add("games-soonline"); c.live.append(el("b", null, g.blurb)); soon.append(c.tile); }   // bold red, the owner's words
-    page.append(soon);
 
     root.append(page);
   }
@@ -118,6 +112,18 @@
   /* Who is in CS67 right now: the four rooms' public /state, added up
      (names from every room, the count from all four). Four small CORS
      reads every 45 s while the page is open; nothing touches a database. */
+  /* Who is at the poker table: the dealer's public /pk/state. */
+  async function pollPoker(force = false) {
+    const live = refs.poker; if (!live || (document.hidden && !force)) return;
+    let j = null; try { j = await fetch(`${ARCADE}/pk/state`, { cache: "no-store" }).then((r) => r.json()); } catch {}
+    if (refs.poker !== live) return;
+    live.replaceChildren(); const dot = el("i", "cas-card-dot");
+    if (!j?.ok) { live.append(dot, el("span", "cas-card-phase", "The dealer isn't answering")); live.parentElement?.classList.remove("hot"); return; }
+    const n = Number(j.seated || 0), names = (j.names || []).slice(0, 6), hand = j.phase === "hand";
+    live.parentElement?.classList.toggle("hot", n > 0);
+    live.append(dot, el("span", "cas-card-phase", n ? `${n} seated${hand ? ", a hand running" : ""}${names.length ? ` · ${names.join(", ")}` : ""}` : "Nobody seated · take a seat"));
+    const right = el("span", "cas-card-right"); right.append(el("span", "cas-card-room", `${j.seats - n} seat${j.seats - n === 1 ? "" : "s"} open`)); live.append(right);
+  }
   async function pollRooms(force = false) {
     const live = refs.cs67; if (!live || (document.hidden && !force)) return;   // the first read happens even in a background tab (2026-10-12: a page opened in a new tab sat on "Looking for the rooms…" until the next poll)
     const rooms = [["bs", "Free-for-all"], ["gg", "Gun Game"], ["bomb", "Bomb"], ["park", "Parkour"]];
@@ -157,11 +163,11 @@
       document.title = "Games — EastCoin";
       window.ECPresence?.beat("games");
       build();
-      pollRooms(true);
+      pollRooms(true); pollPoker(true);
       pollOnline(true);
-      timer = window.setInterval(() => { if (!document.hidden) pollRooms(); }, POLL_MS);
+      timer = window.setInterval(() => { if (!document.hidden) { pollRooms(); pollPoker(); } }, POLL_MS);
       onlineTimer = window.setInterval(() => pollOnline(), 60000);
-      onVis = () => { if (!document.hidden) { pollRooms(); pollOnline(); } };
+      onVis = () => { if (!document.hidden) { pollRooms(); pollPoker(); pollOnline(); } };
       document.addEventListener("visibilitychange", onVis);
     },
     unmount() {
